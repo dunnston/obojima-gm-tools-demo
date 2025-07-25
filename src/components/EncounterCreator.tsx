@@ -5,6 +5,7 @@ import { creatures, Creature, Encounter } from '@/data/creatures';
 import StatBlock from './StatBlock';
 import { calculateEncounterDifficulty, getEncounterDifficultyRating } from '@/utils/encounterCalculator';
 import { PlusIcon, TrashIcon, EyeIcon, BookmarkIcon, CalculatorIcon } from '@heroicons/react/24/outline';
+import { getCreatureImagePath } from '@/utils/imageUtils';
 
 interface EncounterCreature {
   creature: Creature;
@@ -317,6 +318,22 @@ export default function EncounterCreator() {
                   <div key={index} className="bg-slate-700/50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
+                        {/* Creature Image */}
+                        <div className="w-10 h-10 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                          <img
+                            src={getCreatureImagePath(ec.creature.name)}
+                            alt={ec.creature.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                              const parent = img.parentElement;
+                              if (parent) {
+                                parent.innerHTML = '<span class="text-lg">🐉</span>';
+                              }
+                            }}
+                          />
+                        </div>
                         <button
                           onClick={() => openStatBlock(ec.creature)}
                           className="text-emerald-400 hover:text-emerald-300 transition-colors"
@@ -383,10 +400,28 @@ export default function EncounterCreator() {
             <div className="max-h-96 overflow-y-auto space-y-2">
               {filteredCreatures.map((creature, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
-                  <div className="flex-1">
-                    <div className="font-medium text-white">{creature.name}</div>
-                    <div className="text-sm text-slate-400">
-                      CR {creature.challenge_rating} • {creature.size} {creature.type}
+                  <div className="flex items-center gap-3 flex-1">
+                    {/* Creature Image */}
+                    <div className="w-10 h-10 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <img
+                        src={getCreatureImagePath(creature.name)}
+                        alt={creature.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<span class="text-lg">🐉</span>';
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-white">{creature.name}</div>
+                      <div className="text-sm text-slate-400">
+                        CR {creature.challenge_rating} • {creature.size} {creature.type}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

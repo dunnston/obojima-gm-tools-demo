@@ -4,6 +4,7 @@ import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Creature } from '@/data/creatures';
+import { getCreatureImagePath } from '@/utils/imageUtils';
 
 interface StatBlockProps {
   creature: Creature;
@@ -59,10 +60,33 @@ export default function StatBlock({ creature, isOpen, onClose }: StatBlockProps)
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title className="text-2xl font-bold text-white">
-                    {creature.name}
-                  </Dialog.Title>
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-start gap-6">
+                    {/* Creature Image */}
+                    <div className="w-24 h-24 bg-slate-600/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
+                      <img
+                        src={getCreatureImagePath(creature.name)}
+                        alt={creature.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<span class="text-4xl">🐉</span>';
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Dialog.Title className="text-3xl font-bold text-white mb-2">
+                        {creature.name}
+                      </Dialog.Title>
+                      <div className="text-lg italic text-slate-400">
+                        {creature.size} {creature.type}, {creature.alignment}
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={onClose}
                     className="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
@@ -73,10 +97,6 @@ export default function StatBlock({ creature, isOpen, onClose }: StatBlockProps)
 
                 {/* Basic Info */}
                 <div className="space-y-4 text-slate-300">
-                  <div className="text-lg italic">
-                    {creature.size} {creature.type}, {creature.alignment}
-                  </div>
-                  
                   <div className="border-b border-slate-600 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
