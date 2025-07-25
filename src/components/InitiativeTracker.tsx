@@ -64,6 +64,24 @@ export default function InitiativeTracker() {
     ));
   };
 
+  const updateParticipantHP = (id: string, newHp: number) => {
+    setParticipants(participants.map(p => 
+      p.id === id ? { ...p, hp: Math.max(0, newHp) } : p
+    ));
+  };
+
+  const healParticipant = (id: string, amount: number) => {
+    setParticipants(participants.map(p => 
+      p.id === id ? { ...p, hp: Math.min((p.maxHp || 100), (p.hp || 0) + amount) } : p
+    ));
+  };
+
+  const damageParticipant = (id: string, amount: number) => {
+    setParticipants(participants.map(p => 
+      p.id === id ? { ...p, hp: Math.max(0, (p.hp || 0) - amount) } : p
+    ));
+  };
+
   const startCombat = () => {
     if (participants.length < 2) {
       alert('Add at least 2 participants to start combat');
@@ -75,13 +93,36 @@ export default function InitiativeTracker() {
   };
 
   const nextTurn = () => {
-    const nextIndex = currentTurn + 1;
+    let nextIndex = currentTurn + 1;
+    let newRound = round;
+    
+    // If we've reached the end of the list, go to the beginning and increment round
     if (nextIndex >= sortedParticipants.length) {
-      setCurrentTurn(0);
-      setRound(round + 1);
-    } else {
-      setCurrentTurn(nextIndex);
+      nextIndex = 0;
+      newRound = round + 1;
     }
+    
+    // Skip dead participants
+    let attempts = 0;
+    while (attempts < sortedParticipants.length && (sortedParticipants[nextIndex]?.hp || 0) <= 0) {
+      nextIndex++;
+      attempts++;
+      
+      if (nextIndex >= sortedParticipants.length) {
+        nextIndex = 0;
+        if (attempts === 0) newRound++; // Only increment round if we wrapped around
+      }
+    }
+    
+    // If all participants are dead, end combat
+    if (attempts >= sortedParticipants.length) {
+      alert('All participants are defeated! Combat ended.');
+      endCombat();
+      return;
+    }
+    
+    setCurrentTurn(nextIndex);
+    setRound(newRound);
   };
 
   const endCombat = () => {
@@ -155,11 +196,14 @@ export default function InitiativeTracker() {
         <div className="space-y-2">
           {(combatStarted ? sortedParticipants : participants).map((participant, index) => {
             const isCurrent = combatStarted && index === currentTurn;
+            const isDead = (participant.hp || 0) <= 0;
             return (
               <div
                 key={participant.id}
                 className={`p-4 rounded-lg border-2 transition-all ${
-                  isCurrent 
+                  isDead
+                    ? 'border-red-500/50 bg-red-900/20 opacity-60' 
+                    : isCurrent 
                     ? 'border-emerald-400 bg-emerald-900/30 shadow-lg shadow-emerald-400/20' 
                     : 'border-slate-600 bg-slate-700/30'
                 }`}
@@ -192,8 +236,13 @@ export default function InitiativeTracker() {
                     </div>
 
                     {/* Info */}
-                    <div>
-                      <h3 className="font-semibold text-white">{participant.name}</h3>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-semibold ${isDead ? 'text-red-400 line-through' : 'text-white'}`}>
+                          {participant.name}
+                        </h3>
+                        {isDead && <span className="text-red-400 text-xs font-bold">💀 DEAD</span>}
+                      </div>
                       <div className="text-sm text-slate-400">
                         {participant.type === 'player' && participant.playerClass && (
                           <span>Level {participant.level} {participant.playerClass}</span>
@@ -202,6 +251,25 @@ export default function InitiativeTracker() {
                           <span>Creature</span>
                         )}
                       </div>
+                      {/* HP Bar */}
+                      {combatStarted && participant.hp !== undefined && participant.maxHp && (
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>HP</span>
+                            <span>{participant.hp}/{participant.maxHp}</span>
+                          </div>
+                          <div className="w-full bg-slate-600 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all ${
+                                isDead ? 'bg-red-500' : 
+                                (participant.hp / participant.maxHp) < 0.25 ? 'bg-red-500' :
+                                (participant.hp / participant.maxHp) < 0.5 ? 'bg-yellow-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.max(0, (participant.hp / participant.maxHp) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -284,9 +352,19 @@ export default function InitiativeTracker() {
 
             {/* Stats */}
             {currentParticipant.type === 'player' ? (
-              <PlayerDetails participant={currentParticipant} />
+              <PlayerDetails 
+                participant={currentParticipant} 
+                onUpdateHP={updateParticipantHP}
+                onHeal={healParticipant}
+                onDamage={damageParticipant}
+              />
             ) : (
-              <CreatureDetails participant={currentParticipant} />
+              <CreatureDetails 
+                participant={currentParticipant} 
+                onUpdateHP={updateParticipantHP}
+                onHeal={healParticipant}
+                onDamage={damageParticipant}
+              />
             )}
           </div>
         ) : (
@@ -313,7 +391,20 @@ export default function InitiativeTracker() {
 }
 
 // Player Details Component
-function PlayerDetails({ participant }: { participant: CombatParticipant }) {
+function PlayerDetails({ 
+  participant, 
+  onUpdateHP, 
+  onHeal, 
+  onDamage 
+}: { 
+  participant: CombatParticipant;
+  onUpdateHP: (id: string, newHp: number) => void;
+  onHeal: (id: string, amount: number) => void;
+  onDamage: (id: string, amount: number) => void;
+}) {
+  const [hpInput, setHpInput] = useState('');
+  const [healAmount, setHealAmount] = useState('');
+  const [damageAmount, setDamageAmount] = useState('');
   return (
     <div className="bg-slate-800/50 rounded-lg p-6 space-y-4">
       <h3 className="text-xl font-semibold text-white mb-4">Player Details</h3>
@@ -350,11 +441,100 @@ function PlayerDetails({ participant }: { participant: CombatParticipant }) {
           {participant.maxHp && participant.hp !== undefined && (
             <div className="mt-2 w-full bg-slate-600 rounded-full h-2">
               <div 
-                className="bg-red-500 h-2 rounded-full transition-all"
-                style={{ width: `${(participant.hp / participant.maxHp) * 100}%` }}
+                className={`h-2 rounded-full transition-all ${
+                  (participant.hp || 0) <= 0 ? 'bg-red-500' :
+                  (participant.hp / participant.maxHp) < 0.25 ? 'bg-red-500' :
+                  (participant.hp / participant.maxHp) < 0.5 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.max(0, (participant.hp / participant.maxHp) * 100)}%` }}
               />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* HP Controls */}
+      <div className="bg-slate-700/50 rounded-lg p-4">
+        <h4 className="text-white font-semibold mb-3">Health Management</h4>
+        
+        {/* Direct HP Set */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <input
+            type="number"
+            value={hpInput}
+            onChange={(e) => setHpInput(e.target.value)}
+            placeholder="Set HP"
+            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+            min="0"
+            max={participant.maxHp || 100}
+          />
+          <button
+            onClick={() => {
+              const newHp = parseInt(hpInput);
+              if (!isNaN(newHp)) {
+                onUpdateHP(participant.id, newHp);
+                setHpInput('');
+              }
+            }}
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+          >
+            Set HP
+          </button>
+          <button
+            onClick={() => onUpdateHP(participant.id, participant.maxHp || 100)}
+            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+          >
+            Full Heal
+          </button>
+        </div>
+
+        {/* Heal/Damage */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <input
+              type="number"
+              value={healAmount}
+              onChange={(e) => setHealAmount(e.target.value)}
+              placeholder="Heal amount"
+              className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+              min="1"
+            />
+            <button
+              onClick={() => {
+                const heal = parseInt(healAmount);
+                if (!isNaN(heal) && heal > 0) {
+                  onHeal(participant.id, heal);
+                  setHealAmount('');
+                }
+              }}
+              className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+            >
+              ❤️ Heal
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            <input
+              type="number"
+              value={damageAmount}
+              onChange={(e) => setDamageAmount(e.target.value)}
+              placeholder="Damage amount"
+              className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+              min="1"
+            />
+            <button
+              onClick={() => {
+                const damage = parseInt(damageAmount);
+                if (!isNaN(damage) && damage > 0) {
+                  onDamage(participant.id, damage);
+                  setDamageAmount('');
+                }
+              }}
+              className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+            >
+              ⚔️ Damage
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -362,7 +542,20 @@ function PlayerDetails({ participant }: { participant: CombatParticipant }) {
 }
 
 // Creature Details Component
-function CreatureDetails({ participant }: { participant: CombatParticipant }) {
+function CreatureDetails({ 
+  participant, 
+  onUpdateHP, 
+  onHeal, 
+  onDamage 
+}: { 
+  participant: CombatParticipant;
+  onUpdateHP: (id: string, newHp: number) => void;
+  onHeal: (id: string, amount: number) => void;
+  onDamage: (id: string, amount: number) => void;
+}) {
+  const [hpInput, setHpInput] = useState('');
+  const [healAmount, setHealAmount] = useState('');
+  const [damageAmount, setDamageAmount] = useState('');
   const creature = participant.creatureData;
   
   if (!creature) return null;
@@ -392,7 +585,10 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">HP</div>
-          <div className="text-white font-bold text-xl">{creature.hit_points}</div>
+          <div className="text-white font-bold text-xl">
+            {participant.hp || 0} / {participant.maxHp || 0}
+          </div>
+          <div className="text-slate-400 text-xs mt-1">{creature.hit_points}</div>
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">Speed</div>
@@ -422,6 +618,107 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
             </div>
           );
         })}
+      </div>
+
+      {/* HP Controls */}
+      <div className="bg-slate-700/50 rounded-lg p-4">
+        <h4 className="text-white font-semibold mb-3">Health Management</h4>
+        
+        {/* HP Bar */}
+        {participant.maxHp && participant.hp !== undefined && (
+          <div className="mb-3">
+            <div className="w-full bg-slate-600 rounded-full h-3">
+              <div 
+                className={`h-3 rounded-full transition-all ${
+                  (participant.hp || 0) <= 0 ? 'bg-red-500' :
+                  (participant.hp / participant.maxHp) < 0.25 ? 'bg-red-500' :
+                  (participant.hp / participant.maxHp) < 0.5 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.max(0, (participant.hp / participant.maxHp) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Direct HP Set */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <input
+            type="number"
+            value={hpInput}
+            onChange={(e) => setHpInput(e.target.value)}
+            placeholder="Set HP"
+            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+            min="0"
+            max={participant.maxHp || 100}
+          />
+          <button
+            onClick={() => {
+              const newHp = parseInt(hpInput);
+              if (!isNaN(newHp)) {
+                onUpdateHP(participant.id, newHp);
+                setHpInput('');
+              }
+            }}
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+          >
+            Set HP
+          </button>
+          <button
+            onClick={() => onUpdateHP(participant.id, participant.maxHp || 100)}
+            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+          >
+            Full Heal
+          </button>
+        </div>
+
+        {/* Heal/Damage */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <input
+              type="number"
+              value={healAmount}
+              onChange={(e) => setHealAmount(e.target.value)}
+              placeholder="Heal amount"
+              className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+              min="1"
+            />
+            <button
+              onClick={() => {
+                const heal = parseInt(healAmount);
+                if (!isNaN(heal) && heal > 0) {
+                  onHeal(participant.id, heal);
+                  setHealAmount('');
+                }
+              }}
+              className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+            >
+              ❤️ Heal
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            <input
+              type="number"
+              value={damageAmount}
+              onChange={(e) => setDamageAmount(e.target.value)}
+              placeholder="Damage amount"
+              className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+              min="1"
+            />
+            <button
+              onClick={() => {
+                const damage = parseInt(damageAmount);
+                if (!isNaN(damage) && damage > 0) {
+                  onDamage(participant.id, damage);
+                  setDamageAmount('');
+                }
+              }}
+              className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+            >
+              ⚔️ Damage
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Skills and Saves */}
@@ -643,14 +940,18 @@ function AddParticipantModal({
       });
       onClose();
     } else if (type === 'creature' && selectedCreature) {
+      // Parse max HP from hit_points string (e.g., "67 (9d8 + 27)")
+      const maxHpMatch = selectedCreature.hit_points.match(/^(\d+)/);
+      const maxHp = maxHpMatch ? parseInt(maxHpMatch[1]) : 1;
+      
       onAdd({
         name: selectedCreature.name,
         type: 'creature',
         initiative,
         creatureData: selectedCreature,
-        ac: selectedCreature.ac,
-        hp: selectedCreature.hp,
-        maxHp: selectedCreature.hp
+        ac: selectedCreature.armor_class,
+        hp: maxHp,
+        maxHp: maxHp
       });
       onClose();
     }
