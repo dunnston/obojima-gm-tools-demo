@@ -39,16 +39,9 @@ export default function DatabaseView() {
       const savedCreatures = localStorage.getItem('modifiedCreatures');
       const savedMagicItems = localStorage.getItem('modifiedMagicItems');
 
-      console.log('Loading from localStorage:');
-      console.log('- Saved ingredients:', savedIngredients);
-      console.log('- Saved potions:', savedPotions);
-      console.log('- Saved creatures:', savedCreatures);
-      console.log('- Saved magic items:', savedMagicItems);
-
       if (savedIngredients) {
         try {
           const parsedIngredients = JSON.parse(savedIngredients);
-          console.log('Parsed ingredients:', parsedIngredients);
           setModifiedIngredients(parsedIngredients);
         } catch (error) {
           console.error('Error parsing saved ingredients:', error);
@@ -58,7 +51,6 @@ export default function DatabaseView() {
       if (savedPotions) {
         try {
           const parsedPotions = JSON.parse(savedPotions);
-          console.log('Parsed potions:', parsedPotions);
           setModifiedPotions(parsedPotions);
         } catch (error) {
           console.error('Error parsing saved potions:', error);
@@ -68,7 +60,6 @@ export default function DatabaseView() {
       if (savedCreatures) {
         try {
           const parsedCreatures = JSON.parse(savedCreatures);
-          console.log('Parsed creatures:', parsedCreatures);
           setModifiedCreatures(parsedCreatures);
         } catch (error) {
           console.error('Error parsing saved creatures:', error);
@@ -78,7 +69,6 @@ export default function DatabaseView() {
       if (savedMagicItems) {
         try {
           const parsedMagicItems = JSON.parse(savedMagicItems);
-          console.log('Parsed magic items:', parsedMagicItems);
           setModifiedMagicItems(parsedMagicItems);
         } catch (error) {
           console.error('Error parsing saved magic items:', error);
@@ -86,35 +76,30 @@ export default function DatabaseView() {
       }
       
       setIsLoaded(true);
-      console.log('Finished loading from localStorage');
     }
   }, []);
 
   // Save to localStorage whenever modified data changes
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      console.log('Saving modifiedIngredients to localStorage:', modifiedIngredients);
       localStorage.setItem('modifiedIngredients', JSON.stringify(modifiedIngredients));
     }
   }, [modifiedIngredients, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      console.log('Saving modifiedPotions to localStorage:', modifiedPotions);
       localStorage.setItem('modifiedPotions', JSON.stringify(modifiedPotions));
     }
   }, [modifiedPotions, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      console.log('Saving modifiedCreatures to localStorage:', modifiedCreatures);
       localStorage.setItem('modifiedCreatures', JSON.stringify(modifiedCreatures));
     }
   }, [modifiedCreatures, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      console.log('Saving modifiedMagicItems to localStorage:', modifiedMagicItems);
       localStorage.setItem('modifiedMagicItems', JSON.stringify(modifiedMagicItems));
     }
   }, [modifiedMagicItems, isLoaded]);
@@ -128,9 +113,6 @@ export default function DatabaseView() {
   // Apply modifications to ingredients
   const currentIngredients = ingredients.map(ingredient => {
     const modified = modifiedIngredients.find(i => i.name === ingredient.name);
-    if (modified) {
-      console.log(`Found modification for ${ingredient.name}:`, modified);
-    }
     return modified || ingredient;
   });
 
@@ -143,9 +125,6 @@ export default function DatabaseView() {
   // Apply modifications to magic items
   const currentMagicItems = magicItems.map(magicItem => {
     const modified = modifiedMagicItems.find(m => m.name === magicItem.name);
-    if (modified) {
-      console.log(`Found modification for ${magicItem.name}:`, modified);
-    }
     return modified || magicItem;
   });
 
@@ -155,37 +134,27 @@ export default function DatabaseView() {
   };
 
   const handleSave = (updatedItem: any) => {
-    console.log('Saving item:', updatedItem);
-    console.log('Editing type:', editingType);
     
     // Update the appropriate state based on type
     if (editingType === 'ingredient') {
       setModifiedIngredients(prev => {
         const filtered = prev.filter(item => item.name !== updatedItem.name);
-        const newState = [...filtered, updatedItem];
-        console.log('Updated ingredients state:', newState);
-        return newState;
+        return [...filtered, updatedItem];
       });
     } else if (editingType === 'potion') {
       setModifiedPotions(prev => {
         const filtered = prev.filter(item => !(item.name === updatedItem.name && item.number === updatedItem.number));
-        const newState = [...filtered, updatedItem];
-        console.log('Updated potions state:', newState);
-        return newState;
+        return [...filtered, updatedItem];
       });
     } else if (editingType === 'creature') {
       setModifiedCreatures(prev => {
         const filtered = prev.filter(item => item.name !== updatedItem.name);
-        const newState = [...filtered, updatedItem];
-        console.log('Updated creatures state:', newState);
-        return newState;
+        return [...filtered, updatedItem];
       });
     } else if (editingType === 'magicItem') {
       setModifiedMagicItems(prev => {
         const filtered = prev.filter(item => item.name !== updatedItem.name);
-        const newState = [...filtered, updatedItem];
-        console.log('Updated magic items state:', newState);
-        return newState;
+        return [...filtered, updatedItem];
       });
     }
     
@@ -209,7 +178,6 @@ export default function DatabaseView() {
       setModifiedPotions([]);
       setModifiedCreatures([]);
       setModifiedMagicItems([]);
-      console.log('All saved changes cleared from localStorage');
     }
   };
 
@@ -438,7 +406,7 @@ function IngredientsTab({ ingredients, onEdit }: { ingredients: any[], onEdit: (
   const filteredIngredients = ingredients.filter(ingredient => {
     const matchesSearch = ingredient.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRarity = filterRarity === 'all' || ingredient.rarity === filterRarity;
-    const matchesLocation = filterLocation === 'all' || ingredient.locations.some(loc => 
+    const matchesLocation = filterLocation === 'all' || ingredient.locations.some((loc: string) => 
       loc.toLowerCase().includes(filterLocation.toLowerCase())
     );
     return matchesSearch && matchesRarity && matchesLocation;
@@ -960,33 +928,45 @@ function MagicItemsTab({ magicItems, onEdit }: { magicItems: any[], onEdit: (ite
         </select>
       </div>
 
+      {/* Results Count */}
+      <div className="text-slate-400 text-sm">
+        Showing {filteredMagicItems.length} of {magicItems.length} magic items
+      </div>
+
       {/* Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredMagicItems.map((item) => (
           <div
             key={item.name}
-            className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-xl border border-white/10 p-6 hover:border-white/20 transition-all duration-200"
+            className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200"
           >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-white leading-tight">{item.name}</h3>
-              <button
-                onClick={() => onEdit(item, 'magicItem')}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-600/50 rounded-lg transition-all duration-200"
-                title="Edit Magic Item"
-              >
-                <PencilIcon className="h-4 w-4" />
-              </button>
+            {/* Magic Item Icon */}
+            <div className="w-full h-20 bg-slate-600/30 rounded-lg flex items-center justify-center mb-3">
+              <span className="text-4xl">
+                {item.type.includes('Weapon') ? '⚔️' : 
+                 item.type === 'Ring' ? '💍' : 
+                 item.type === 'Armor' ? '🛡️' :
+                 item.type === 'Wondrous Item' ? '✨' : '🎯'}
+              </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Type:</span>
-                <span className="text-sm text-white font-medium">{item.type}</span>
+            {/* Item Info */}
+            <div className="space-y-2">
+              <div className="flex items-start justify-between">
+                <h3 className="font-semibold text-white text-sm leading-tight">{item.name}</h3>
+                <button
+                  onClick={() => onEdit(item, 'magicItem')}
+                  className="p-1 text-slate-400 hover:text-emerald-400 transition-colors"
+                  title="Edit Magic Item"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Rarity:</span>
-                <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+              <div className="text-xs text-slate-400">{item.type}</div>
+
+              <div className="flex items-center justify-between">
+                <span className={`text-xs px-2 py-1 rounded-full ${
                   item.rarity === 'Common' ? 'bg-gray-500/20 text-gray-300' :
                   item.rarity === 'Uncommon' ? 'bg-green-500/20 text-green-300' :
                   item.rarity === 'Rare' ? 'bg-blue-500/20 text-blue-300' :
@@ -995,18 +975,16 @@ function MagicItemsTab({ magicItems, onEdit }: { magicItems: any[], onEdit: (ite
                 }`}>
                   {item.rarity}
                 </span>
+                {item.requiresAttunement && (
+                  <span className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded-full">
+                    Attunement
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Attunement:</span>
-                <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                  item.requiresAttunement 
-                    ? 'bg-red-500/20 text-red-300' 
-                    : 'bg-green-500/20 text-green-300'
-                }`}>
-                  {item.requiresAttunement ? 'Required' : 'Not Required'}
-                </span>
-              </div>
+              {item.effect && (
+                <p className="text-xs text-slate-400 line-clamp-2">{item.effect}</p>
+              )}
             </div>
           </div>
         ))}
