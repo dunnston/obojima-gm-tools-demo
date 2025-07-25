@@ -727,13 +727,31 @@ function CreaturesTab({ creatures, onEdit }: { creatures: any[], onEdit: (item: 
 
 function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl my-8 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <div>
-            <h2 className="text-2xl font-bold text-white">{creature.name}</h2>
-            <p className="text-slate-400">{creature.size} {creature.type}, {creature.alignment}</p>
+          <div className="flex items-center gap-4">
+            {/* Creature Image */}
+            <div className="w-16 h-16 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+              <img
+                src={getCreatureImagePath(creature.name)}
+                alt={creature.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  const parent = img.parentElement;
+                  if (parent) {
+                    parent.innerHTML = '<span class="text-2xl">🐉</span>';
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{creature.name}</h2>
+              <p className="text-slate-400">{creature.size} {creature.type}, {creature.alignment}</p>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -743,7 +761,7 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           {/* Basic Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-700/30 rounded-lg p-3 text-center">
