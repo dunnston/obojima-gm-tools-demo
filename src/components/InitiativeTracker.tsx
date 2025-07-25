@@ -293,8 +293,20 @@ export default function InitiativeTracker() {
                       </>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <BoltIcon className="h-5 w-5 text-yellow-400" />
-                        <span className="text-white font-bold">{participant.initiative}</span>
+                        <div className="flex items-center gap-1">
+                          <BoltIcon className="h-4 w-4 text-yellow-400" />
+                          <span className="text-white font-bold text-sm">{participant.initiative}</span>
+                        </div>
+                        
+                        {/* Compact HP Controls */}
+                        {participant.hp !== undefined && participant.maxHp && (
+                          <HPControls 
+                            participant={participant}
+                            onUpdateHP={updateParticipantHP}
+                            onHeal={healParticipant}
+                            onDamage={damageParticipant}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -1135,6 +1147,121 @@ function AddParticipantModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Compact HP Controls Component
+function HPControls({ 
+  participant, 
+  onUpdateHP, 
+  onHeal, 
+  onDamage 
+}: { 
+  participant: CombatParticipant;
+  onUpdateHP: (id: string, newHp: number) => void;
+  onHeal: (id: string, amount: number) => void;
+  onDamage: (id: string, amount: number) => void;
+}) {
+  const [showControls, setShowControls] = useState(false);
+  const [damageAmount, setDamageAmount] = useState('');
+  const [healAmount, setHealAmount] = useState('');
+
+  const handleDamage = () => {
+    const damage = parseInt(damageAmount);
+    if (!isNaN(damage) && damage > 0) {
+      onDamage(participant.id, damage);
+      setDamageAmount('');
+      setShowControls(false);
+    }
+  };
+
+  const handleHeal = () => {
+    const heal = parseInt(healAmount);
+    if (!isNaN(heal) && heal > 0) {
+      onHeal(participant.id, heal);
+      setHealAmount('');
+      setShowControls(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, action: 'damage' | 'heal') => {
+    if (e.key === 'Enter') {
+      if (action === 'damage') {
+        handleDamage();
+      } else {
+        handleHeal();
+      }
+    }
+  };
+
+  if (!showControls) {
+    return (
+      <button
+        onClick={() => setShowControls(true)}
+        className="px-2 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-colors"
+        title="Modify HP"
+      >
+        ❤️
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-2 border border-slate-600">
+      {/* Damage */}
+      <div className="flex items-center gap-1">
+        <input
+          type="number"
+          value={damageAmount}
+          onChange={(e) => setDamageAmount(e.target.value)}
+          onKeyPress={(e) => handleKeyPress(e, 'damage')}
+          placeholder="DMG"
+          className="w-12 px-1 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs text-center"
+          min="1"
+          autoFocus
+        />
+        <button
+          onClick={handleDamage}
+          className="px-1 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-colors"
+          title="Deal Damage"
+        >
+          ⚔️
+        </button>
+      </div>
+
+      {/* Heal */}
+      <div className="flex items-center gap-1">
+        <input
+          type="number"
+          value={healAmount}
+          onChange={(e) => setHealAmount(e.target.value)}
+          onKeyPress={(e) => handleKeyPress(e, 'heal')}
+          placeholder="HEAL"
+          className="w-12 px-1 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs text-center"
+          min="1"
+        />
+        <button
+          onClick={handleHeal}
+          className="px-1 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition-colors"
+          title="Heal"
+        >
+          ❤️
+        </button>
+      </div>
+
+      {/* Close */}
+      <button
+        onClick={() => {
+          setShowControls(false);
+          setDamageAmount('');
+          setHealAmount('');
+        }}
+        className="px-1 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-colors ml-1"
+        title="Close"
+      >
+        ✕
+      </button>
     </div>
   );
 }
