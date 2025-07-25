@@ -371,21 +371,36 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
     <div className="bg-slate-800/50 rounded-lg p-6 space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto">
       <h3 className="text-xl font-semibold text-white mb-4">Creature Stats</h3>
       
+      {/* Basic Info */}
+      <div className="bg-slate-700/50 rounded-lg p-4 mb-4">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-white">{creature.name}</div>
+          <div className="text-slate-400 text-sm">
+            {creature.size} {creature.type}, {creature.alignment}
+          </div>
+          <div className="text-slate-400 text-sm mt-1">
+            Challenge Rating: {creature.challenge_rating} (Proficiency: +{creature.proficiency_bonus})
+          </div>
+        </div>
+      </div>
+
       {/* Basic Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">AC</div>
-          <div className="text-white font-bold text-xl">{creature.ac}</div>
+          <div className="text-white font-bold text-xl">{creature.armor_class}</div>
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">HP</div>
-          <div className="text-white font-bold text-xl">{creature.hp}</div>
+          <div className="text-white font-bold text-xl">{creature.hit_points}</div>
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">Speed</div>
-          <div className="text-white font-bold text-xl">
+          <div className="text-white font-bold text-sm">
             {typeof creature.speed === 'object' 
-              ? `${creature.speed.walk || 'N/A'}`
+              ? Object.entries(creature.speed).map(([type, value]) => 
+                  `${type}: ${value}`
+                ).join(', ')
               : creature.speed || 'N/A'
             }
           </div>
@@ -394,9 +409,8 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
 
       {/* Ability Scores */}
       <div className="grid grid-cols-6 gap-2">
-        {['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].map((ability, index) => {
-          const scores = [creature.str, creature.dex, creature.con, creature.int, creature.wis, creature.cha];
-          const score = scores[index];
+        {['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].map((ability) => {
+          const score = creature.ability_scores[ability as keyof typeof creature.ability_scores];
           const modifier = Math.floor((score - 10) / 2);
           return (
             <div key={ability} className="bg-slate-700/50 rounded-lg p-2 text-center">
@@ -410,12 +424,106 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
         })}
       </div>
 
+      {/* Skills and Saves */}
+      {(creature.skills || creature.saving_throws) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {creature.saving_throws && Object.keys(creature.saving_throws).length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-white font-semibold mb-2 text-sm">Saving Throws</h4>
+              <div className="text-slate-300 text-sm">
+                {Object.entries(creature.saving_throws).map(([save, bonus]) => 
+                  `${save.toUpperCase()} +${bonus}`
+                ).join(', ')}
+              </div>
+            </div>
+          )}
+          
+          {creature.skills && Object.keys(creature.skills).length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-white font-semibold mb-2 text-sm">Skills</h4>
+              <div className="text-slate-300 text-sm">
+                {Object.entries(creature.skills).map(([skill, bonus]) => 
+                  `${skill} +${bonus}`
+                ).join(', ')}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Resistances and Immunities */}
+      {(creature.damage_resistances || creature.damage_immunities || creature.damage_vulnerabilities || creature.condition_immunities) && (
+        <div className="space-y-2">
+          {creature.damage_resistances && creature.damage_resistances.length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-orange-400 font-semibold mb-1 text-sm">Damage Resistances</h4>
+              <div className="text-slate-300 text-sm">{creature.damage_resistances.join(', ')}</div>
+            </div>
+          )}
+          
+          {creature.damage_immunities && creature.damage_immunities.length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-green-400 font-semibold mb-1 text-sm">Damage Immunities</h4>
+              <div className="text-slate-300 text-sm">{creature.damage_immunities.join(', ')}</div>
+            </div>
+          )}
+          
+          {creature.damage_vulnerabilities && creature.damage_vulnerabilities.length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-red-400 font-semibold mb-1 text-sm">Damage Vulnerabilities</h4>
+              <div className="text-slate-300 text-sm">{creature.damage_vulnerabilities.join(', ')}</div>
+            </div>
+          )}
+          
+          {creature.condition_immunities && creature.condition_immunities.length > 0 && (
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <h4 className="text-blue-400 font-semibold mb-1 text-sm">Condition Immunities</h4>
+              <div className="text-slate-300 text-sm">{creature.condition_immunities.join(', ')}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Senses and Languages */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-slate-700/50 rounded-lg p-3">
+          <h4 className="text-white font-semibold mb-2 text-sm">Senses</h4>
+          <div className="text-slate-300 text-sm">
+            {creature.senses.darkvision && <div>Darkvision {creature.senses.darkvision}</div>}
+            {creature.senses.truesight && <div>Truesight {creature.senses.truesight}</div>}
+            <div>Passive Perception {creature.senses.passive_perception}</div>
+          </div>
+        </div>
+        
+        <div className="bg-slate-700/50 rounded-lg p-3">
+          <h4 className="text-white font-semibold mb-2 text-sm">Languages</h4>
+          <div className="text-slate-300 text-sm">
+            {creature.languages.length > 0 ? creature.languages.join(', ') : 'None'}
+          </div>
+        </div>
+      </div>
+
+      {/* Traits */}
+      {creature.traits && creature.traits.length > 0 && (
+        <div>
+          <h4 className="text-white font-semibold mb-2">Traits</h4>
+          <div className="space-y-2">
+            {creature.traits.map((trait, index) => (
+              <div key={index} className="bg-slate-700/50 rounded-lg p-3">
+                <div className="font-semibold text-purple-400">{trait.name}</div>
+                <div className="text-sm text-slate-300 mt-1">{trait.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       {creature.actions && creature.actions.length > 0 && (
         <div>
           <h4 className="text-white font-semibold mb-2">Actions</h4>
           <div className="space-y-2">
-            {creature.actions.map((action: any, index: number) => (
+            {creature.actions.map((action, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
                 <div className="font-semibold text-emerald-400">{action.name}</div>
                 <div className="text-sm text-slate-300 mt-1">{action.description}</div>
@@ -425,15 +533,45 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
         </div>
       )}
 
-      {/* Special Abilities */}
-      {creature.specialAbilities && creature.specialAbilities.length > 0 && (
+      {/* Bonus Actions */}
+      {creature.bonus_actions && creature.bonus_actions.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Special Abilities</h4>
+          <h4 className="text-white font-semibold mb-2">Bonus Actions</h4>
           <div className="space-y-2">
-            {creature.specialAbilities.map((ability: any, index: number) => (
+            {creature.bonus_actions.map((action, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
-                <div className="font-semibold text-purple-400">{ability.name}</div>
-                <div className="text-sm text-slate-300 mt-1">{ability.description}</div>
+                <div className="font-semibold text-yellow-400">{action.name}</div>
+                <div className="text-sm text-slate-300 mt-1">{action.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reactions */}
+      {creature.reactions && creature.reactions.length > 0 && (
+        <div>
+          <h4 className="text-white font-semibold mb-2">Reactions</h4>
+          <div className="space-y-2">
+            {creature.reactions.map((reaction, index) => (
+              <div key={index} className="bg-slate-700/50 rounded-lg p-3">
+                <div className="font-semibold text-cyan-400">{reaction.name}</div>
+                <div className="text-sm text-slate-300 mt-1">{reaction.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Legendary Actions */}
+      {creature.legendary_actions && creature.legendary_actions.length > 0 && (
+        <div>
+          <h4 className="text-white font-semibold mb-2">Legendary Actions</h4>
+          <div className="space-y-2">
+            {creature.legendary_actions.map((action, index) => (
+              <div key={index} className="bg-slate-700/50 rounded-lg p-3">
+                <div className="font-semibold text-orange-400">{action.name}</div>
+                <div className="text-sm text-slate-300 mt-1">{action.description}</div>
               </div>
             ))}
           </div>
