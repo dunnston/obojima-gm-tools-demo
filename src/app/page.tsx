@@ -10,6 +10,7 @@ import CharacterManager from '@/components/CharacterManager';
 import GMNotes from '@/components/GMNotes';
 import DatabaseView from '@/components/DatabaseView';
 import Settings from '@/components/Settings';
+import InitiativeTracker from '@/components/InitiativeTracker';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
@@ -30,6 +31,8 @@ export default function Home() {
         return <VendingMachine />;
       case 'database':
         return <DatabaseView />;
+      case 'initiative':
+        return <InitiativeTracker />;
       case 'settings':
         return <Settings />;
       default:

@@ -12,7 +12,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   UserIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  BoltIcon
 } from '@heroicons/react/24/outline';
 
 export interface SidebarProps {
@@ -28,6 +29,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'foraging', name: 'Ingredient Foraging', icon: MagnifyingGlassIcon, color: 'text-green-400' },
     { id: 'vending', name: 'Vending Machine', icon: BuildingStorefrontIcon, color: 'text-orange-400' },
     { id: 'encounters', name: 'Encounters', icon: SparklesIcon, color: 'text-purple-400' },
+    { id: 'initiative', name: 'Initiative Tracker', icon: BoltIcon, color: 'text-yellow-400' },
     { id: 'characters', name: 'Player Characters', icon: UserIcon, color: 'text-cyan-400' },
     { id: 'notes', name: 'GM Notes', icon: BookOpenIcon, color: 'text-blue-400' },
     { id: 'database', name: 'Database', icon: CircleStackIcon, color: 'text-amber-400' },
