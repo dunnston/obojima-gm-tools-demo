@@ -1,0 +1,797 @@
+
+// Auto-generated registration for existing files
+// Ingredients
+addLocalIngredientFile('amber', 'webp');
+localIngredientFiles.add('amber.webp'); // Direct filename
+addLocalIngredientFile('apper-carrot', 'webp');
+localIngredientFiles.add('apper-carrot.webp'); // Direct filename
+addLocalIngredientFile('Bamboo', 'webp');
+localIngredientFiles.add('Bamboo.webp'); // Direct filename
+addLocalIngredientFile('Bashu Powder', 'webp');
+localIngredientFiles.add('Bashu Powder.webp'); // Direct filename
+addLocalIngredientFile('Black Cinnamon', 'webp');
+localIngredientFiles.add('Black Cinnamon.webp'); // Direct filename
+addLocalIngredientFile('Black Pearl', 'webp');
+localIngredientFiles.add('Black Pearl.webp'); // Direct filename
+addLocalIngredientFile('Blossom of Spirit Vine', 'webp');
+localIngredientFiles.add('Blossom of Spirit Vine.webp'); // Direct filename
+addLocalIngredientFile('Blue Back Salmon', 'webp');
+localIngredientFiles.add('Blue Back Salmon.webp'); // Direct filename
+addLocalIngredientFile('Boom Beri', 'webp');
+localIngredientFiles.add('Boom Beri.webp'); // Direct filename
+addLocalIngredientFile('Bora Bug', 'webp');
+localIngredientFiles.add('Bora Bug.webp'); // Direct filename
+addLocalIngredientFile('Bottle Cap (Supa-Fizz!)', 'webp');
+localIngredientFiles.add('Bottle Cap (Supa-Fizz!).webp'); // Direct filename
+addLocalIngredientFile('Bottled Lightning', 'webp');
+localIngredientFiles.add('Bottled Lightning.webp'); // Direct filename
+addLocalIngredientFile('Brush Reed', 'webp');
+localIngredientFiles.add('Brush Reed.webp'); // Direct filename
+addLocalIngredientFile('Bubble Gum', 'webp');
+localIngredientFiles.add('Bubble Gum.webp'); // Direct filename
+addLocalIngredientFile('Bundle of Driko Twigs', 'webp');
+localIngredientFiles.add('Bundle of Driko Twigs.webp'); // Direct filename
+addLocalIngredientFile('Camp Mite', 'webp');
+localIngredientFiles.add('Camp Mite.webp'); // Direct filename
+addLocalIngredientFile('Chicken Egg', 'webp');
+localIngredientFiles.add('Chicken Egg.webp'); // Direct filename
+addLocalIngredientFile('Chisuay's Heavenly Tea', 'webp');
+localIngredientFiles.add('Chisuay's Heavenly Tea.webp'); // Direct filename
+addLocalIngredientFile('Clay Snake Tail', 'webp');
+localIngredientFiles.add('Clay Snake Tail.webp'); // Direct filename
+addLocalIngredientFile('Cloud Horn', 'webp');
+localIngredientFiles.add('Cloud Horn.webp'); // Direct filename
+addLocalIngredientFile('Coal from the Wandering Line', 'webp');
+localIngredientFiles.add('Coal from the Wandering Line.webp'); // Direct filename
+addLocalIngredientFile('Corrupted Seawater', 'webp');
+localIngredientFiles.add('Corrupted Seawater.webp'); // Direct filename
+addLocalIngredientFile('Crackling Jasper', 'webp');
+localIngredientFiles.add('Crackling Jasper.webp'); // Direct filename
+addLocalIngredientFile('Creeping Bolete', 'webp');
+localIngredientFiles.add('Creeping Bolete.webp'); // Direct filename
+addLocalIngredientFile('Crimson Octopus Ink', 'webp');
+localIngredientFiles.add('Crimson Octopus Ink.webp'); // Direct filename
+addLocalIngredientFile('Dawn Petal', 'webp');
+localIngredientFiles.add('Dawn Petal.webp'); // Direct filename
+addLocalIngredientFile('Dorrin Plate', 'webp');
+localIngredientFiles.add('Dorrin Plate.webp'); // Direct filename
+addLocalIngredientFile('Dragon Fang of Yutro', 'webp');
+localIngredientFiles.add('Dragon Fang of Yutro.webp'); // Direct filename
+addLocalIngredientFile('Dragon Root', 'webp');
+localIngredientFiles.add('Dragon Root.webp'); // Direct filename
+addLocalIngredientFile('Dried Fruit', 'webp');
+localIngredientFiles.add('Dried Fruit.webp'); // Direct filename
+addLocalIngredientFile('Earwax', 'webp');
+localIngredientFiles.add('Earwax.webp'); // Direct filename
+addLocalIngredientFile('Essence of Glumbug', 'webp');
+localIngredientFiles.add('Essence of Glumbug.webp'); // Direct filename
+addLocalIngredientFile('Essence of Ill Omen', 'webp');
+localIngredientFiles.add('Essence of Ill Omen.webp'); // Direct filename
+addLocalIngredientFile('Fairy Willow', 'webp');
+localIngredientFiles.add('Fairy Willow.webp'); // Direct filename
+addLocalIngredientFile('Feather Rock', 'webp');
+localIngredientFiles.add('Feather Rock.webp'); // Direct filename
+addLocalIngredientFile('Fish Folk Tooth', 'webp');
+localIngredientFiles.add('Fish Folk Tooth.webp'); // Direct filename
+addLocalIngredientFile('Fish Head', 'webp');
+localIngredientFiles.add('Fish Head.webp'); // Direct filename
+addLocalIngredientFile('Fizzing Green', 'webp');
+localIngredientFiles.add('Fizzing Green.webp'); // Direct filename
+addLocalIngredientFile('Flash Paper', 'webp');
+localIngredientFiles.add('Flash Paper.webp'); // Direct filename
+addLocalIngredientFile('Forge Slag', 'webp');
+localIngredientFiles.add('Forge Slag.webp'); // Direct filename
+addLocalIngredientFile('Gargoyle Powder', 'webp');
+localIngredientFiles.add('Gargoyle Powder.webp'); // Direct filename
+addLocalIngredientFile('Giant Koi Fish Scale', 'webp');
+localIngredientFiles.add('Giant Koi Fish Scale.webp'); // Direct filename
+addLocalIngredientFile('Glow Worms of the Vale', 'webp');
+localIngredientFiles.add('Glow Worms of the Vale.webp'); // Direct filename
+addLocalIngredientFile('Gohaku Rice', 'webp');
+localIngredientFiles.add('Gohaku Rice.webp'); // Direct filename
+addLocalIngredientFile('Golden Root', 'webp');
+localIngredientFiles.add('Golden Root.webp'); // Direct filename
+addLocalIngredientFile('Hakuma Sapwood', 'webp');
+localIngredientFiles.add('Hakuma Sapwood.webp'); // Direct filename
+addLocalIngredientFile('Hakumon's Ramen Broth', 'webp');
+localIngredientFiles.add('Hakumon's Ramen Broth.webp'); // Direct filename
+addLocalIngredientFile('Hand of Eryo', 'webp');
+localIngredientFiles.add('Hand of Eryo.webp'); // Direct filename
+addLocalIngredientFile('Happy Joy Cake', 'webp');
+localIngredientFiles.add('Happy Joy Cake.webp'); // Direct filename
+addLocalIngredientFile('Hill Dragon Egg', 'webp');
+localIngredientFiles.add('Hill Dragon Egg.webp'); // Direct filename
+addLocalIngredientFile('Howler Fur', 'webp');
+localIngredientFiles.add('Howler Fur.webp'); // Direct filename
+addLocalIngredientFile('Irimbi Chrysalis', 'webp');
+localIngredientFiles.add('Irimbi Chrysalis.webp'); // Direct filename
+addLocalIngredientFile('Itchi Beri', 'webp');
+localIngredientFiles.add('Itchi Beri.webp'); // Direct filename
+addLocalIngredientFile('Jack-O'-Lantern Bits', 'webp');
+localIngredientFiles.add('Jack-O'-Lantern Bits.webp'); // Direct filename
+addLocalIngredientFile('Jumping Bonfire', 'webp');
+localIngredientFiles.add('Jumping Bonfire.webp'); // Direct filename
+addLocalIngredientFile('Kloth Leech', 'webp');
+localIngredientFiles.add('Kloth Leech.webp'); // Direct filename
+addLocalIngredientFile('Knobble Leaf Seaweed', 'webp');
+localIngredientFiles.add('Knobble Leaf Seaweed.webp'); // Direct filename
+addLocalIngredientFile('Kojo Root', 'webp');
+localIngredientFiles.add('Kojo Root.webp'); // Direct filename
+addLocalIngredientFile('Kojobi Fruit', 'webp');
+localIngredientFiles.add('Kojobi Fruit.webp'); // Direct filename
+addLocalIngredientFile('Laughing Moss', 'webp');
+localIngredientFiles.add('Laughing Moss.webp'); // Direct filename
+addLocalIngredientFile('Lionfish Poison', 'webp');
+localIngredientFiles.add('Lionfish Poison.webp'); // Direct filename
+addLocalIngredientFile('Lions Blume', 'webp');
+localIngredientFiles.add('Lions Blume.webp'); // Direct filename
+addLocalIngredientFile('Living Spud', 'webp');
+localIngredientFiles.add('Living Spud.webp'); // Direct filename
+addLocalIngredientFile('Lovers Vine', 'webp');
+localIngredientFiles.add('Lovers Vine.webp'); // Direct filename
+addLocalIngredientFile('Magic Monk's Rice Wine', 'webp');
+localIngredientFiles.add('Magic Monk's Rice Wine.webp'); // Direct filename
+addLocalIngredientFile('Mandrake Root', 'webp');
+localIngredientFiles.add('Mandrake Root.webp'); // Direct filename
+addLocalIngredientFile('Mellowort', 'webp');
+localIngredientFiles.add('Mellowort.webp'); // Direct filename
+addLocalIngredientFile('Molted Lizard Skin', 'webp');
+localIngredientFiles.add('Molted Lizard Skin.webp'); // Direct filename
+addLocalIngredientFile('Monkey's Coil', 'webp');
+localIngredientFiles.add('Monkey's Coil.webp'); // Direct filename
+addLocalIngredientFile('Mountain Ox Dung', 'webp');
+localIngredientFiles.add('Mountain Ox Dung.webp'); // Direct filename
+addLocalIngredientFile('Mountain Snail', 'webp');
+localIngredientFiles.add('Mountain Snail.webp'); // Direct filename
+addLocalIngredientFile('Mournshade', 'webp');
+localIngredientFiles.add('Mournshade.webp'); // Direct filename
+addLocalIngredientFile('Mouse Tree Nut', 'webp');
+localIngredientFiles.add('Mouse Tree Nut.webp'); // Direct filename
+addLocalIngredientFile('Mouse Tree Nut_alt', 'png');
+localIngredientFiles.add('Mouse Tree Nut_alt.png'); // Direct filename
+addLocalIngredientFile('Munchanka Root', 'webp');
+localIngredientFiles.add('Munchanka Root.webp'); // Direct filename
+addLocalIngredientFile('Nakudama Spice', 'webp');
+localIngredientFiles.add('Nakudama Spice.webp'); // Direct filename
+addLocalIngredientFile('Narutomaki', 'webp');
+localIngredientFiles.add('Narutomaki.webp'); // Direct filename
+addLocalIngredientFile('Night Thistle', 'webp');
+localIngredientFiles.add('Night Thistle.webp'); // Direct filename
+addLocalIngredientFile('Nobblewort', 'webp');
+localIngredientFiles.add('Nobblewort.webp'); // Direct filename
+addLocalIngredientFile('Nokumai's Frozen Breath', 'webp');
+localIngredientFiles.add('Nokumai's Frozen Breath.webp'); // Direct filename
+addLocalIngredientFile('Noodle Eel', 'webp');
+localIngredientFiles.add('Noodle Eel.webp'); // Direct filename
+addLocalIngredientFile('Oporion Glass', 'webp');
+localIngredientFiles.add('Oporion Glass.webp'); // Direct filename
+addLocalIngredientFile('Opu Opu Spring Water', 'webp');
+localIngredientFiles.add('Opu Opu Spring Water.webp'); // Direct filename
+addLocalIngredientFile('Origami Crane', 'webp');
+localIngredientFiles.add('Origami Crane.webp'); // Direct filename
+addLocalIngredientFile('Ota Lantern Oil', 'webp');
+localIngredientFiles.add('Ota Lantern Oil.webp'); // Direct filename
+addLocalIngredientFile('Peeping Willow', 'webp');
+localIngredientFiles.add('Peeping Willow.webp'); // Direct filename
+addLocalIngredientFile('Petrified Alligator', 'webp');
+localIngredientFiles.add('Petrified Alligator.webp'); // Direct filename
+addLocalIngredientFile('Pink Candle Wax', 'webp');
+localIngredientFiles.add('Pink Candle Wax.webp'); // Direct filename
+addLocalIngredientFile('Plumage of a Running Kirio', 'webp');
+localIngredientFiles.add('Plumage of a Running Kirio.webp'); // Direct filename
+addLocalIngredientFile('Poison', 'webp');
+localIngredientFiles.add('Poison.webp'); // Direct filename
+addLocalIngredientFile('Pok Pok Flakes', 'webp');
+localIngredientFiles.add('Pok Pok Flakes.webp'); // Direct filename
+addLocalIngredientFile('Pungent Sea Foam', 'webp');
+localIngredientFiles.add('Pungent Sea Foam.webp'); // Direct filename
+addLocalIngredientFile('Pyramid Melon', 'webp');
+localIngredientFiles.add('Pyramid Melon.webp'); // Direct filename
+addLocalIngredientFile('Queen's Dilemma', 'webp');
+localIngredientFiles.add('Queen's Dilemma.webp'); // Direct filename
+addLocalIngredientFile('Raka Paste', 'webp');
+localIngredientFiles.add('Raka Paste.webp'); // Direct filename
+addLocalIngredientFile('Rattle Shoot', 'webp');
+localIngredientFiles.add('Rattle Shoot.webp'); // Direct filename
+addLocalIngredientFile('Ribbon Rot', 'webp');
+localIngredientFiles.add('Ribbon Rot.webp'); // Direct filename
+addLocalIngredientFile('Ronin Neko Figurine', 'webp');
+localIngredientFiles.add('Ronin Neko Figurine.webp'); // Direct filename
+addLocalIngredientFile('Rubble from a Rubble Golem', 'webp');
+localIngredientFiles.add('Rubble from a Rubble Golem.webp'); // Direct filename
+addLocalIngredientFile('Rust Crab', 'webp');
+localIngredientFiles.add('Rust Crab.webp'); // Direct filename
+addLocalIngredientFile('Sage Arol's Beetle', 'webp');
+localIngredientFiles.add('Sage Arol's Beetle.webp'); // Direct filename
+addLocalIngredientFile('Scalefruit Rind', 'webp');
+localIngredientFiles.add('Scalefruit Rind.webp'); // Direct filename
+addLocalIngredientFile('Scumweed', 'webp');
+localIngredientFiles.add('Scumweed.webp'); // Direct filename
+addLocalIngredientFile('Sea Water', 'webp');
+localIngredientFiles.add('Sea Water.webp'); // Direct filename
+addLocalIngredientFile('Seashell', 'webp');
+localIngredientFiles.add('Seashell.webp'); // Direct filename
+addLocalIngredientFile('Shadowroot', 'webp');
+localIngredientFiles.add('Shadowroot.webp'); // Direct filename
+addLocalIngredientFile('Sheep Dragon Wool', 'webp');
+localIngredientFiles.add('Sheep Dragon Wool.webp'); // Direct filename
+addLocalIngredientFile('Sleeping Merchant', 'webp');
+localIngredientFiles.add('Sleeping Merchant.webp'); // Direct filename
+addLocalIngredientFile('Slime, Corrupted', 'webp');
+localIngredientFiles.add('Slime, Corrupted.webp'); // Direct filename
+addLocalIngredientFile('Slime, Green', 'webp');
+localIngredientFiles.add('Slime, Green.webp'); // Direct filename
+addLocalIngredientFile('Slime, Orange', 'webp');
+localIngredientFiles.add('Slime, Orange.webp'); // Direct filename
+addLocalIngredientFile('Slime, Yellow', 'webp');
+localIngredientFiles.add('Slime, Yellow.webp'); // Direct filename
+addLocalIngredientFile('Snap Vine Sap', 'webp');
+localIngredientFiles.add('Snap Vine Sap.webp'); // Direct filename
+addLocalIngredientFile('Spark Plug', 'webp');
+localIngredientFiles.add('Spark Plug.webp'); // Direct filename
+addLocalIngredientFile('Spindle Leg Spider Webs', 'webp');
+localIngredientFiles.add('Spindle Leg Spider Webs.webp'); // Direct filename
+addLocalIngredientFile('Spirit Root', 'webp');
+localIngredientFiles.add('Spirit Root.webp'); // Direct filename
+addLocalIngredientFile('Spirit Tea', 'webp');
+localIngredientFiles.add('Spirit Tea.webp'); // Direct filename
+addLocalIngredientFile('Spring', 'webp');
+localIngredientFiles.add('Spring.webp'); // Direct filename
+addLocalIngredientFile('Squid Ink', 'webp');
+localIngredientFiles.add('Squid Ink.webp'); // Direct filename
+addLocalIngredientFile('Starstone', 'webp');
+localIngredientFiles.add('Starstone.webp'); // Direct filename
+addLocalIngredientFile('Sun Shroom', 'webp');
+localIngredientFiles.add('Sun Shroom.webp'); // Direct filename
+addLocalIngredientFile('Tangle Weed', 'webp');
+localIngredientFiles.add('Tangle Weed.webp'); // Direct filename
+addLocalIngredientFile('Tears of the Moon', 'webp');
+localIngredientFiles.add('Tears of the Moon.webp'); // Direct filename
+addLocalIngredientFile('Toka Truffle', 'webp');
+localIngredientFiles.add('Toka Truffle.webp'); // Direct filename
+addLocalIngredientFile('Ube', 'webp');
+localIngredientFiles.add('Ube.webp'); // Direct filename
+addLocalIngredientFile('Varrow', 'webp');
+localIngredientFiles.add('Varrow.webp'); // Direct filename
+addLocalIngredientFile('Venus Fly Rat', 'webp');
+localIngredientFiles.add('Venus Fly Rat.webp'); // Direct filename
+addLocalIngredientFile('Vinyl Record', 'webp');
+localIngredientFiles.add('Vinyl Record.webp'); // Direct filename
+addLocalIngredientFile('Windbloom', 'webp');
+localIngredientFiles.add('Windbloom.webp'); // Direct filename
+addLocalIngredientFile('Witch's Broom', 'webp');
+localIngredientFiles.add('Witch's Broom.webp'); // Direct filename
+addLocalIngredientFile('Witch's Eye Coral', 'webp');
+localIngredientFiles.add('Witch's Eye Coral.webp'); // Direct filename
+addLocalIngredientFile('Wolfenite', 'webp');
+localIngredientFiles.add('Wolfenite.webp'); // Direct filename
+addLocalIngredientFile('Wufu Whisky', 'webp');
+localIngredientFiles.add('Wufu Whisky.webp'); // Direct filename
+addLocalIngredientFile('Wychwood', 'webp');
+localIngredientFiles.add('Wychwood.webp'); // Direct filename
+addLocalIngredientFile('Yugi Sap', 'webp');
+localIngredientFiles.add('Yugi Sap.webp'); // Direct filename
+addLocalIngredientFile('Yuma Shrub', 'webp');
+localIngredientFiles.add('Yuma Shrub.webp'); // Direct filename
+addLocalIngredientFile('Yuma Shrub_alt', 'png');
+localIngredientFiles.add('Yuma Shrub_alt.png'); // Direct filename
+
+// Potions
+addLocalPotionFile('A New Look', 'webp');
+localPotionFiles.add('A New Look.webp'); // Direct filename
+addLocalPotionFile('Animal Affinity', 'webp');
+localPotionFiles.add('Animal Affinity.webp'); // Direct filename
+addLocalPotionFile('Arcane Solvent', 'webp');
+localPotionFiles.add('Arcane Solvent.webp'); // Direct filename
+addLocalPotionFile('Astounding Vigor', 'webp');
+localPotionFiles.add('Astounding Vigor.webp'); // Direct filename
+addLocalPotionFile('Audio Oddity', 'webp');
+localPotionFiles.add('Audio Oddity.webp'); // Direct filename
+addLocalPotionFile('Beard Brew', 'webp');
+localPotionFiles.add('Beard Brew.webp'); // Direct filename
+addLocalPotionFile('Beast Hide', 'webp');
+localPotionFiles.add('Beast Hide.webp'); // Direct filename
+addLocalPotionFile('beast-hide', 'webp');
+localPotionFiles.add('beast-hide.webp'); // Direct filename
+addLocalPotionFile('Blessing of the Moon Spirit', 'webp');
+localPotionFiles.add('Blessing of the Moon Spirit.webp'); // Direct filename
+addLocalPotionFile('Bottled Bind', 'webp');
+localPotionFiles.add('Bottled Bind.webp'); // Direct filename
+addLocalPotionFile('Bottled Bomb', 'webp');
+localPotionFiles.add('Bottled Bomb.webp'); // Direct filename
+addLocalPotionFile('Bottled Slime', 'webp');
+localPotionFiles.add('Bottled Slime.webp'); // Direct filename
+addLocalPotionFile('Bottled Torch', 'webp');
+localPotionFiles.add('Bottled Torch.webp'); // Direct filename
+addLocalPotionFile('bottled-bomb', 'webp');
+localPotionFiles.add('bottled-bomb.webp'); // Direct filename
+addLocalPotionFile('Bowark's Bombastic Beer', 'webp');
+localPotionFiles.add('Bowark's Bombastic Beer.webp'); // Direct filename
+addLocalPotionFile('Breakfast in a Bottle', 'webp');
+localPotionFiles.add('Breakfast in a Bottle.webp'); // Direct filename
+addLocalPotionFile('Brute Brew', 'webp');
+localPotionFiles.add('Brute Brew.webp'); // Direct filename
+addLocalPotionFile('Bubble Message', 'webp');
+localPotionFiles.add('Bubble Message.webp'); // Direct filename
+addLocalPotionFile('Candlecap', 'webp');
+localPotionFiles.add('Candlecap.webp'); // Direct filename
+addLocalPotionFile('Carbonated Snake', 'webp');
+localPotionFiles.add('Carbonated Snake.webp'); // Direct filename
+addLocalPotionFile('Carla Cackletooth's Corruption Cocktail', 'webp');
+localPotionFiles.add('Carla Cackletooth's Corruption Cocktail.webp'); // Direct filename
+addLocalPotionFile('Cat's Eye', 'webp');
+localPotionFiles.add('Cat's Eye.webp'); // Direct filename
+addLocalPotionFile('Catspeed', 'webp');
+localPotionFiles.add('Catspeed.webp'); // Direct filename
+addLocalPotionFile('Cave Diver', 'webp');
+localPotionFiles.add('Cave Diver.webp'); // Direct filename
+addLocalPotionFile('Chicken Chaser', 'webp');
+localPotionFiles.add('Chicken Chaser.webp'); // Direct filename
+addLocalPotionFile('Cinderskin', 'webp');
+localPotionFiles.add('Cinderskin.webp'); // Direct filename
+addLocalPotionFile('Claws of the Crab King', 'webp');
+localPotionFiles.add('Claws of the Crab King.webp'); // Direct filename
+addLocalPotionFile('Crafter's Brew', 'webp');
+localPotionFiles.add('Crafter's Brew.webp'); // Direct filename
+addLocalPotionFile('Crystal Clear', 'webp');
+localPotionFiles.add('Crystal Clear.webp'); // Direct filename
+addLocalPotionFile('Dancing Feet', 'webp');
+localPotionFiles.add('Dancing Feet.webp'); // Direct filename
+addLocalPotionFile('Dancing Juice', 'webp');
+localPotionFiles.add('Dancing Juice.webp'); // Direct filename
+addLocalPotionFile('Demonskin', 'webp');
+localPotionFiles.add('Demonskin.webp'); // Direct filename
+addLocalPotionFile('Detective's Tonic', 'webp');
+localPotionFiles.add('Detective's Tonic.webp'); // Direct filename
+addLocalPotionFile('Disappearing Act', 'webp');
+localPotionFiles.add('Disappearing Act.webp'); // Direct filename
+addLocalPotionFile('Displacement Field', 'webp');
+localPotionFiles.add('Displacement Field.webp'); // Direct filename
+addLocalPotionFile('displacement-field', 'webp');
+localPotionFiles.add('displacement-field.webp'); // Direct filename
+addLocalPotionFile('Don't Eat Dirt', 'webp');
+localPotionFiles.add('Don't Eat Dirt.webp'); // Direct filename
+addLocalPotionFile('Don't Hit Me Juice', 'webp');
+localPotionFiles.add('Don't Hit Me Juice.webp'); // Direct filename
+addLocalPotionFile('Dragon Frog Transmutation', 'webp');
+localPotionFiles.add('Dragon Frog Transmutation.webp'); // Direct filename
+addLocalPotionFile('Duck Foot', 'webp');
+localPotionFiles.add('Duck Foot.webp'); // Direct filename
+addLocalPotionFile('Duko the Trickster's Elixir', 'webp');
+localPotionFiles.add('Duko the Trickster's Elixir.webp'); // Direct filename
+addLocalPotionFile('Durability', 'webp');
+localPotionFiles.add('Durability.webp'); // Direct filename
+addLocalPotionFile('Eagle's Vision', 'webp');
+localPotionFiles.add('Eagle's Vision.webp'); // Direct filename
+addLocalPotionFile('eagle-s-vision', 'webp');
+localPotionFiles.add('eagle-s-vision.webp'); // Direct filename
+addLocalPotionFile('Elder Elixir', 'webp');
+localPotionFiles.add('Elder Elixir.webp'); // Direct filename
+addLocalPotionFile('Elixir of Echoes', 'webp');
+localPotionFiles.add('Elixir of Echoes.webp'); // Direct filename
+addLocalPotionFile('Elixir of Jipampa', 'webp');
+localPotionFiles.add('Elixir of Jipampa.webp'); // Direct filename
+addLocalPotionFile('Elixir of Omnimind', 'webp');
+localPotionFiles.add('Elixir of Omnimind.webp'); // Direct filename
+addLocalPotionFile('Enhanced Bottled Bomb', 'webp');
+localPotionFiles.add('Enhanced Bottled Bomb.webp'); // Direct filename
+addLocalPotionFile('Enhanced Lightning Breath', 'webp');
+localPotionFiles.add('Enhanced Lightning Breath.webp'); // Direct filename
+addLocalPotionFile('Enhanced Static Shock', 'webp');
+localPotionFiles.add('Enhanced Static Shock.webp'); // Direct filename
+addLocalPotionFile('Epic Bottled Bomb', 'webp');
+localPotionFiles.add('Epic Bottled Bomb.webp'); // Direct filename
+addLocalPotionFile('Essence of Great Rivers', 'webp');
+localPotionFiles.add('Essence of Great Rivers.webp'); // Direct filename
+addLocalPotionFile('Essence of the River Spirit', 'webp');
+localPotionFiles.add('Essence of the River Spirit.webp'); // Direct filename
+addLocalPotionFile('Essence of Umami', 'webp');
+localPotionFiles.add('Essence of Umami.webp'); // Direct filename
+addLocalPotionFile('Eyes of Akibu', 'webp');
+localPotionFiles.add('Eyes of Akibu.webp'); // Direct filename
+addLocalPotionFile('Face of Fugari', 'webp');
+localPotionFiles.add('Face of Fugari.webp'); // Direct filename
+addLocalPotionFile('Fire Shield', 'webp');
+localPotionFiles.add('Fire Shield.webp'); // Direct filename
+addLocalPotionFile('Flip and Skip', 'webp');
+localPotionFiles.add('Flip and Skip.webp'); // Direct filename
+addLocalPotionFile('Gardener's Solution', 'webp');
+localPotionFiles.add('Gardener's Solution.webp'); // Direct filename
+addLocalPotionFile('Gargoyle Hooch', 'webp');
+localPotionFiles.add('Gargoyle Hooch.webp'); // Direct filename
+addLocalPotionFile('Glowskin', 'webp');
+localPotionFiles.add('Glowskin.webp'); // Direct filename
+addLocalPotionFile('Gobble Gunk', 'webp');
+localPotionFiles.add('Gobble Gunk.webp'); // Direct filename
+addLocalPotionFile('Grand Friendship', 'webp');
+localPotionFiles.add('Grand Friendship.webp'); // Direct filename
+addLocalPotionFile('Grandma's Turnip Soup', 'webp');
+localPotionFiles.add('Grandma's Turnip Soup.webp'); // Direct filename
+addLocalPotionFile('Healing Gas', 'webp');
+localPotionFiles.add('Healing Gas.webp'); // Direct filename
+addLocalPotionFile('Herbalist's Aid', 'webp');
+localPotionFiles.add('Herbalist's Aid.webp'); // Direct filename
+addLocalPotionFile('Hero's Blade', 'webp');
+localPotionFiles.add('Hero's Blade.webp'); // Direct filename
+addLocalPotionFile('Heroism', 'webp');
+localPotionFiles.add('Heroism.webp'); // Direct filename
+addLocalPotionFile('Hidden Hand', 'webp');
+localPotionFiles.add('Hidden Hand.webp'); // Direct filename
+addLocalPotionFile('Hindsight', 'webp');
+localPotionFiles.add('Hindsight.webp'); // Direct filename
+addLocalPotionFile('Homegrown', 'webp');
+localPotionFiles.add('Homegrown.webp'); // Direct filename
+addLocalPotionFile('Homeward Tonic', 'webp');
+localPotionFiles.add('Homeward Tonic.webp'); // Direct filename
+addLocalPotionFile('Hsirebbig', 'webp');
+localPotionFiles.add('Hsirebbig.webp'); // Direct filename
+addLocalPotionFile('Hunter's Speed', 'webp');
+localPotionFiles.add('Hunter's Speed.webp'); // Direct filename
+addLocalPotionFile('Illusion in a Bottle', 'webp');
+localPotionFiles.add('Illusion in a Bottle.webp'); // Direct filename
+addLocalPotionFile('Incoming!', 'webp');
+localPotionFiles.add('Incoming!.webp'); // Direct filename
+addLocalPotionFile('Incredible Luck', 'webp');
+localPotionFiles.add('Incredible Luck.webp'); // Direct filename
+addLocalPotionFile('Intoxicating Aroma', 'webp');
+localPotionFiles.add('Intoxicating Aroma.webp'); // Direct filename
+addLocalPotionFile('Invisible Tonic', 'webp');
+localPotionFiles.add('Invisible Tonic.webp'); // Direct filename
+addLocalPotionFile('Invulnerability', 'webp');
+localPotionFiles.add('Invulnerability.webp'); // Direct filename
+addLocalPotionFile('Iron Belly', 'webp');
+localPotionFiles.add('Iron Belly.webp'); // Direct filename
+addLocalPotionFile('Iron Mind', 'webp');
+localPotionFiles.add('Iron Mind.webp'); // Direct filename
+addLocalPotionFile('Irresistible', 'webp');
+localPotionFiles.add('Irresistible.webp'); // Direct filename
+addLocalPotionFile('Island Nectar', 'webp');
+localPotionFiles.add('Island Nectar.webp'); // Direct filename
+addLocalPotionFile('Keening Voice', 'webp');
+localPotionFiles.add('Keening Voice.webp'); // Direct filename
+addLocalPotionFile('Kinetic Pop', 'webp');
+localPotionFiles.add('Kinetic Pop.webp'); // Direct filename
+addLocalPotionFile('Ladybug Kinship', 'webp');
+localPotionFiles.add('Ladybug Kinship.webp'); // Direct filename
+addLocalPotionFile('Language Lore', 'webp');
+localPotionFiles.add('Language Lore.webp'); // Direct filename
+addLocalPotionFile('Last Resort', 'webp');
+localPotionFiles.add('Last Resort.webp'); // Direct filename
+addLocalPotionFile('Life-Steal', 'webp');
+localPotionFiles.add('Life-Steal.webp'); // Direct filename
+addLocalPotionFile('Lifetime Supply', 'webp');
+localPotionFiles.add('Lifetime Supply.webp'); // Direct filename
+addLocalPotionFile('Lightning Breath', 'webp');
+localPotionFiles.add('Lightning Breath.webp'); // Direct filename
+addLocalPotionFile('Liquid Arcana', 'webp');
+localPotionFiles.add('Liquid Arcana.webp'); // Direct filename
+addLocalPotionFile('Liquid Cat', 'webp');
+localPotionFiles.add('Liquid Cat.webp'); // Direct filename
+addLocalPotionFile('Liquid Disguise', 'webp');
+localPotionFiles.add('Liquid Disguise.webp'); // Direct filename
+addLocalPotionFile('Liquid Dispel', 'webp');
+localPotionFiles.add('Liquid Dispel.webp'); // Direct filename
+addLocalPotionFile('Liquid Lockpick', 'webp');
+localPotionFiles.add('Liquid Lockpick.webp'); // Direct filename
+addLocalPotionFile('Liquid Mending', 'webp');
+localPotionFiles.add('Liquid Mending.webp'); // Direct filename
+addLocalPotionFile('Lunar Elixir', 'webp');
+localPotionFiles.add('Lunar Elixir.webp'); // Direct filename
+addLocalPotionFile('Machine Oil', 'webp');
+localPotionFiles.add('Machine Oil.webp'); // Direct filename
+addLocalPotionFile('Manifested Nostalgia', 'webp');
+localPotionFiles.add('Manifested Nostalgia.webp'); // Direct filename
+addLocalPotionFile('Many Hands', 'webp');
+localPotionFiles.add('Many Hands.webp'); // Direct filename
+addLocalPotionFile('Meditative Trance', 'webp');
+localPotionFiles.add('Meditative Trance.webp'); // Direct filename
+addLocalPotionFile('Melodious Bird Calls', 'webp');
+localPotionFiles.add('Melodious Bird Calls.webp'); // Direct filename
+addLocalPotionFile('Merriment', 'webp');
+localPotionFiles.add('Merriment.webp'); // Direct filename
+addLocalPotionFile('Mind Over Might', 'webp');
+localPotionFiles.add('Mind Over Might.webp'); // Direct filename
+addLocalPotionFile('Mind Transfer', 'webp');
+localPotionFiles.add('Mind Transfer.webp'); // Direct filename
+addLocalPotionFile('Mosspot', 'webp');
+localPotionFiles.add('Mosspot.webp'); // Direct filename
+addLocalPotionFile('Move A Thing', 'webp');
+localPotionFiles.add('Move A Thing.webp'); // Direct filename
+addLocalPotionFile('Musical Mixer', 'webp');
+localPotionFiles.add('Musical Mixer.webp'); // Direct filename
+addLocalPotionFile('New Life', 'webp');
+localPotionFiles.add('New Life.webp'); // Direct filename
+addLocalPotionFile('Newly Found Magic', 'webp');
+localPotionFiles.add('Newly Found Magic.webp'); // Direct filename
+addLocalPotionFile('Object Embodiment', 'webp');
+localPotionFiles.add('Object Embodiment.webp'); // Direct filename
+addLocalPotionFile('Oil of the Trademark Flourish', 'webp');
+localPotionFiles.add('Oil of the Trademark Flourish.webp'); // Direct filename
+addLocalPotionFile('Paradise Plumage', 'webp');
+localPotionFiles.add('Paradise Plumage.webp'); // Direct filename
+addLocalPotionFile('Paranoia', 'webp');
+localPotionFiles.add('Paranoia.webp'); // Direct filename
+addLocalPotionFile('Passing Memory', 'webp');
+localPotionFiles.add('Passing Memory.webp'); // Direct filename
+addLocalPotionFile('Pathseeking', 'webp');
+localPotionFiles.add('Pathseeking.webp'); // Direct filename
+addLocalPotionFile('Perfect Memory', 'webp');
+localPotionFiles.add('Perfect Memory.webp'); // Direct filename
+addLocalPotionFile('Phoenix Elixir', 'webp');
+localPotionFiles.add('Phoenix Elixir.webp'); // Direct filename
+addLocalPotionFile('Photosynthetic Skin', 'webp');
+localPotionFiles.add('Photosynthetic Skin.webp'); // Direct filename
+addLocalPotionFile('Pig Snout', 'webp');
+localPotionFiles.add('Pig Snout.webp'); // Direct filename
+addLocalPotionFile('Pigment', 'webp');
+localPotionFiles.add('Pigment.webp'); // Direct filename
+addLocalPotionFile('Pocket Portal', 'webp');
+localPotionFiles.add('Pocket Portal.webp'); // Direct filename
+addLocalPotionFile('Pocket Stomach', 'webp');
+localPotionFiles.add('Pocket Stomach.webp'); // Direct filename
+addLocalPotionFile('Potion of Attunement', 'webp');
+localPotionFiles.add('Potion of Attunement.webp'); // Direct filename
+addLocalPotionFile('Potion of Exertion', 'webp');
+localPotionFiles.add('Potion of Exertion.webp'); // Direct filename
+addLocalPotionFile('Potion of Fog', 'webp');
+localPotionFiles.add('Potion of Fog.webp'); // Direct filename
+addLocalPotionFile('Potion of Freezing', 'webp');
+localPotionFiles.add('Potion of Freezing.webp'); // Direct filename
+addLocalPotionFile('Potion of Healing Touch', 'webp');
+localPotionFiles.add('Potion of Healing Touch.webp'); // Direct filename
+addLocalPotionFile('Potion of Holistic Wellness', 'webp');
+localPotionFiles.add('Potion of Holistic Wellness.webp'); // Direct filename
+addLocalPotionFile('Potion of Reprieve', 'webp');
+localPotionFiles.add('Potion of Reprieve.webp'); // Direct filename
+addLocalPotionFile('Potion of Soft Steps', 'webp');
+localPotionFiles.add('Potion of Soft Steps.webp'); // Direct filename
+addLocalPotionFile('Prickleskin', 'webp');
+localPotionFiles.add('Prickleskin.webp'); // Direct filename
+addLocalPotionFile('Projected Thoughts', 'webp');
+localPotionFiles.add('Projected Thoughts.webp'); // Direct filename
+addLocalPotionFile('Pumpkin Patch Guard', 'webp');
+localPotionFiles.add('Pumpkin Patch Guard.webp'); // Direct filename
+addLocalPotionFile('Rabbit's Speed', 'webp');
+localPotionFiles.add('Rabbit's Speed.webp'); // Direct filename
+addLocalPotionFile('rabbit-s-speed', 'webp');
+localPotionFiles.add('rabbit-s-speed.webp'); // Direct filename
+addLocalPotionFile('Rapid Withdrawal', 'webp');
+localPotionFiles.add('Rapid Withdrawal.webp'); // Direct filename
+addLocalPotionFile('Ratatam's Glowskin Elixir', 'webp');
+localPotionFiles.add('Ratatam's Glowskin Elixir.webp'); // Direct filename
+addLocalPotionFile('Respiratory Distress', 'webp');
+localPotionFiles.add('Respiratory Distress.webp'); // Direct filename
+addLocalPotionFile('Rubberskin', 'webp');
+localPotionFiles.add('Rubberskin.webp'); // Direct filename
+addLocalPotionFile('Secret Path', 'webp');
+localPotionFiles.add('Secret Path.webp'); // Direct filename
+addLocalPotionFile('Seeking Smoke', 'webp');
+localPotionFiles.add('Seeking Smoke.webp'); // Direct filename
+addLocalPotionFile('Sensorius Maximus', 'webp');
+localPotionFiles.add('Sensorius Maximus.webp'); // Direct filename
+addLocalPotionFile('Severed Reaction', 'webp');
+localPotionFiles.add('Severed Reaction.webp'); // Direct filename
+addLocalPotionFile('Shadow Child', 'webp');
+localPotionFiles.add('Shadow Child.webp'); // Direct filename
+addLocalPotionFile('Shadow Puppet', 'webp');
+localPotionFiles.add('Shadow Puppet.webp'); // Direct filename
+addLocalPotionFile('Sharp Mind', 'webp');
+localPotionFiles.add('Sharp Mind.webp'); // Direct filename
+addLocalPotionFile('Sheep Dragon Brew', 'webp');
+localPotionFiles.add('Sheep Dragon Brew.webp'); // Direct filename
+addLocalPotionFile('Shepherd's Bane', 'webp');
+localPotionFiles.add('Shepherd's Bane.webp'); // Direct filename
+addLocalPotionFile('Simulacrum Elixir', 'webp');
+localPotionFiles.add('Simulacrum Elixir.webp'); // Direct filename
+addLocalPotionFile('Sky Swimming', 'webp');
+localPotionFiles.add('Sky Swimming.webp'); // Direct filename
+addLocalPotionFile('Slugskin', 'webp');
+localPotionFiles.add('Slugskin.webp'); // Direct filename
+addLocalPotionFile('Soft Paw', 'webp');
+localPotionFiles.add('Soft Paw.webp'); // Direct filename
+addLocalPotionFile('Spirit Appendage', 'webp');
+localPotionFiles.add('Spirit Appendage.webp'); // Direct filename
+addLocalPotionFile('Spirit Armor', 'webp');
+localPotionFiles.add('Spirit Armor.webp'); // Direct filename
+addLocalPotionFile('Spirit of Salyri', 'webp');
+localPotionFiles.add('Spirit of Salyri.webp'); // Direct filename
+addLocalPotionFile('Spirit Repellent', 'webp');
+localPotionFiles.add('Spirit Repellent.webp'); // Direct filename
+addLocalPotionFile('Spirit Sweets', 'webp');
+localPotionFiles.add('Spirit Sweets.webp'); // Direct filename
+addLocalPotionFile('Spiritual Rebuke', 'webp');
+localPotionFiles.add('Spiritual Rebuke.webp'); // Direct filename
+addLocalPotionFile('Static Shock', 'webp');
+localPotionFiles.add('Static Shock.webp'); // Direct filename
+addLocalPotionFile('Stink Brew', 'webp');
+localPotionFiles.add('Stink Brew.webp'); // Direct filename
+addLocalPotionFile('Super Singing', 'webp');
+localPotionFiles.add('Super Singing.webp'); // Direct filename
+addLocalPotionFile('Thunderbelch', 'webp');
+localPotionFiles.add('Thunderbelch.webp'); // Direct filename
+addLocalPotionFile('Tiny Bubbles', 'webp');
+localPotionFiles.add('Tiny Bubbles.webp'); // Direct filename
+addLocalPotionFile('Tiny Telekinesis', 'webp');
+localPotionFiles.add('Tiny Telekinesis.webp'); // Direct filename
+addLocalPotionFile('Tunnel Vision', 'webp');
+localPotionFiles.add('Tunnel Vision.webp'); // Direct filename
+addLocalPotionFile('Twin Telepathy', 'webp');
+localPotionFiles.add('Twin Telepathy.webp'); // Direct filename
+addLocalPotionFile('Twin Vision', 'webp');
+localPotionFiles.add('Twin Vision.webp'); // Direct filename
+addLocalPotionFile('Umi's Powerful Undertow', 'webp');
+localPotionFiles.add('Umi's Powerful Undertow.webp'); // Direct filename
+addLocalPotionFile('Uncanny Focus', 'webp');
+localPotionFiles.add('Uncanny Focus.webp'); // Direct filename
+addLocalPotionFile('Unified Might', 'webp');
+localPotionFiles.add('Unified Might.webp'); // Direct filename
+addLocalPotionFile('Unknown Elixir', 'webp');
+localPotionFiles.add('Unknown Elixir.webp'); // Direct filename
+addLocalPotionFile('Ups-A-Daisy', 'webp');
+localPotionFiles.add('Ups-A-Daisy.webp'); // Direct filename
+addLocalPotionFile('Vocal Stranger', 'webp');
+localPotionFiles.add('Vocal Stranger.webp'); // Direct filename
+addLocalPotionFile('Water Breathing', 'webp');
+localPotionFiles.add('Water Breathing.webp'); // Direct filename
+addLocalPotionFile('Weapon Master's Elixir', 'webp');
+localPotionFiles.add('Weapon Master's Elixir.webp'); // Direct filename
+addLocalPotionFile('Witch's Hidden Gem', 'webp');
+localPotionFiles.add('Witch's Hidden Gem.webp'); // Direct filename
+addLocalPotionFile('Witch's Lament', 'webp');
+localPotionFiles.add('Witch's Lament.webp'); // Direct filename
+addLocalPotionFile('Withered Will', 'webp');
+localPotionFiles.add('Withered Will.webp'); // Direct filename
+addLocalPotionFile('Wonder Juice', 'webp');
+localPotionFiles.add('Wonder Juice.webp'); // Direct filename
+addLocalPotionFile('Wrathful Spirit', 'webp');
+localPotionFiles.add('Wrathful Spirit.webp'); // Direct filename
+
+// Creatures
+addLocalCreatureFile('Acorn Crab', 'webp');
+localCreatureFiles.add('Acorn Crab.webp'); // Direct filename
+addLocalCreatureFile('acorn-crab', 'webp');
+localCreatureFiles.add('acorn-crab.webp'); // Direct filename
+addLocalCreatureFile('Akaobata', 'webp');
+localCreatureFiles.add('Akaobata.webp'); // Direct filename
+addLocalCreatureFile('Animalistic Spirit', 'webp');
+localCreatureFiles.add('Animalistic Spirit.webp'); // Direct filename
+addLocalCreatureFile('Animated Object Spirit', 'webp');
+localCreatureFiles.add('Animated Object Spirit.webp'); // Direct filename
+addLocalCreatureFile('Aquatic Beast Spirit', 'webp');
+localCreatureFiles.add('Aquatic Beast Spirit.webp'); // Direct filename
+addLocalCreatureFile('Bearracuda', 'webp');
+localCreatureFiles.add('Bearracuda.webp'); // Direct filename
+addLocalCreatureFile('Beast Spirit', 'webp');
+localCreatureFiles.add('Beast Spirit.webp'); // Direct filename
+addLocalCreatureFile('Bloodfin', 'png');
+localCreatureFiles.add('Bloodfin.png'); // Direct filename
+addLocalCreatureFile('Blowbelly Pufferfish', 'webp');
+localCreatureFiles.add('Blowbelly Pufferfish.webp'); // Direct filename
+addLocalCreatureFile('Bora Bug', 'webp');
+localCreatureFiles.add('Bora Bug.webp'); // Direct filename
+addLocalCreatureFile('Cat of Prodigious Size', 'webp');
+localCreatureFiles.add('Cat of Prodigious Size.webp'); // Direct filename
+addLocalCreatureFile('Clone of Viota', 'webp');
+localCreatureFiles.add('Clone of Viota.webp'); // Direct filename
+addLocalCreatureFile('Corrupted Muk', 'webp');
+localCreatureFiles.add('Corrupted Muk.webp'); // Direct filename
+addLocalCreatureFile('Crawler', 'webp');
+localCreatureFiles.add('Crawler.webp'); // Direct filename
+addLocalCreatureFile('Cuddle Bug', 'webp');
+localCreatureFiles.add('Cuddle Bug.webp'); // Direct filename
+addLocalCreatureFile('Dara', 'jpg');
+localCreatureFiles.add('Dara.jpg'); // Direct filename
+addLocalCreatureFile('Deep Angler', 'webp');
+localCreatureFiles.add('Deep Angler.webp'); // Direct filename
+addLocalCreatureFile('Dragon, Frog', 'webp');
+localCreatureFiles.add('Dragon, Frog.webp'); // Direct filename
+addLocalCreatureFile('Dragon, Hill', 'webp');
+localCreatureFiles.add('Dragon, Hill.webp'); // Direct filename
+addLocalCreatureFile('Dragon, Sheep', 'webp');
+localCreatureFiles.add('Dragon, Sheep.webp'); // Direct filename
+addLocalCreatureFile('Dragon', 'webp');
+localCreatureFiles.add('Dragon.webp'); // Direct filename
+addLocalCreatureFile('Dust Bunny', 'webp');
+localCreatureFiles.add('Dust Bunny.webp'); // Direct filename
+addLocalCreatureFile('Elder Dragon Frog', 'webp');
+localCreatureFiles.add('Elder Dragon Frog.webp'); // Direct filename
+addLocalCreatureFile('Elemental Spirit', 'webp');
+localCreatureFiles.add('Elemental Spirit.webp'); // Direct filename
+addLocalCreatureFile('Field Giant', 'webp');
+localCreatureFiles.add('Field Giant.webp'); // Direct filename
+addLocalCreatureFile('Fish Folk', 'webp');
+localCreatureFiles.add('Fish Folk.webp'); // Direct filename
+addLocalCreatureFile('Flora Spirit', 'webp');
+localCreatureFiles.add('Flora Spirit.webp'); // Direct filename
+addLocalCreatureFile('Flying Beast Spirit', 'webp');
+localCreatureFiles.add('Flying Beast Spirit.webp'); // Direct filename
+addLocalCreatureFile('Giant Jellyfish', 'webp');
+localCreatureFiles.add('Giant Jellyfish.webp'); // Direct filename
+addLocalCreatureFile('Giant Koi', 'webp');
+localCreatureFiles.add('Giant Koi.webp'); // Direct filename
+addLocalCreatureFile('Goro Goro', 'webp');
+localCreatureFiles.add('Goro Goro.webp'); // Direct filename
+addLocalCreatureFile('Hammer Gull', 'webp');
+localCreatureFiles.add('Hammer Gull.webp'); // Direct filename
+addLocalCreatureFile('Harpy', 'webp');
+localCreatureFiles.add('Harpy.webp'); // Direct filename
+addLocalCreatureFile('Howler, Snarler', 'webp');
+localCreatureFiles.add('Howler, Snarler.webp'); // Direct filename
+addLocalCreatureFile('Howler, Stalker', 'webp');
+localCreatureFiles.add('Howler, Stalker.webp'); // Direct filename
+addLocalCreatureFile('Howler, Yipper', 'webp');
+localCreatureFiles.add('Howler, Yipper.webp'); // Direct filename
+addLocalCreatureFile('Howler', 'webp');
+localCreatureFiles.add('Howler.webp'); // Direct filename
+addLocalCreatureFile('Jumaga', 'webp');
+localCreatureFiles.add('Jumaga.webp'); // Direct filename
+addLocalCreatureFile('Kafuka', 'webp');
+localCreatureFiles.add('Kafuka.webp'); // Direct filename
+addLocalCreatureFile('Lion's Blume', 'webp');
+localCreatureFiles.add('Lion's Blume.webp'); // Direct filename
+addLocalCreatureFile('Lionfish King', 'webp');
+localCreatureFiles.add('Lionfish King.webp'); // Direct filename
+addLocalCreatureFile('Malgrotha', 'png');
+localCreatureFiles.add('Malgrotha.png'); // Direct filename
+addLocalCreatureFile('Minor Demon', 'webp');
+localCreatureFiles.add('Minor Demon.webp'); // Direct filename
+addLocalCreatureFile('Morris', 'png');
+localCreatureFiles.add('Morris.png'); // Direct filename
+addLocalCreatureFile('Mossling', 'webp');
+localCreatureFiles.add('Mossling.webp'); // Direct filename
+addLocalCreatureFile('Pixie, Giant', 'webp');
+localCreatureFiles.add('Pixie, Giant.webp'); // Direct filename
+addLocalCreatureFile('Pixie', 'webp');
+localCreatureFiles.add('Pixie.webp'); // Direct filename
+addLocalCreatureFile('Postal Knight', 'webp');
+localCreatureFiles.add('Postal Knight.webp'); // Direct filename
+addLocalCreatureFile('Rubble Golem', 'webp');
+localCreatureFiles.add('Rubble Golem.webp'); // Direct filename
+addLocalCreatureFile('Seagull', 'png');
+localCreatureFiles.add('Seagull.png'); // Direct filename
+addLocalCreatureFile('Seaweed Elemental', 'webp');
+localCreatureFiles.add('Seaweed Elemental.webp'); // Direct filename
+addLocalCreatureFile('Skeletal Fish', 'webp');
+localCreatureFiles.add('Skeletal Fish.webp'); // Direct filename
+addLocalCreatureFile('Sky King', 'webp');
+localCreatureFiles.add('Sky King.webp'); // Direct filename
+addLocalCreatureFile('Slagger', 'webp');
+localCreatureFiles.add('Slagger.webp'); // Direct filename
+addLocalCreatureFile('Slime Wisps', 'png');
+localCreatureFiles.add('Slime Wisps.png'); // Direct filename
+addLocalCreatureFile('Slime, Green', 'webp');
+localCreatureFiles.add('Slime, Green.webp'); // Direct filename
+addLocalCreatureFile('Slime, Soda', 'webp');
+localCreatureFiles.add('Slime, Soda.webp'); // Direct filename
+addLocalCreatureFile('Sludge-Touched Sentinel', 'png');
+localCreatureFiles.add('Sludge-Touched Sentinel.png'); // Direct filename
+addLocalCreatureFile('Slurpgill', 'png');
+localCreatureFiles.add('Slurpgill.png'); // Direct filename
+addLocalCreatureFile('Snowball Spirits', 'webp');
+localCreatureFiles.add('Snowball Spirits.webp'); // Direct filename
+addLocalCreatureFile('Spirit', 'webp');
+localCreatureFiles.add('Spirit.webp'); // Direct filename
+addLocalCreatureFile('Stone Whale', 'webp');
+localCreatureFiles.add('Stone Whale.webp'); // Direct filename
+addLocalCreatureFile('Stul', 'webp');
+localCreatureFiles.add('Stul.webp'); // Direct filename
+addLocalCreatureFile('The Hunter', 'webp');
+localCreatureFiles.add('The Hunter.webp'); // Direct filename
+addLocalCreatureFile('Urugama', 'webp');
+localCreatureFiles.add('Urugama.webp'); // Direct filename
+addLocalCreatureFile('Venus Fly Rat', 'webp');
+localCreatureFiles.add('Venus Fly Rat.webp'); // Direct filename
+addLocalCreatureFile('Vespoma', 'webp');
+localCreatureFiles.add('Vespoma.webp'); // Direct filename
+addLocalCreatureFile('Vile Corruption', 'webp');
+localCreatureFiles.add('Vile Corruption.webp'); // Direct filename
+addLocalCreatureFile('Voraro the Parasite', 'webp');
+localCreatureFiles.add('Voraro the Parasite.webp'); // Direct filename
+addLocalCreatureFile('Wandering Door', 'webp');
+localCreatureFiles.add('Wandering Door.webp'); // Direct filename
+addLocalCreatureFile('Watchwood Tree', 'webp');
+localCreatureFiles.add('Watchwood Tree.webp'); // Direct filename
+addLocalCreatureFile('Witch', 'webp');
+localCreatureFiles.add('Witch.webp'); // Direct filename
+addLocalCreatureFile('Yokario', 'webp');
+localCreatureFiles.add('Yokario.webp'); // Direct filename
