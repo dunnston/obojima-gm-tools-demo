@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { creatures } from '@/data/creatures';
@@ -726,14 +727,23 @@ function CreaturesTab({ creatures, onEdit }: { creatures: any[], onEdit: (item: 
 }
 
 function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] overflow-y-auto" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl my-8 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between p-6 border-b border-slate-700">
+          <div className="flex items-start gap-6">
             {/* Creature Image */}
-            <div className="w-16 h-16 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-24 h-24 bg-slate-600/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
               <img
                 src={getCreatureImagePath(creature.name)}
                 alt={creature.name}
@@ -743,14 +753,15 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
                   img.style.display = 'none';
                   const parent = img.parentElement;
                   if (parent) {
-                    parent.innerHTML = '<span class="text-2xl">🐉</span>';
+                    parent.innerHTML = '<span class="text-4xl">🐉</span>';
                   }
                 }}
               />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">{creature.name}</h2>
-              <p className="text-slate-400">{creature.size} {creature.type}, {creature.alignment}</p>
+            <div className="flex-1">
+              <h2 className="text-3xl font-bold text-white mb-2">{creature.name}</h2>
+              <p className="text-slate-400 text-lg">{creature.size} {creature.type}</p>
+              <p className="text-slate-500 text-sm">{creature.alignment}</p>
             </div>
           </div>
           <button
@@ -875,6 +886,8 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 function MagicItemsTab({ magicItems, onEdit }: { magicItems: any[], onEdit: (item: any, type: string) => void }) {

@@ -55,7 +55,24 @@ export function addLocalPotionFile(potionName: string, extension: string) {
 
 export function addLocalCreatureFile(creatureName: string, extension: string) {
   const cleanName = creatureName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  localCreatureFiles.add(`${cleanName}.${extension}`);
+  const filename = `${cleanName}.${extension}`;
+  localCreatureFiles.add(filename);
+  
+  // Also add with original name (with spaces) for better matching
+  const originalFilename = `${creatureName}.${extension}`;
+  localCreatureFiles.add(originalFilename);
+  
+  // Persist to localStorage
+  if (typeof window !== 'undefined') {
+    const savedFiles = JSON.parse(localStorage.getItem('localCreatureFiles') || '[]');
+    if (!savedFiles.includes(filename)) {
+      savedFiles.push(filename);
+    }
+    if (!savedFiles.includes(originalFilename)) {
+      savedFiles.push(originalFilename);
+    }
+    localStorage.setItem('localCreatureFiles', JSON.stringify(savedFiles));
+  }
 }
 
 // Initialize ALL downloaded potion images
@@ -853,6 +870,14 @@ addLocalCreatureFile('Witch', 'webp');
 localCreatureFiles.add('Witch.webp');
 addLocalCreatureFile('Yokario', 'webp');
 localCreatureFiles.add('Yokario.webp');
+
+// Load saved creature files from localStorage
+if (typeof window !== 'undefined') {
+  const savedCreatureFiles = JSON.parse(localStorage.getItem('localCreatureFiles') || '[]');
+  savedCreatureFiles.forEach((filename: string) => {
+    localCreatureFiles.add(filename);
+  });
+}
 
 // Get specific image for potion or fallback to default
 export function getPotionImageUrl(potionName: string): string {
