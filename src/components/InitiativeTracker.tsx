@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { creatures } from '@/data/creatures';
+import { PlayerCharacter } from '@/data/characters';
 import { getCreatureImagePath } from '@/utils/imageUtils';
 import { 
   UserPlusIcon, 
@@ -27,6 +28,7 @@ interface CombatParticipant {
   creatureData?: any;
   playerClass?: string;
   level?: number;
+  characterData?: PlayerCharacter;
 }
 
 export default function InitiativeTracker() {
@@ -176,6 +178,12 @@ export default function InitiativeTracker() {
                             target.src = '/images/creatures/default-creature.svg';
                           }}
                         />
+                      ) : participant.imageUrl ? (
+                        <img
+                          src={participant.imageUrl}
+                          alt={participant.name}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400">
                           <UserIcon className="h-8 w-8" />
@@ -259,6 +267,12 @@ export default function InitiativeTracker() {
                       const target = e.target as HTMLImageElement;
                       target.src = '/images/creatures/default-creature.svg';
                     }}
+                  />
+                ) : currentParticipant.imageUrl ? (
+                  <img
+                    src={currentParticipant.imageUrl}
+                    alt={currentParticipant.name}
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
@@ -369,7 +383,12 @@ function CreatureDetails({ participant }: { participant: CombatParticipant }) {
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
           <div className="text-slate-400 text-sm">Speed</div>
-          <div className="text-white font-bold text-xl">{creature.speed}</div>
+          <div className="text-white font-bold text-xl">
+            {typeof creature.speed === 'object' 
+              ? `${creature.speed.walk || 'N/A'}`
+              : creature.speed || 'N/A'
+            }
+          </div>
         </div>
       </div>
 
@@ -434,31 +453,55 @@ function AddParticipantModal({
   onAdd: (participant: Omit<CombatParticipant, 'id'>) => void;
   onClose: () => void;
 }) {
-  const [name, setName] = useState('');
   const [initiative, setInitiative] = useState(0);
-  const [playerClass, setPlayerClass] = useState('');
-  const [level, setLevel] = useState(1);
-  const [ac, setAc] = useState(10);
+  const [selectedCreature, setSelectedCreature] = useState<any>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<PlayerCharacter | null>(null);
+  const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [hp, setHp] = useState(10);
   const [maxHp, setMaxHp] = useState(10);
-  const [selectedCreature, setSelectedCreature] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Load characters from localStorage
+  useEffect(() => {
+    if (type === 'player') {
+      try {
+        const savedCharacters = localStorage.getItem('obojima-characters');
+        if (savedCharacters) {
+          const parsed = JSON.parse(savedCharacters);
+          const charactersWithDates = parsed.map((char: any) => ({
+            ...char,
+            createdAt: new Date(char.createdAt),
+            updatedAt: new Date(char.updatedAt)
+          }));
+          setCharacters(charactersWithDates);
+        }
+      } catch (error) {
+        console.error('Error loading characters:', error);
+      }
+    }
+  }, [type]);
 
   const filteredCreatures = creatures.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredCharacters = characters.filter(c => 
+    c.characterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.playerName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSubmit = () => {
-    if (type === 'player' && name) {
+    if (type === 'player' && selectedCharacter) {
       onAdd({
-        name,
+        name: selectedCharacter.characterName,
         type: 'player',
         initiative,
-        playerClass,
-        level,
-        ac,
+        playerClass: selectedCharacter.class,
+        ac: selectedCharacter.armorClass,
         hp,
-        maxHp
+        maxHp,
+        characterData: selectedCharacter,
+        imageUrl: selectedCharacter.imageUrl
       });
       onClose();
     } else if (type === 'creature' && selectedCreature) {
@@ -486,69 +529,94 @@ function AddParticipantModal({
           {type === 'player' ? (
             <>
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Name</label>
+                <label className="block text-sm text-slate-400 mb-1">Search Characters</label>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  placeholder="Character name"
+                  placeholder="Search by character or player name..."
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Class</label>
-                  <input
-                    type="text"
-                    value={playerClass}
-                    onChange={(e) => setPlayerClass(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                    placeholder="Fighter"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Level</label>
-                  <input
-                    type="number"
-                    value={level}
-                    onChange={(e) => setLevel(parseInt(e.target.value) || 1)}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                    min="1"
-                    max="20"
-                  />
-                </div>
+              <div className="max-h-48 overflow-y-auto border border-slate-600 rounded-lg">
+                {filteredCharacters.length > 0 ? (
+                  filteredCharacters.map((character) => (
+                    <button
+                      key={character.id}
+                      onClick={() => setSelectedCharacter(character)}
+                      className={`w-full px-3 py-3 text-left hover:bg-slate-700 transition-colors border-b border-slate-700 last:border-b-0 ${
+                        selectedCharacter?.id === character.id ? 'bg-emerald-900/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-600 flex-shrink-0">
+                          {character.imageUrl ? (
+                            <img
+                              src={character.imageUrl}
+                              alt={character.characterName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                              <UserIcon className="h-6 w-6" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">{character.characterName}</div>
+                          <div className="text-slate-400 text-sm">
+                            {character.playerName} • {character.class} • AC {character.armorClass}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-slate-400">
+                    <UserIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <div>No characters found</div>
+                    <div className="text-xs mt-1">
+                      {characters.length === 0 
+                        ? 'Create characters in the Player Characters tab first'
+                        : 'Try adjusting your search terms'
+                      }
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">AC</label>
-                  <input
-                    type="number"
-                    value={ac}
-                    onChange={(e) => setAc(parseInt(e.target.value) || 10)}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  />
+              {selectedCharacter && (
+                <div className="bg-slate-700/50 rounded-lg p-3">
+                  <div className="text-white font-semibold">{selectedCharacter.characterName}</div>
+                  <div className="text-sm text-slate-400">
+                    {selectedCharacter.class} • AC {selectedCharacter.armorClass} • Player: {selectedCharacter.playerName}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">HP</label>
-                  <input
-                    type="number"
-                    value={hp}
-                    onChange={(e) => setHp(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  />
+              )}
+
+              {selectedCharacter && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Current HP</label>
+                    <input
+                      type="number"
+                      value={hp}
+                      onChange={(e) => setHp(parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Max HP</label>
+                    <input
+                      type="number"
+                      value={maxHp}
+                      onChange={(e) => setMaxHp(parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Max HP</label>
-                  <input
-                    type="number"
-                    value={maxHp}
-                    onChange={(e) => setMaxHp(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  />
-                </div>
-              </div>
+              )}
             </>
           ) : (
             <>
@@ -615,7 +683,7 @@ function AddParticipantModal({
         <div className="flex gap-2 mt-6">
           <button
             onClick={handleSubmit}
-            disabled={type === 'player' ? !name : !selectedCreature}
+            disabled={type === 'player' ? !selectedCharacter : !selectedCreature}
             className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
             Add {type === 'player' ? 'Player' : 'Creature'}
