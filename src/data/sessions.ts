@@ -52,6 +52,14 @@ export interface SessionSecretClue {
   revealedToPlayers?: string[]; // Player character IDs who know this
 }
 
+export interface SessionCreature {
+  id: string;
+  creatureName: string; // Reference to creature name from database
+  notes?: string;
+  quantity?: number;
+  context?: string; // e.g., "potential boss", "patrol guard", "random encounter"
+}
+
 export interface GameSession {
   id: string;
   name: string;
@@ -64,6 +72,7 @@ export interface GameSession {
   secretsAndClues: SessionSecretClue[];
   encounters: string[]; // References to saved encounter IDs
   npcs: SessionNPC[];
+  creatures: SessionCreature[];
   treasure: SessionTreasure[];
   scenes: SessionScene[];
   
@@ -92,6 +101,7 @@ export const createEmptySession = (): Omit<GameSession, 'id' | 'createdAt' | 'up
   secretsAndClues: [],
   encounters: [],
   npcs: [],
+  creatures: [],
   treasure: [],
   scenes: [],
   sessionNotes: '',

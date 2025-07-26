@@ -11,6 +11,7 @@ import SessionPlanner from '@/components/SessionPlanner';
 import DatabaseView from '@/components/DatabaseView';
 import Settings from '@/components/Settings';
 import InitiativeTracker from '@/components/InitiativeTracker';
+import QuestLog from '@/components/QuestLog';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
@@ -24,7 +25,9 @@ export default function Home() {
       case 'characters':
         return <CharacterManager />;
       case 'notes':
-        return <SessionPlanner />;
+        return <SessionPlanner onPageChange={setCurrentPage} />;
+      case 'quests':
+        return <QuestLog />;
       case 'encounters':
         return <EncounterCreator />;
       case 'vending':

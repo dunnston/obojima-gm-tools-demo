@@ -4,6 +4,8 @@ export interface PlayerCharacter {
   playerName: string;
   class: string;
   armorClass: number;
+  hitPoints: number;
+  maxHitPoints: number;
   passivePerception: number;
   passiveInsight: number;
   passiveInvestigation: number;
@@ -24,6 +26,8 @@ export interface CharacterFormData {
   playerName: string;
   class: string;
   armorClass: number | string;
+  hitPoints: number | string;
+  maxHitPoints: number | string;
   passivePerception: number | string;
   passiveInsight: number | string;
   passiveInvestigation: number | string;
@@ -43,6 +47,8 @@ export const createEmptyCharacter = (): CharacterFormData => ({
   playerName: '',
   class: '',
   armorClass: '',
+  hitPoints: '',
+  maxHitPoints: '',
   passivePerception: '',
   passiveInsight: '',
   passiveInvestigation: '',
@@ -61,6 +67,8 @@ export const formDataToCharacter = (formData: CharacterFormData): Omit<PlayerCha
   playerName: formData.playerName,
   class: formData.class,
   armorClass: typeof formData.armorClass === 'string' ? parseInt(formData.armorClass) || 0 : formData.armorClass,
+  hitPoints: typeof formData.hitPoints === 'string' ? parseInt(formData.hitPoints) || 0 : formData.hitPoints,
+  maxHitPoints: typeof formData.maxHitPoints === 'string' ? parseInt(formData.maxHitPoints) || 0 : formData.maxHitPoints,
   passivePerception: typeof formData.passivePerception === 'string' ? parseInt(formData.passivePerception) || 0 : formData.passivePerception,
   passiveInsight: typeof formData.passiveInsight === 'string' ? parseInt(formData.passiveInsight) || 0 : formData.passiveInsight,
   passiveInvestigation: typeof formData.passiveInvestigation === 'string' ? parseInt(formData.passiveInvestigation) || 0 : formData.passiveInvestigation,
@@ -79,6 +87,8 @@ export const characterToFormData = (character: PlayerCharacter): CharacterFormDa
   playerName: character.playerName,
   class: character.class,
   armorClass: character.armorClass,
+  hitPoints: character.hitPoints,
+  maxHitPoints: character.maxHitPoints,
   passivePerception: character.passivePerception,
   passiveInsight: character.passiveInsight,
   passiveInvestigation: character.passiveInvestigation,

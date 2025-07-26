@@ -230,10 +230,14 @@ export default function CharacterManager() {
                   <span className="text-white font-medium">{character.class || 'Unknown'}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">AC</div>
                     <div className="text-white font-bold">{character.armorClass || 0}</div>
+                  </div>
+                  <div className="bg-slate-700/30 rounded-lg p-2">
+                    <div className="text-xs text-slate-400">HP</div>
+                    <div className="text-white font-bold">{character.hitPoints || 0}/{character.maxHitPoints || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">PP</div>
@@ -318,16 +322,20 @@ export default function CharacterManager() {
                   <div className="text-white font-bold">{selectedCharacter.armorClass}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                  <div className="text-sm text-slate-400 mb-1">Hit Points</div>
+                  <div className="text-white font-bold">{selectedCharacter.hitPoints || 0} / {selectedCharacter.maxHitPoints || 0}</div>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Perception</div>
                   <div className="text-white font-bold">{selectedCharacter.passivePerception}</div>
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Insight</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInsight}</div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Investigation</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInvestigation}</div>

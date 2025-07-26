@@ -12,6 +12,8 @@ interface CharacterFormProps {
 }
 
 export default function CharacterForm({ character, onSave, onCancel, isEditing = false }: CharacterFormProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [formData, setFormData] = useState<CharacterFormData>(() => {
     if (character) {
       return {
@@ -19,6 +21,8 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
         playerName: character.playerName,
         class: character.class,
         armorClass: character.armorClass,
+        hitPoints: character.hitPoints || 0,
+        maxHitPoints: character.maxHitPoints || 0,
         passivePerception: character.passivePerception,
         passiveInsight: character.passiveInsight,
         passiveInvestigation: character.passiveInvestigation,
@@ -39,7 +43,56 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // File upload utility function
+  const copyFileToPublicDirectory = async (file: File, filename: string): Promise<void> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', filename);
+      formData.append('subfolder', 'characters');
+
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Upload failed: ${response.statusText}${errorData.details ? ` - ${errorData.details}` : ''}`);
+      }
+
+      const result = await response.json();
+      console.log('Character portrait uploaded successfully:', result);
+    } catch (error) {
+      console.error('Error uploading character portrait:', error);
+      throw error;
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -48,7 +101,28 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
       return;
     }
 
-    const characterData = formDataToCharacter(formData);
+    let updatedFormData = { ...formData };
+
+    // Handle file upload if a file is selected
+    if (selectedFile) {
+      try {
+        const fileExtension = selectedFile.name.split('.').pop();
+        const filename = `${formData.characterName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
+        const imagePath = `/images/characters/${filename}`;
+        updatedFormData.imageUrl = imagePath;
+        
+        await copyFileToPublicDirectory(selectedFile, filename);
+        
+        console.log('Character portrait saved as:', filename);
+        
+      } catch (error) {
+        console.error('Error handling file upload:', error);
+        alert('Error uploading character portrait. Please try again.');
+        return;
+      }
+    }
+
+    const characterData = formDataToCharacter(updatedFormData);
     onSave(characterData);
   };
 
@@ -135,6 +209,36 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
+                Current Hit Points
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="999"
+                value={formData.hitPoints}
+                onChange={(e) => handleInputChange('hitPoints', e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="Current HP"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Max Hit Points
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="999"
+                value={formData.maxHitPoints}
+                onChange={(e) => handleInputChange('maxHitPoints', e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="Max HP"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Passive Perception
               </label>
               <input
@@ -180,17 +284,93 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
               />
             </div>
 
-            <div>
+            {/* Character Portrait Upload */}
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Character Image URL
+                Character Portrait
               </label>
-              <input
-                type="url"
-                value={formData.imageUrl}
-                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="https://example.com/character-image.jpg"
-              />
+              
+              {/* Drag and Drop Area */}
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors cursor-pointer"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="portrait-upload"
+                />
+                <label htmlFor="portrait-upload" className="cursor-pointer">
+                  <div className="space-y-2">
+                    <div className="text-4xl">🖼️</div>
+                    <div className="text-sm text-slate-300">
+                      Drag and drop a portrait here, or <span className="text-emerald-400">click to browse</span>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Supports JPG, PNG, GIF up to 10MB
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Selected File Info */}
+              {selectedFile && (
+                <div className="mt-3 p-3 bg-slate-700/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">
+                      📁 {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setPreviewUrl('');
+                      }}
+                      className="text-red-400 hover:text-red-300 text-xs"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Preview */}
+              {previewUrl && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Preview
+                  </label>
+                  <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-800">
+                    <img 
+                      src={previewUrl} 
+                      alt="Character Portrait Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Show existing image if editing and no new file selected */}
+              {!previewUrl && formData.imageUrl && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Current Portrait
+                  </label>
+                  <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-800">
+                    <img 
+                      src={formData.imageUrl} 
+                      alt="Current Character Portrait"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

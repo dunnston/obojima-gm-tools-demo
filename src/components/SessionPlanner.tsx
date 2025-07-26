@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
-import { creatures } from '@/data/creatures';
-import { encounters } from '@/data/encounters';
+import { creatures, Encounter } from '@/data/creatures';
 import { 
   PlusIcon, 
   PlayIcon, 
@@ -22,11 +21,12 @@ import {
   BoltIcon
 } from '@heroicons/react/24/outline';
 
-export default function SessionPlanner() {
+export default function SessionPlanner({ onPageChange }: { onPageChange?: (page: string) => void }) {
   const [sessions, setSessions] = useState<GameSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
+  const [encounters, setEncounters] = useState<Encounter[]>([]);
   
   // Load data on mount
   useEffect(() => {
@@ -39,7 +39,16 @@ export default function SessionPlanner() {
           ...session,
           date: new Date(session.date),
           createdAt: new Date(session.createdAt),
-          updatedAt: new Date(session.updatedAt)
+          updatedAt: new Date(session.updatedAt),
+          // Ensure all arrays exist with defaults
+          playerCharacters: session.playerCharacters || [],
+          music: session.music || [],
+          secretsAndClues: session.secretsAndClues || [],
+          encounters: session.encounters || [],
+          npcs: session.npcs || [],
+          creatures: session.creatures || [],
+          treasure: session.treasure || [],
+          scenes: session.scenes || []
         }));
         setSessions(sessionsWithDates);
       }
@@ -54,6 +63,18 @@ export default function SessionPlanner() {
           updatedAt: new Date(char.updatedAt)
         }));
         setCharacters(charactersWithDates);
+      }
+
+      // Load encounters
+      const savedEncounters = localStorage.getItem('obojima-encounters');
+      if (savedEncounters) {
+        const parsed = JSON.parse(savedEncounters);
+        const encountersWithDates = parsed.map((encounter: any) => ({
+          ...encounter,
+          created_at: new Date(encounter.created_at),
+          updated_at: new Date(encounter.updated_at)
+        }));
+        setEncounters(encountersWithDates);
       }
     } catch (error) {
       console.error('Error loading session data:', error);
@@ -123,11 +144,11 @@ export default function SessionPlanner() {
       encounters: [],
       treasure: [],
       notes: '',
-      order: selectedSession.scenes.length
+      order: selectedSession.scenes?.length || 0
     };
 
     updateSession(selectedSession.id, {
-      scenes: [...selectedSession.scenes, newScene]
+      scenes: [...(selectedSession.scenes || []), newScene]
     });
   };
 
@@ -174,11 +195,11 @@ export default function SessionPlanner() {
                 </div>
                 <div className="flex items-center gap-2">
                   <UserGroupIcon className="h-4 w-4" />
-                  {session.playerCharacters.length} players
+                  {session.playerCharacters?.length || 0} players
                 </div>
                 <div className="flex items-center gap-2">
                   <DocumentTextIcon className="h-4 w-4" />
-                  {session.scenes.length} scenes
+                  {session.scenes?.length || 0} scenes
                 </div>
               </div>
 
@@ -239,7 +260,7 @@ export default function SessionPlanner() {
             <h1 className="text-3xl font-bold text-white">{selectedSession.name}</h1>
             <div className="flex items-center gap-4 text-slate-400 mt-1">
               <span>{selectedSession.date.toLocaleDateString()}</span>
-              <span>{selectedSession.playerCharacters.length} players</span>
+              <span>{selectedSession.playerCharacters?.length || 0} players</span>
               <span className={`px-2 py-1 rounded-full text-xs ${
                 selectedSession.status === 'completed' ? 'bg-green-500/20 text-green-300' :
                 selectedSession.status === 'in-progress' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -281,8 +302,9 @@ export default function SessionPlanner() {
       <SessionDetailView 
         session={selectedSession}
         characters={characters}
+        savedEncounters={encounters}
         onUpdateSession={updateSession}
-        onAddScene={addScene}
+        onNavigateToInitiative={() => onPageChange?.('initiative')}
       />
     </div>
   );
@@ -399,93 +421,4 @@ function CreateSessionModal({
   );
 }
 
-// Session Detail View Component (placeholder for now)
-function SessionDetailView({ 
-  session, 
-  characters, 
-  onUpdateSession, 
-  onAddScene 
-}: {
-  session: GameSession;
-  characters: PlayerCharacter[];
-  onUpdateSession: (sessionId: string, updates: Partial<GameSession>) => void;
-  onAddScene: () => void;
-}) {
-  return (
-    <div className="space-y-8">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-slate-400 text-sm">Players</div>
-          <div className="text-2xl font-bold text-white">{session.playerCharacters.length}</div>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-slate-400 text-sm">Scenes</div>
-          <div className="text-2xl font-bold text-white">{session.scenes.length}</div>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-slate-400 text-sm">Encounters</div>
-          <div className="text-2xl font-bold text-white">{session.encounters.length}</div>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-slate-400 text-sm">NPCs</div>
-          <div className="text-2xl font-bold text-white">{session.npcs.length}</div>
-        </div>
-      </div>
-
-      {/* Scenes Section */}
-      <div className="bg-slate-800/50 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">Scenes</h2>
-          <button
-            onClick={onAddScene}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Add Scene
-          </button>
-        </div>
-
-        {session.scenes.length > 0 ? (
-          <div className="space-y-3">
-            {session.scenes.map((scene) => (
-              <div key={scene.id} className="bg-slate-700/50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-white">{scene.title}</h3>
-                    <p className="text-slate-400 text-sm mt-1">{scene.description || 'No description'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-slate-400 hover:text-emerald-400 transition-colors">
-                      <EyeIcon className="h-4 w-4" />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-emerald-400 transition-colors">
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <DocumentTextIcon className="h-12 w-12 text-slate-400 mx-auto mb-4 opacity-50" />
-            <p className="text-slate-400">No scenes created yet</p>
-            <p className="text-slate-500 text-sm mt-1">Add your first scene to start planning</p>
-          </div>
-        )}
-      </div>
-
-      {/* Session Notes */}
-      <div className="bg-slate-800/50 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Session Notes</h2>
-        <textarea
-          value={session.sessionNotes}
-          onChange={(e) => onUpdateSession(session.id, { sessionNotes: e.target.value })}
-          placeholder="Record what happens during the session..."
-          className="w-full h-32 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:border-emerald-400"
-        />
-      </div>
-    </div>
-  );
-}
+import SessionDetailView from './SessionDetailView';

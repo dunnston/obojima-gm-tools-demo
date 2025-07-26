@@ -13,7 +13,8 @@ import {
   XMarkIcon,
   UserIcon,
   CircleStackIcon,
-  BoltIcon
+  BoltIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 export interface SidebarProps {
@@ -32,6 +33,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'initiative', name: 'Initiative Tracker', icon: BoltIcon, color: 'text-yellow-400' },
     { id: 'characters', name: 'Player Characters', icon: UserIcon, color: 'text-cyan-400' },
     { id: 'notes', name: 'Session Planner', icon: BookOpenIcon, color: 'text-blue-400' },
+    { id: 'quests', name: 'Quest Log', icon: DocumentTextIcon, color: 'text-rose-400' },
     { id: 'database', name: 'Database', icon: CircleStackIcon, color: 'text-amber-400' },
     { id: 'settings', name: 'Settings', icon: CogIcon, color: 'text-gray-400' }
   ];

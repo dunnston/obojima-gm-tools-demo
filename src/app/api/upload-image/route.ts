@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 export async function POST(request: NextRequest) {
@@ -25,6 +25,14 @@ export async function POST(request: NextRequest) {
     const uploadDir = path.join(process.cwd(), 'public', 'images', subfolder);
     const filePath = path.join(uploadDir, filename);
 
+    // Create the directory if it doesn't exist
+    try {
+      await mkdir(uploadDir, { recursive: true });
+      console.log(`Directory ensured: ${uploadDir}`);
+    } catch (error) {
+      console.log(`Directory might already exist: ${uploadDir}`);
+    }
+
     // Check if file already exists and remove it first to avoid duplicates
     try {
       const fs = await import('fs/promises');
@@ -34,7 +42,7 @@ export async function POST(request: NextRequest) {
       // File doesn't exist, which is fine
     }
 
-    // Create the directory if it doesn't exist
+    // Write the file
     await writeFile(filePath, buffer);
 
     console.log(`File saved: ${filePath}`);
@@ -47,6 +55,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json({ error: 'File upload failed' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'File upload failed', 
+      details: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }

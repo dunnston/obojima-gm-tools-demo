@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { creatures } from '@/data/creatures';
+import { creatures, Encounter } from '@/data/creatures';
 import { PlayerCharacter } from '@/data/characters';
 import { getCreatureImagePath } from '@/utils/imageUtils';
 import { 
@@ -38,6 +38,20 @@ export default function InitiativeTracker() {
   const [round, setRound] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'player' | 'creature'>('player');
+
+  // Check for pending encounter on mount
+  useEffect(() => {
+    const pendingEncounterData = localStorage.getItem('pendingEncounter');
+    if (pendingEncounterData) {
+      try {
+        const { encounterId, playerIds } = JSON.parse(pendingEncounterData);
+        loadEncounterAndPlayers(encounterId, playerIds);
+        localStorage.removeItem('pendingEncounter');
+      } catch (error) {
+        console.error('Error loading pending encounter:', error);
+      }
+    }
+  }, []);
 
   // Sort participants by initiative (descending)
   const sortedParticipants = [...participants].sort((a, b) => b.initiative - a.initiative);
@@ -129,6 +143,70 @@ export default function InitiativeTracker() {
     setCombatStarted(false);
     setCurrentTurn(0);
     setRound(1);
+  };
+
+  const loadEncounterAndPlayers = (encounterId: string, playerIds: string[]) => {
+    // Load encounter from localStorage
+    const savedEncounters = localStorage.getItem('obojima-encounters');
+    if (!savedEncounters) return;
+
+    try {
+      const encounters: Encounter[] = JSON.parse(savedEncounters);
+      const encounter = encounters.find(e => e.id === encounterId);
+      if (!encounter) return;
+
+      // Load player characters
+      const savedCharacters = localStorage.getItem('obojima-characters');
+      let characters: PlayerCharacter[] = [];
+      if (savedCharacters) {
+        characters = JSON.parse(savedCharacters);
+      }
+
+      const newParticipants: CombatParticipant[] = [];
+
+      // Add players
+      playerIds.forEach(playerId => {
+        const character = characters.find(c => c.id === playerId);
+        if (character) {
+          newParticipants.push({
+            id: `player-${Date.now()}-${Math.random()}`,
+            name: character.characterName,
+            type: 'player',
+            initiative: Math.floor(Math.random() * 20) + 1, // Random initiative for now
+            ac: character.armorClass,
+            hp: character.hitPoints || 0,
+            maxHp: character.maxHitPoints || 0,
+            imageUrl: character.imageUrl,
+            playerClass: character.class,
+            characterData: character
+          });
+        }
+      });
+
+      // Add creatures from encounter
+      encounter.creatures.forEach(creatureGroup => {
+        for (let i = 0; i < creatureGroup.count; i++) {
+          const creature = creatureGroup.creature;
+          const hp = parseInt(creature.hit_points.split(' ')[0]) || 10; // Parse HP from string like "45 (7d6 + 21)"
+          
+          newParticipants.push({
+            id: `creature-${Date.now()}-${Math.random()}-${i}`,
+            name: creatureGroup.count > 1 ? `${creature.name} ${i + 1}` : creature.name,
+            type: 'creature',
+            initiative: Math.floor(Math.random() * 20) + 1, // Random initiative for now
+            ac: creature.armor_class,
+            hp: hp,
+            maxHp: hp,
+            imageUrl: getCreatureImagePath(creature.name),
+            creatureData: creature
+          });
+        }
+      });
+
+      setParticipants(newParticipants);
+    } catch (error) {
+      console.error('Error loading encounter and players:', error);
+    }
   };
 
   return (
