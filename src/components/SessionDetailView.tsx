@@ -19,6 +19,7 @@ import { Encounter } from '@/data/creatures';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
+import { getCreatureImagePath } from '@/utils/imageUtils';
 import { 
   PlusIcon, 
   PlayIcon, 
@@ -660,41 +661,55 @@ function CreatureCard({
   
   return (
     <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-white">{creature.creatureName}</h3>
-            {creature.quantity && creature.quantity > 1 && (
-              <span className="px-2 py-1 bg-slate-600 text-xs rounded text-slate-300">
-                ×{creature.quantity}
-              </span>
-            )}
-          </div>
-          {creatureData && (
-            <p className="text-sm text-slate-400">
-              {creatureData.type} • CR {creatureData.challenge_rating}
-            </p>
-          )}
-          {creature.context && (
-            <p className="text-xs text-emerald-400 mt-1">{creature.context}</p>
-          )}
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+          <img 
+            src={getCreatureImagePath(creature.creatureName)} 
+            alt={creature.creatureName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = '/images/creatures/default-creature.svg';
+            }}
+          />
         </div>
-        
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onView}
-            className="p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
-            title="View Details"
-          >
-            <EyeIcon className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded transition-colors"
-            title="Remove"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-white">{creature.creatureName}</h3>
+                {creature.quantity && creature.quantity > 1 && (
+                  <span className="px-2 py-1 bg-slate-600 text-xs rounded text-slate-300">
+                    ×{creature.quantity}
+                  </span>
+                )}
+              </div>
+              {creatureData && (
+                <p className="text-sm text-slate-400">
+                  {creatureData.type} • CR {creatureData.challenge_rating}
+                </p>
+              )}
+              {creature.context && (
+                <p className="text-xs text-emerald-400 mt-1">{creature.context}</p>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1 ml-2">
+              <button
+                onClick={onView}
+                className="p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+                title="View Details"
+              >
+                <EyeIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded transition-colors"
+                title="Remove"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       

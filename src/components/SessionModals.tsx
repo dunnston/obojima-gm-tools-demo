@@ -13,6 +13,7 @@ import { Encounter, creatures } from '@/data/creatures';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
+import { getCreatureImagePath } from '@/utils/imageUtils';
 import { 
   XMarkIcon,
   PlusIcon,
@@ -826,15 +827,29 @@ export function CreatureSelectionModal({
                         : 'bg-slate-700/30 border-slate-600 text-slate-200 hover:bg-slate-700/50'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{creature.name}</div>
-                        <div className="text-sm text-slate-400">
-                          {creature.type} • CR {creature.challenge_rating}
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+                        <img 
+                          src={getCreatureImagePath(creature.name)} 
+                          alt={creature.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/images/creatures/default-creature.svg';
+                          }}
+                        />
                       </div>
-                      <div className="text-xs text-slate-400">
-                        AC {creature.armor_class}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium truncate">{creature.name}</div>
+                            <div className="text-sm text-slate-400">
+                              {creature.type} • CR {creature.challenge_rating}
+                            </div>
+                          </div>
+                          <div className="text-xs text-slate-400 ml-2">
+                            AC {creature.armor_class}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -848,14 +863,28 @@ export function CreatureSelectionModal({
             {selectedCreature ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">{selectedCreature.name}</h3>
-                  <p className="text-slate-400">
-                    {selectedCreature.type} • CR {selectedCreature.challenge_rating}
-                  </p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-slate-300">
-                    <span>AC {selectedCreature.armor_class}</span>
-                    <span>HP {selectedCreature.hit_points}</span>
-                    <span>Speed {selectedCreature.speed.walk || selectedCreature.speed.fly || 'Varies'}</span>
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+                      <img 
+                        src={getCreatureImagePath(selectedCreature.name)} 
+                        alt={selectedCreature.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/creatures/default-creature.svg';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">{selectedCreature.name}</h3>
+                      <p className="text-slate-400">
+                        {selectedCreature.type} • CR {selectedCreature.challenge_rating}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-slate-300">
+                        <span>AC {selectedCreature.armor_class}</span>
+                        <span>HP {selectedCreature.hit_points}</span>
+                        <span>Speed {selectedCreature.speed.walk || selectedCreature.speed.fly || 'Varies'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1035,15 +1064,16 @@ export function CreatureDetailsModal({
 
             {/* Image */}
             <div>
-              {(creature as any).imageUrl && (
-                <div className="mb-4">
-                  <img
-                    src={(creature as any).imageUrl}
-                    alt={creature.name}
-                    className="w-full h-64 object-cover rounded-lg border border-slate-600"
-                  />
-                </div>
-              )}
+              <div className="mb-4">
+                <img
+                  src={getCreatureImagePath(creature.name)}
+                  alt={creature.name}
+                  className="w-full h-64 object-cover rounded-lg border border-slate-600"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/creatures/default-creature.svg';
+                  }}
+                />
+              </div>
             </div>
           </div>
 
