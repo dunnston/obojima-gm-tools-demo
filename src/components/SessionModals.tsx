@@ -830,11 +830,11 @@ export function CreatureSelectionModal({
                       <div>
                         <div className="font-medium">{creature.name}</div>
                         <div className="text-sm text-slate-400">
-                          {creature.type} • CR {creature.challengeRating}
+                          {creature.type} • CR {creature.challenge_rating}
                         </div>
                       </div>
                       <div className="text-xs text-slate-400">
-                        AC {creature.armorClass}
+                        AC {creature.armor_class}
                       </div>
                     </div>
                   </button>
@@ -850,12 +850,12 @@ export function CreatureSelectionModal({
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">{selectedCreature.name}</h3>
                   <p className="text-slate-400">
-                    {selectedCreature.type} • CR {selectedCreature.challengeRating}
+                    {selectedCreature.type} • CR {selectedCreature.challenge_rating}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-slate-300">
-                    <span>AC {selectedCreature.armorClass}</span>
-                    <span>HP {selectedCreature.hitPoints}</span>
-                    <span>Speed {selectedCreature.speed}</span>
+                    <span>AC {selectedCreature.armor_class}</span>
+                    <span>HP {selectedCreature.hit_points}</span>
+                    <span>Speed {selectedCreature.speed.walk || selectedCreature.speed.fly || 'Varies'}</span>
                   </div>
                 </div>
 
@@ -984,19 +984,19 @@ export function CreatureDetailsModal({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Challenge Rating:</span>
-                    <span className="text-white">{creature.challengeRating}</span>
+                    <span className="text-white">{creature.challenge_rating}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Armor Class:</span>
-                    <span className="text-white">{creature.armorClass}</span>
+                    <span className="text-white">{creature.armor_class}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Hit Points:</span>
-                    <span className="text-white">{creature.hitPoints}</span>
+                    <span className="text-white">{creature.hit_points}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Speed:</span>
-                    <span className="text-white">{creature.speed}</span>
+                    <span className="text-white">{creature.speed.walk || creature.speed.fly || 'Varies'}</span>
                   </div>
                 </div>
               </div>
@@ -1007,27 +1007,27 @@ export function CreatureDetailsModal({
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">STR</div>
-                    <div className="text-white font-semibold">{creature.strength}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.STR}</div>
                   </div>
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">DEX</div>
-                    <div className="text-white font-semibold">{creature.dexterity}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.DEX}</div>
                   </div>
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">CON</div>
-                    <div className="text-white font-semibold">{creature.constitution}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.CON}</div>
                   </div>
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">INT</div>
-                    <div className="text-white font-semibold">{creature.intelligence}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.INT}</div>
                   </div>
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">WIS</div>
-                    <div className="text-white font-semibold">{creature.wisdom}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.WIS}</div>
                   </div>
                   <div className="text-center p-2 bg-slate-700/50 rounded">
                     <div className="text-slate-400 text-xs">CHA</div>
-                    <div className="text-white font-semibold">{creature.charisma}</div>
+                    <div className="text-white font-semibold">{creature.ability_scores.CHA}</div>
                   </div>
                 </div>
               </div>
@@ -1035,10 +1035,10 @@ export function CreatureDetailsModal({
 
             {/* Image */}
             <div>
-              {creature.imageUrl && (
+              {(creature as any).imageUrl && (
                 <div className="mb-4">
                   <img
-                    src={creature.imageUrl}
+                    src={(creature as any).imageUrl}
                     alt={creature.name}
                     className="w-full h-64 object-cover rounded-lg border border-slate-600"
                   />
@@ -1048,14 +1048,28 @@ export function CreatureDetailsModal({
           </div>
 
           {/* Additional sections like features, actions, etc. can be added here */}
-          {creature.features && creature.features.length > 0 && (
+          {creature.traits && creature.traits.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold text-white mb-3">Features</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Traits</h3>
               <div className="space-y-3">
-                {creature.features.map((feature, index) => (
+                {creature.traits.map((trait, index) => (
                   <div key={index} className="p-4 bg-slate-700/30 rounded-lg">
-                    <h4 className="font-semibold text-emerald-400 mb-2">{feature.name}</h4>
-                    <p className="text-slate-300 text-sm">{feature.description}</p>
+                    <h4 className="font-semibold text-emerald-400 mb-2">{trait.name}</h4>
+                    <p className="text-slate-300 text-sm">{trait.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {creature.actions && creature.actions.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-white mb-3">Actions</h3>
+              <div className="space-y-3">
+                {creature.actions.map((action, index) => (
+                  <div key={index} className="p-4 bg-slate-700/30 rounded-lg">
+                    <h4 className="font-semibold text-red-400 mb-2">{action.name}</h4>
+                    <p className="text-slate-300 text-sm">{action.description}</p>
                   </div>
                 ))}
               </div>

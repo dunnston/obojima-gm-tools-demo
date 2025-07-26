@@ -672,7 +672,7 @@ function CreatureCard({
           </div>
           {creatureData && (
             <p className="text-sm text-slate-400">
-              {creatureData.type} • CR {creatureData.challengeRating}
+              {creatureData.type} • CR {creatureData.challenge_rating}
             </p>
           )}
           {creature.context && (
@@ -708,8 +708,8 @@ function CreatureCard({
         <div className="flex items-center gap-4 text-slate-400">
           {creatureData && (
             <>
-              <span>AC {creatureData.armorClass}</span>
-              <span>HP {creatureData.hitPoints}</span>
+              <span>AC {creatureData.armor_class}</span>
+              <span>HP {creatureData.hit_points}</span>
             </>
           )}
         </div>
