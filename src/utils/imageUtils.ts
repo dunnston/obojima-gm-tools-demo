@@ -1,5 +1,5 @@
 // Utility functions for handling images
-import { getPotionImageUrl, getIngredientImageUrl, getCreatureImageUrl } from './imageMapping';
+import { getPotionImageUrl, getIngredientImageUrl, getCreatureImageUrl, getMagicItemImageUrl } from './imageMapping';
 
 /**
  * Get the image path for a potion
@@ -23,6 +23,14 @@ export function getIngredientImagePath(ingredientName: string): string {
  */
 export function getCreatureImagePath(creatureName: string): string {
   return getCreatureImageUrl(creatureName);
+}
+
+/**
+ * Get the image path for a magic item
+ * Returns specific image if available, otherwise default placeholder
+ */
+export function getMagicItemImagePath(magicItemName: string): string {
+  return getMagicItemImageUrl(magicItemName);
 }
 
 /**

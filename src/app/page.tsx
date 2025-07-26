@@ -7,7 +7,7 @@ import VendingMachine from '@/components/VendingMachine';
 import EncounterCreator from '@/components/EncounterCreator';
 import IngredientForaging from '@/components/IngredientForaging';
 import CharacterManager from '@/components/CharacterManager';
-import GMNotes from '@/components/GMNotes';
+import SessionPlanner from '@/components/SessionPlanner';
 import DatabaseView from '@/components/DatabaseView';
 import Settings from '@/components/Settings';
 import InitiativeTracker from '@/components/InitiativeTracker';
@@ -24,7 +24,7 @@ export default function Home() {
       case 'characters':
         return <CharacterManager />;
       case 'notes':
-        return <GMNotes />;
+        return <SessionPlanner />;
       case 'encounters':
         return <EncounterCreator />;
       case 'vending':

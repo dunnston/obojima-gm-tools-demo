@@ -7,7 +7,7 @@ import { ingredients } from '@/data/ingredients';
 import { creatures } from '@/data/creatures';
 import { magicItems } from '@/data/magicItems';
 import { PotionEditForm, IngredientEditForm, CreatureEditForm, MagicItemEditForm } from './EditForms';
-import { getPotionImagePath, getIngredientImagePath, getCreatureImagePath } from '@/utils/imageUtils';
+import { getPotionImagePath, getIngredientImagePath, getCreatureImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
 import { 
   BeakerIcon, 
   SparklesIcon, 
@@ -971,14 +971,17 @@ function MagicItemsTab({ magicItems, onEdit }: { magicItems: any[], onEdit: (ite
             key={item.name}
             className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200"
           >
-            {/* Magic Item Icon */}
-            <div className="w-full h-20 bg-slate-600/30 rounded-lg flex items-center justify-center mb-3">
-              <span className="text-4xl">
-                {item.type.includes('Weapon') ? '⚔️' : 
-                 item.type === 'Ring' ? '💍' : 
-                 item.type === 'Armor' ? '🛡️' :
-                 item.type === 'Wondrous Item' ? '✨' : '🎯'}
-              </span>
+            {/* Magic Item Image */}
+            <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-slate-800">
+              <img
+                src={getMagicItemImagePath(item.name)}
+                alt={item.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/images/magic-items/default-magic-item.svg';
+                }}
+              />
             </div>
 
             {/* Item Info */}
@@ -1012,6 +1015,12 @@ function MagicItemsTab({ magicItems, onEdit }: { magicItems: any[], onEdit: (ite
                   </span>
                 )}
               </div>
+
+              {item.price && (
+                <div className="text-xs text-emerald-400 font-semibold">
+                  {item.price} gp
+                </div>
+              )}
 
               {item.effect && (
                 <p className="text-xs text-slate-400 line-clamp-2">{item.effect}</p>

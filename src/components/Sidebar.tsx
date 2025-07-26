@@ -31,7 +31,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'encounters', name: 'Encounters', icon: SparklesIcon, color: 'text-purple-400' },
     { id: 'initiative', name: 'Initiative Tracker', icon: BoltIcon, color: 'text-yellow-400' },
     { id: 'characters', name: 'Player Characters', icon: UserIcon, color: 'text-cyan-400' },
-    { id: 'notes', name: 'GM Notes', icon: BookOpenIcon, color: 'text-blue-400' },
+    { id: 'notes', name: 'Session Planner', icon: BookOpenIcon, color: 'text-blue-400' },
     { id: 'database', name: 'Database', icon: CircleStackIcon, color: 'text-amber-400' },
     { id: 'settings', name: 'Settings', icon: CogIcon, color: 'text-gray-400' }
   ];

@@ -41,6 +41,7 @@ ingredients.forEach(ingredient => {
 const localIngredientFiles = new Set<string>();
 const localPotionFiles = new Set<string>();
 const localCreatureFiles = new Set<string>();
+const localMagicItemFiles = new Set<string>();
 
 // Functions to add locally uploaded files to the cache
 export function addLocalIngredientFile(ingredientName: string, extension: string) {
@@ -72,6 +73,28 @@ export function addLocalCreatureFile(creatureName: string, extension: string) {
       savedFiles.push(originalFilename);
     }
     localStorage.setItem('localCreatureFiles', JSON.stringify(savedFiles));
+  }
+}
+
+export function addLocalMagicItemFile(magicItemName: string, extension: string) {
+  const cleanName = magicItemName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const filename = `${cleanName}.${extension}`;
+  localMagicItemFiles.add(filename);
+  
+  // Also add with original name (with spaces) for better matching
+  const originalFilename = `${magicItemName}.${extension}`;
+  localMagicItemFiles.add(originalFilename);
+  
+  // Persist to localStorage
+  if (typeof window !== 'undefined') {
+    const savedFiles = JSON.parse(localStorage.getItem('localMagicItemFiles') || '[]');
+    if (!savedFiles.includes(filename)) {
+      savedFiles.push(filename);
+    }
+    if (!savedFiles.includes(originalFilename)) {
+      savedFiles.push(originalFilename);
+    }
+    localStorage.setItem('localMagicItemFiles', JSON.stringify(savedFiles));
   }
 }
 
@@ -877,6 +900,12 @@ if (typeof window !== 'undefined') {
   savedCreatureFiles.forEach((filename: string) => {
     localCreatureFiles.add(filename);
   });
+
+  // Load saved magic item files from localStorage
+  const savedMagicItemFiles = JSON.parse(localStorage.getItem('localMagicItemFiles') || '[]');
+  savedMagicItemFiles.forEach((filename: string) => {
+    localMagicItemFiles.add(filename);
+  });
 }
 
 // Get specific image for potion or fallback to default
@@ -949,6 +978,30 @@ export function getCreatureImageUrl(creatureName: string): string {
   }
   
   return '/images/creatures/default-creature.svg';
+}
+
+// Get specific image for magic item or fallback to default
+export function getMagicItemImageUrl(magicItemName: string): string {
+  const localImageExtensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+  
+  // First check for files with original magic item name (exact match with spaces)
+  for (const ext of localImageExtensions) {
+    const originalFilename = `${magicItemName}.${ext}`;
+    if (localMagicItemFiles.has(originalFilename)) {
+      return `/images/magic-items/${originalFilename}`;
+    }
+  }
+  
+  // Then check for normalized names (with dashes instead of spaces)
+  const cleanName = magicItemName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  for (const ext of localImageExtensions) {
+    const filename = `${cleanName}.${ext}`;
+    if (localMagicItemFiles.has(filename)) {
+      return `/images/magic-items/${filename}`;
+    }
+  }
+  
+  return '/images/magic-items/default-magic-item.svg';
 }
 
 // Debug info

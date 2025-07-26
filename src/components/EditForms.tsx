@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile } from '@/utils/imageMapping';
+import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile, addLocalMagicItemFile } from '@/utils/imageMapping';
 
 // File copying utility function
 async function copyFileToPublicDirectory(file: File, filename: string, subfolder: string): Promise<void> {
@@ -1024,20 +1024,77 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
     charges: magicItem.charges || '',
     activation: magicItem.activation || '',
     locationFound: magicItem.locationFound || '',
-    flavorText: magicItem.flavorText || ''
+    flavorText: magicItem.flavorText || '',
+    price: magicItem.price || 0,
+    imageUrl: magicItem.imageUrl || ''
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+               type === 'number' ? parseFloat(value) || 0 : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    if (!formData.name.trim()) {
+      alert('Magic item name is required');
+      return;
+    }
+
+    let updatedMagicItem = { ...magicItem, ...formData };
+
+    if (selectedFile) {
+      try {
+        const fileExtension = selectedFile.name.split('.').pop();
+        const filename = `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
+        const imagePath = `/images/magic-items/${filename}`;
+        updatedMagicItem.imageUrl = imagePath;
+        
+        await copyFileToPublicDirectory(selectedFile, filename, 'magic-items');
+        
+        // Register the file with the image mapping system
+        addLocalMagicItemFile(formData.name, fileExtension || 'jpg');
+        
+        console.log('Magic item image saved as:', filename);
+        
+      } catch (error) {
+        console.error('Error handling file upload:', error);
+        alert('Error uploading image. Please try again.');
+        return;
+      }
+    }
+    
+    onSave(updatedMagicItem);
   };
 
   return (
@@ -1150,6 +1207,23 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
                 placeholder="e.g., Action, Bonus Action"
               />
             </div>
+
+            {/* Price */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Price (gold)
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                min="0"
+                step="1"
+                placeholder="0"
+              />
+            </div>
           </div>
 
           {/* Location Found */}
@@ -1195,6 +1269,46 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
               placeholder="Atmospheric description or lore"
             ></textarea>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Magic Item Image
+            </label>
+            <div
+              className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center hover:border-slate-500 transition-colors"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+            >
+              {previewUrl ? (
+                <div className="space-y-4">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="mx-auto max-h-32 rounded-lg"
+                  />
+                  <p className="text-sm text-slate-400">New image selected</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-4xl text-slate-500">🎯</div>
+                  <div>
+                    <p className="text-slate-300 mb-2">Drag and drop an image here, or</p>
+                    <label className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer transition-colors">
+                      Choose File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-slate-500">PNG, JPG, WebP up to 10MB</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Form Actions */}

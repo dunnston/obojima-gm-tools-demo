@@ -8,6 +8,8 @@ export interface MagicItem {
   locationFound?: string;
   requiresAttunement: boolean;
   flavorText?: string;
+  price?: number;
+  imageUrl?: string;
 }
 
 export const magicItems: MagicItem[] = [
@@ -15,7 +17,9 @@ export const magicItems: MagicItem[] = [
     name: "Anglerfish Helm",
     type: "Wondrous Item",
     rarity: "Uncommon",
-    requiresAttunement: true
+    requiresAttunement: true,
+    effect: "A mystical helm that grants the wearer underwater vision.",
+    price: 500
   },
   {
     name: "Baffled Candle",

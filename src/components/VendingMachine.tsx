@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { generateVendingMachineInventory, VendingMachineInventory } from '@/utils/vendingMachine';
 import { ArrowPathIcon, SparklesIcon, BeakerIcon, WrenchScrewdriverIcon, CogIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import { getPotionImagePath, getIngredientImagePath } from '@/utils/imageUtils';
+import { getPotionImagePath, getIngredientImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
 
 export default function VendingMachine() {
   const [inventory, setInventory] = useState<VendingMachineInventory | null>(null);
@@ -195,7 +195,19 @@ export default function VendingMachine() {
               className={`aspect-square p-3 rounded-xl border ${getRarityColor(item.rarity)} transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer group`}
             >
               <div className="w-full h-full bg-slate-700/50 rounded-lg flex items-center justify-center group-hover:bg-slate-600/50 transition-colors">
-                <span className="text-3xl">{getMagicItemIcon(item.type)}</span>
+                <img
+                  src={getMagicItemImagePath(item.name)}
+                  alt={item.name}
+                  className="w-full h-full object-cover rounded"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    const parent = img.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<span class="text-3xl">${getMagicItemIcon(item.type)}</span>`;
+                    }
+                  }}
+                />
               </div>
             </button>
           ))}
@@ -298,7 +310,19 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
               
               {itemType === 'magicItem' && (
                 <div className="w-32 h-32 bg-slate-700/50 rounded-lg flex items-center justify-center">
-                  <span className="text-6xl">{getMagicItemIcon(item.type)}</span>
+                  <img
+                    src={getMagicItemImagePath(item.name)}
+                    alt={item.name}
+                    className="w-28 h-28 object-cover rounded"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      const parent = img.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-6xl">${getMagicItemIcon(item.type)}</span>`;
+                      }
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -370,6 +394,10 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
                     <div className="text-white text-sm">{item.effect}</div>
                   </div>
                 )}
+                <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                  <div className="text-yellow-400 text-2xl font-bold">💰{item.price || 0}g</div>
+                  <div className="text-slate-400 text-sm">Price</div>
+                </div>
               </div>
             )}
           </div>
