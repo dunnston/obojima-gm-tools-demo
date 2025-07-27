@@ -34,39 +34,101 @@ export default function SwordSchoolTracker({
   onDelete
 }: SwordSchoolTrackerProps) {
   const [newQuest, setNewQuest] = useState('');
-  const [showDuelResult, setShowDuelResult] = useState(false);
-  const [duelRoll, setDuelRoll] = useState<number | null>(null);
+  const [showDuelModal, setShowDuelModal] = useState(false);
+  const [duelState, setDuelState] = useState<{
+    playerHits: number;
+    masterHits: number;
+    currentTurn: 'player' | 'master';
+    combatLog: Array<{ attacker: string; roll: number; ac: number; hit: boolean; damage?: number }>;
+    gameOver: boolean;
+    winner?: 'player' | 'master';
+  }>({
+    playerHits: 0,
+    masterHits: 0,
+    currentTurn: 'player',
+    combatLog: [],
+    gameOver: false
+  });
 
   // Calculate current training progress
   const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
   const totalWeeksTrained = activity.totalWeeksTrained + weeksElapsed;
   const currentMasterAC = Math.max(0, 30 - totalWeeksTrained);
   
-  // Check if can attempt duel
+  // Check if can attempt duel - fix date comparison
   const canAttemptDuel = !activity.attemptedDuel || 
-    (activity.duelResult === 'fail' && activity.nextAttemptDate && hasDatePassed(activity.nextAttemptDate));
+    (activity.duelResult === 'fail' && activity.nextAttemptDate && currentGameDate >= new Date(activity.nextAttemptDate));
 
   const handleAddWeekTraining = () => {
+    // Include elapsed weeks in the update to prevent UI sync issues
+    const newWeeksTrained = totalWeeksTrained + 1;
+    const newMasterAC = Math.max(0, 30 - newWeeksTrained);
+    
     onUpdate({
-      totalWeeksTrained: activity.totalWeeksTrained + 1,
-      currentMasterAC: Math.max(0, 30 - (activity.totalWeeksTrained + 1))
+      totalWeeksTrained: newWeeksTrained,
+      currentMasterAC: newMasterAC
     });
   };
 
-  const handleAttemptDuel = () => {
-    const roll = Math.floor(Math.random() * 20) + 1;
-    setDuelRoll(roll);
-    setShowDuelResult(true);
-
-    const success = roll >= currentMasterAC;
-    
-    onUpdate({
-      attemptedDuel: true,
-      duelResult: success ? 'success' : 'fail',
-      nextAttemptDate: success ? undefined : addMonths(currentGameDate, 3),
-      masterTechniqueLearned: success,
-      status: success ? 'completed' : activity.status
+  const handleStartDuel = () => {
+    setDuelState({
+      playerHits: 0,
+      masterHits: 0,
+      currentTurn: 'player',
+      combatLog: [],
+      gameOver: false
     });
+    setShowDuelModal(true);
+  };
+
+  const handleAttack = () => {
+    const roll = Math.floor(Math.random() * 20) + 1;
+    const isPlayerTurn = duelState.currentTurn === 'player';
+    const attackerAC = isPlayerTurn ? 15 : currentMasterAC; // Player has AC 15
+    const targetAC = isPlayerTurn ? currentMasterAC : 15;
+    const hit = roll >= targetAC;
+    
+    const newCombatLog = [...duelState.combatLog, {
+      attacker: isPlayerTurn ? activity.characterName : 'Master',
+      roll,
+      ac: targetAC,
+      hit
+    }];
+
+    let newPlayerHits = duelState.playerHits;
+    let newMasterHits = duelState.masterHits;
+    
+    if (hit) {
+      if (isPlayerTurn) {
+        newPlayerHits += 1;
+      } else {
+        newMasterHits += 1;
+      }
+    }
+
+    const gameOver = newPlayerHits >= 3 || newMasterHits >= 3;
+    const winner = newPlayerHits >= 3 ? 'player' : newMasterHits >= 3 ? 'master' : undefined;
+
+    setDuelState({
+      playerHits: newPlayerHits,
+      masterHits: newMasterHits,
+      currentTurn: gameOver ? duelState.currentTurn : (isPlayerTurn ? 'master' : 'player'),
+      combatLog: newCombatLog,
+      gameOver,
+      winner
+    });
+
+    // If duel is over, update the activity
+    if (gameOver) {
+      const success = winner === 'player';
+      onUpdate({
+        attemptedDuel: true,
+        duelResult: success ? 'success' : 'fail',
+        nextAttemptDate: success ? undefined : addMonths(currentGameDate, 3),
+        masterTechniqueLearned: success,
+        status: success ? 'completed' : activity.status
+      });
+    }
   };
 
   const handleAddQuest = () => {
@@ -187,10 +249,10 @@ export default function SwordSchoolTracker({
 
         {canAttemptDuel && !activity.masterTechniqueLearned ? (
           <button
-            onClick={handleAttemptDuel}
+            onClick={handleStartDuel}
             className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all"
           >
-            Attempt Master Duel (Roll vs AC {currentMasterAC})
+            Challenge Master to Duel (First to 3 Hits)
           </button>
         ) : !activity.masterTechniqueLearned ? (
           <div className="text-center p-4 bg-slate-700/50 rounded-lg">
@@ -254,43 +316,93 @@ export default function SwordSchoolTracker({
         />
       </div>
 
-      {/* Duel Result Modal */}
-      {showDuelResult && duelRoll !== null && (
+      {/* Interactive Duel Modal */}
+      {showDuelModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">Duel Result</h3>
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 max-w-2xl w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Master Duel - First to 3 Hits</h3>
             
-            <div className="text-center mb-6">
-              <div className="text-5xl font-bold text-white mb-2">{duelRoll}</div>
-              <div className="text-slate-400">
-                vs AC {currentMasterAC}
+            {/* Hit Counter */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-400">{duelState.playerHits}</div>
+                <div className="text-sm text-slate-300">{activity.characterName}</div>
+              </div>
+              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                <div className="text-2xl font-bold text-red-400">{duelState.masterHits}</div>
+                <div className="text-sm text-slate-300">Master (AC {currentMasterAC})</div>
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg text-center ${
-              duelRoll >= currentMasterAC
-                ? 'bg-green-500/20 border border-green-400/50'
-                : 'bg-red-500/20 border border-red-400/50'
-            }`}>
-              <div className="text-2xl font-bold mb-2">
-                {duelRoll >= currentMasterAC ? (
-                  <span className="text-green-400">Victory!</span>
+            {/* Combat Log */}
+            <div className="mb-6 max-h-40 overflow-y-auto">
+              <h4 className="text-sm font-semibold text-slate-400 mb-2">Combat Log</h4>
+              <div className="space-y-1">
+                {duelState.combatLog.map((entry, index) => (
+                  <div key={index} className="text-sm text-slate-300 p-2 bg-slate-700/30 rounded">
+                    <span className={entry.attacker === activity.characterName ? 'text-blue-400' : 'text-red-400'}>
+                      {entry.attacker}
+                    </span> rolls {entry.roll} vs AC {entry.ac}: 
+                    <span className={entry.hit ? 'text-green-400 ml-1' : 'text-red-400 ml-1'}>
+                      {entry.hit ? 'HIT!' : 'Miss'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Game State */}
+            {!duelState.gameOver ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <span className="text-slate-300">Current Turn: </span>
+                  <span className={duelState.currentTurn === 'player' ? 'text-blue-400 font-semibold' : 'text-red-400 font-semibold'}>
+                    {duelState.currentTurn === 'player' ? activity.characterName : 'Master'}
+                  </span>
+                </div>
+                
+                {duelState.currentTurn === 'player' ? (
+                  <button
+                    onClick={handleAttack}
+                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    Attack! (Roll d20)
+                  </button>
                 ) : (
-                  <span className="text-red-400">Defeat!</span>
+                  <button
+                    onClick={handleAttack}
+                    className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    Master Attacks...
+                  </button>
                 )}
               </div>
-              <p className="text-slate-300">
-                {duelRoll >= currentMasterAC
-                  ? 'You have mastered the technique!'
-                  : 'Train harder and try again in 3 months.'}
-              </p>
-            </div>
+            ) : (
+              <div className={`p-4 rounded-lg text-center mb-4 ${
+                duelState.winner === 'player'
+                  ? 'bg-green-500/20 border border-green-400/50'
+                  : 'bg-red-500/20 border border-red-400/50'
+              }`}>
+                <div className="text-2xl font-bold mb-2">
+                  {duelState.winner === 'player' ? (
+                    <span className="text-green-400">Victory!</span>
+                  ) : (
+                    <span className="text-red-400">Defeat!</span>
+                  )}
+                </div>
+                <p className="text-slate-300">
+                  {duelState.winner === 'player'
+                    ? 'You have mastered the technique!'
+                    : 'Train harder and try again in 3 months.'}
+                </p>
+              </div>
+            )}
 
             <button
-              onClick={() => setShowDuelResult(false)}
-              className="w-full mt-6 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              onClick={() => setShowDuelModal(false)}
+              className="w-full px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
-              Close
+              {duelState.gameOver ? 'Close' : 'Cancel Duel'}
             </button>
           </div>
         </div>
