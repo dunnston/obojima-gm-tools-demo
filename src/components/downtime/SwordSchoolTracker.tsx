@@ -42,13 +42,17 @@ export default function SwordSchoolTracker({
     combatLog: Array<{ attacker: string; roll: number; ac: number; hit: boolean; damage?: number }>;
     gameOver: boolean;
     winner?: 'player' | 'master';
+    waitingForRoll: boolean;
   }>({
     playerHits: 0,
     masterHits: 0,
     currentTurn: 'player',
     combatLog: [],
-    gameOver: false
+    gameOver: false,
+    waitingForRoll: false
   });
+
+  const [rollInput, setRollInput] = useState('');
 
   // Calculate current training progress
   const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
@@ -60,13 +64,15 @@ export default function SwordSchoolTracker({
     (activity.duelResult === 'fail' && activity.nextAttemptDate && currentGameDate >= new Date(activity.nextAttemptDate));
 
   const handleAddWeekTraining = () => {
-    // Include elapsed weeks in the update to prevent UI sync issues
+    // Update the base weeks trained and reset start date to current game date
+    // This prevents double-counting elapsed weeks
     const newWeeksTrained = totalWeeksTrained + 1;
     const newMasterAC = Math.max(0, 30 - newWeeksTrained);
     
     onUpdate({
       totalWeeksTrained: newWeeksTrained,
-      currentMasterAC: newMasterAC
+      currentMasterAC: newMasterAC,
+      startDate: currentGameDate // Reset start date to prevent elapsed weeks from accumulating
     });
   };
 
@@ -76,15 +82,27 @@ export default function SwordSchoolTracker({
       masterHits: 0,
       currentTurn: 'player',
       combatLog: [],
-      gameOver: false
+      gameOver: false,
+      waitingForRoll: false
     });
+    setRollInput('');
     setShowDuelModal(true);
   };
 
-  const handleAttack = () => {
-    const roll = Math.floor(Math.random() * 20) + 1;
+  const handleRequestRoll = () => {
+    setDuelState(prev => ({
+      ...prev,
+      waitingForRoll: true
+    }));
+  };
+
+  const handleSubmitRoll = () => {
+    const roll = parseInt(rollInput);
+    if (isNaN(roll) || roll < 1 || roll > 20) {
+      return; // Invalid roll
+    }
+
     const isPlayerTurn = duelState.currentTurn === 'player';
-    const attackerAC = isPlayerTurn ? 15 : currentMasterAC; // Player has AC 15
     const targetAC = isPlayerTurn ? currentMasterAC : 15;
     const hit = roll >= targetAC;
     
@@ -115,8 +133,11 @@ export default function SwordSchoolTracker({
       currentTurn: gameOver ? duelState.currentTurn : (isPlayerTurn ? 'master' : 'player'),
       combatLog: newCombatLog,
       gameOver,
-      winner
+      winner,
+      waitingForRoll: false
     });
+
+    setRollInput('');
 
     // If duel is over, update the activity
     if (gameOver) {
@@ -359,22 +380,48 @@ export default function SwordSchoolTracker({
                   <span className={duelState.currentTurn === 'player' ? 'text-blue-400 font-semibold' : 'text-red-400 font-semibold'}>
                     {duelState.currentTurn === 'player' ? activity.characterName : 'Master'}
                   </span>
+                  <div className="text-sm text-slate-400 mt-1">
+                    Target AC: {duelState.currentTurn === 'player' ? currentMasterAC : 15}
+                  </div>
                 </div>
                 
-                {duelState.currentTurn === 'player' ? (
+                {!duelState.waitingForRoll ? (
                   <button
-                    onClick={handleAttack}
-                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                    onClick={handleRequestRoll}
+                    className={`w-full px-4 py-3 text-white font-semibold rounded-lg transition-colors ${
+                      duelState.currentTurn === 'player' 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
                   >
-                    Attack! (Roll d20)
+                    {duelState.currentTurn === 'player' ? 'Roll Attack (d20)' : 'Master Attacks (d20)'}
                   </button>
                 ) : (
-                  <button
-                    onClick={handleAttack}
-                    className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-                  >
-                    Master Attacks...
-                  </button>
+                  <div className="space-y-3">
+                    <div className="text-center text-slate-300">
+                      Enter your d20 roll result:
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={rollInput}
+                        onChange={(e) => setRollInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSubmitRoll()}
+                        placeholder="1-20"
+                        className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-center"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSubmitRoll}
+                        disabled={!rollInput || parseInt(rollInput) < 1 || parseInt(rollInput) > 20}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : (
