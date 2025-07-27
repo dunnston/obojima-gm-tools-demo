@@ -1,0 +1,8 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" rx="8" fill="#1e293b"/>
+  <path d="M50 20L45 30L35 35L30 45L35 55L45 60L50 70L55 60L65 55L70 45L65 35L55 30L50 20Z" fill="#10b981"/>
+  <path d="M50 25L48 32L42 35L40 42L42 48L48 52L50 58L52 52L58 48L60 42L58 35L52 32L50 25Z" fill="#34d399" opacity="0.7"/>
+  <circle cx="46" cy="40" r="1.5" fill="#6ee7b7"/>
+  <circle cx="54" cy="45" r="1" fill="#6ee7b7" opacity="0.8"/>
+  <text x="50" y="95" text-anchor="middle" fill="#64748b" font-size="8" font-family="system-ui">Ingredient</text>
+</svg>

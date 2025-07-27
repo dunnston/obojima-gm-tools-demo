@@ -40,8 +40,11 @@ import {
   ChevronDownIcon,
   FireIcon,
   ArrowUpTrayIcon,
-  CheckIcon
+  CheckIcon,
+  MapIcon,
+  PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
+import EncounterGenerator from './EncounterGenerator';
 
 interface SessionDetailViewProps {
   session: GameSession;
@@ -60,12 +63,13 @@ export default function SessionDetailView({
 }: SessionDetailViewProps) {
   const [editingScene, setEditingScene] = useState<SessionScene | null>(null);
   const [viewingScene, setViewingScene] = useState<SessionScene | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['scenes', 'players']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['tools', 'scenes', 'players']));
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentMusic, setCurrentMusic] = useState<SessionMusic | null>(null);
   const [showEncounterModal, setShowEncounterModal] = useState(false);
   const [showCreatureSelector, setShowCreatureSelector] = useState(false);
   const [viewingCreature, setViewingCreature] = useState<string | null>(null);
+  const [showRandomEncounterGenerator, setShowRandomEncounterGenerator] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -221,6 +225,68 @@ export default function SessionDetailView({
 
   return (
     <div className="space-y-6">
+      {/* Session Tools Section */}
+      <Section 
+        title="Session Tools"
+        icon={SparklesIcon}
+        expanded={expandedSections.has('tools')}
+        onToggle={() => toggleSection('tools')}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button
+            onClick={() => setShowRandomEncounterGenerator(true)}
+            className="flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 rounded-lg text-white hover:border-emerald-400/60 transition-all duration-200 group"
+          >
+            <div className="p-2 bg-emerald-500/20 rounded-lg group-hover:bg-emerald-500/30 transition-colors">
+              <PuzzlePieceIcon className="h-6 w-6 text-emerald-400" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Random Encounter</div>
+              <div className="text-sm text-slate-400">Generate regional encounters</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateToInitiative?.()}
+            className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/30 rounded-lg text-white hover:border-red-400/60 transition-all duration-200 group"
+          >
+            <div className="p-2 bg-red-500/20 rounded-lg group-hover:bg-red-500/30 transition-colors">
+              <BoltIcon className="h-6 w-6 text-red-400" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Initiative Tracker</div>
+              <div className="text-sm text-slate-400">Manage combat encounters</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setShowCreatureSelector(true)}
+            className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg text-white hover:border-purple-400/60 transition-all duration-200 group"
+          >
+            <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
+              <FireIcon className="h-6 w-6 text-purple-400" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Quick Creature</div>
+              <div className="text-sm text-slate-400">Browse creature stat blocks</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setShowEncounterModal(true)}
+            className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-400/30 rounded-lg text-white hover:border-blue-400/60 transition-all duration-200 group"
+          >
+            <div className="p-2 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+              <SparklesIcon className="h-6 w-6 text-blue-400" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Add Encounter</div>
+              <div className="text-sm text-slate-400">Add saved encounters</div>
+            </div>
+          </button>
+        </div>
+      </Section>
+
       {/* Player Characters Section */}
       <Section 
         title="Player Characters"
@@ -537,6 +603,13 @@ export default function SessionDetailView({
         <CreatureDetailsModal
           creatureName={viewingCreature}
           onClose={() => setViewingCreature(null)}
+        />
+      )}
+
+      {/* Random Encounter Generator Modal */}
+      {showRandomEncounterGenerator && (
+        <EncounterGenerator
+          onClose={() => setShowRandomEncounterGenerator(false)}
         />
       )}
     </div>

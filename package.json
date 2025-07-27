@@ -4,11 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev-network": "next dev --turbopack -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "launch": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && start http://localhost:3000\"",
-    "open": "start http://localhost:3000"
+    "open": "start http://localhost:3000",
+    "backup-creatures": "node scripts/simple-backup.js",
+    "prepare-public": "node scripts/prepare-public-release.js",
+    "restore-full-creatures": "node scripts/restore-full-creatures.js",
+    "build-public": "npm run prepare-public && npm run build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",

@@ -1,0 +1,3840 @@
+export interface CreatureAbilityScores {
+  STR: number;
+  DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
+  CHA: number;
+}
+
+export interface CreatureSpeed {
+  walk?: string;
+  fly?: string;
+  swim?: string;
+  climb?: string;
+  burrow?: string;
+}
+
+export interface CreatureSenses {
+  darkvision?: string;
+  truesight?: string;
+  passive_perception: number | string;
+}
+
+export interface CreatureSkills {
+  [skill: string]: number | string;
+}
+
+export interface CreatureSavingThrows {
+  [ability: string]: number;
+}
+
+export interface CreatureTrait {
+  name: string;
+  description: string;
+}
+
+export interface CreatureAction {
+  name: string;
+  description: string;
+}
+
+export interface Creature {
+  name: string;
+  size: string;
+  type: string;
+  alignment: string;
+  armor_class: number;
+  hit_points: string;
+  speed: CreatureSpeed;
+  ability_scores: CreatureAbilityScores;
+  skills?: CreatureSkills;
+  saving_throws?: CreatureSavingThrows;
+  damage_resistances?: string[];
+  damage_immunities?: string[];
+  damage_vulnerabilities?: string[];
+  condition_immunities?: string[];
+  senses: CreatureSenses;
+  languages: string[];
+  challenge_rating: number;
+  proficiency_bonus: number;
+  traits?: CreatureTrait[];
+  actions?: CreatureAction[];
+  bonus_actions?: CreatureAction[];
+  reactions?: CreatureAction[];
+  legendary_actions?: CreatureAction[];
+}
+
+export interface Encounter {
+  id: string;
+  name: string;
+  description?: string;
+  creatures: {
+    creature: Creature;
+    count: number;
+    notes?: string;
+  }[];
+  difficulty?: string;
+  environment?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// All creatures data
+export const creatures: Creature[] = [
+  {
+    "name": "Acorn Crab",
+    "size": "Medium",
+    "type": "Monstrosity",
+    "alignment": "Neutral",
+    "armor_class": 16,
+    "hit_points": "67 (9d8 + 27)",
+    "speed": {
+      "walk": "30 ft.",
+      "climb": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 16,
+      "DEX": 13,
+      "CON": 16,
+      "INT": 6,
+      "WIS": 6,
+      "CHA": 6
+    },
+    "skills": {
+      "Athletics": 5,
+      "Perception": 3
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 13
+    },
+    "languages": [],
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Great Heights",
+        "description": "When the Acorn Crab falls from a height of 10 feet or higher, it can make a Slam attack at the end of the fall. When it does so, it takes no falling damage."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Acorn Crab makes two Pinch attacks."
+      },
+      {
+        "name": "Pinch",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage."
+      },
+      {
+        "name": "Slam",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) bludgeoning damage, plus an extra 3 (1d6) damage for every 10 feet the acorn crab fell before the attack."
+      }
+    ]
+  },
+  {
+    "name": "Akaobata",
+    "size": "Medium",
+    "type": "Spirit",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 16,
+    "hit_points": "45 (10d8)",
+    "speed": {
+      "fly": "60 ft. (hover)",
+      "walk": "0 ft."
+    },
+    "ability_scores": {
+      "STR": 11,
+      "DEX": 13,
+      "CON": 11,
+      "INT": 15,
+      "WIS": 16,
+      "CHA": 20
+    },
+    "skills": {
+      "Deception": 8,
+      "Insight": 9,
+      "Perception": 9
+    },
+    "damage_immunities": [
+      "Bludgeoning from Nonmagical Attacks",
+      "Piercing from Nonmagical Attacks",
+      "Slashing from Nonmagical Attacks"
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "truesight": "15 ft.",
+      "passive_perception": 19
+    },
+    "languages": [
+      "Common",
+      "Naku Naku",
+      "Torum"
+    ],
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Incorporeal Movement",
+        "description": "The Akaobata can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Limited Magic Immunity",
+        "description": "The Akaobata can’t be affected or detected by spells of 6th level or lower unless it wishes to be. It has advantage on saving throws against all other spells and magical effects."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Cursed Touch",
+        "description": "Melee Spell Attack: +8 to hit, reach 5 ft., one creature. Hit: 19 (4d6 + 5) psychic damage, and it must make a DC 16 Wisdom saving throw. On a failed save, the target’s emotions are overwhelmed with fear, hate, sorrow, confusion, or regret. When a creature fails this saving throw, the Akaobata becomes emboldened until the end of the turn, gaining access to its bonus action options."
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Fleeting Strengths",
+        "description": "The Akaobata chooses a creature it can see within 60 feet of it. The target must succeed on a DC 16 Wisdom saving throw or be cursed by the Akaobata’s intrusive magics. This magical curse causes the target to lose proficiency in one saving throw or skill of the Akaobata’s choice. The curse lasts until it is lifted by a *Remove Curse* spell or similar magic."
+      },
+      {
+        "name": "Levitate",
+        "description": "The Akaobata casts *Mass Levitate* (save DC 16), requiring no material components. Its spellcasting ability for this spell is Charisma."
+      },
+      {
+        "name": "Power of Whispers",
+        "description": "The Akaobata chooses up to two creatures it can see within 60 feet of it. Each target must succeed on a DC 16 Constitution saving throw or take 9 (1d8 + 5) psychic damage and become Restrained until the end of its next turn."
+      }
+    ]
+  },
+  {
+    "name": "Bearracuda",
+    "size": "Large",
+    "type": "Beast",
+    "alignment": "Unaligned",
+    "armor_class": 13,
+    "hit_points": "51 (6d10 + 18)",
+    "speed": {
+      "fly": "60 ft. (hover)",
+      "walk": "0 ft."
+    },
+    "ability_scores": {
+      "STR": 19,
+      "DEX": 13,
+      "CON": 17,
+      "INT": 2,
+      "WIS": 10,
+      "CHA": 5
+    },
+    "skills": {
+      "Perception": 4,
+      "Stealth": 3
+    },
+    "senses": {
+      "passive_perception": 14
+    },
+    "languages": [],
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Aquatic Memory",
+        "description": "The Bearracuda can move under and through heavy snow as if it weren’t difficult terrain. While moving through snow, the Bearracuda has advantage on Dexterity (Stealth) checks."
+      },
+      {
+        "name": "Pacifying Light",
+        "description": "If the Bearracuda becomes Blinded by a light-based effect, it must also succeed on a DC 13 Constitution saving throw or fall Unconscious for 1 minute, until it takes damage, or until a creature uses an action to shake or slap it awake."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 15 (2d10 + 4) piercing damage."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Drag",
+        "description": "When the Bearracuda successfully grapples a creature that is its size or smaller, it moves up to its speed, carrying the Grappled creature with it."
+      }
+    ]
+  },
+  {
+    "name": "Cat of Prodigious Size",
+    "size": "Huge",
+    "type": "Beast",
+    "alignment": "Neutral",
+    "armor_class": 13,
+    "hit_points": "115 (11d12 + 44)",
+    "speed": {
+      "walk": "50 ft."
+    },
+    "ability_scores": {
+      "STR": 22,
+      "DEX": 16,
+      "CON": 19,
+      "INT": 7,
+      "WIS": 12,
+      "CHA": 12
+    },
+    "skills": {
+      "Perception": 4,
+      "Stealth": 6
+    },
+    "senses": {
+      "passive_perception": 14
+    },
+    "languages": [],
+    "challenge_rating": 8,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Keen Smell",
+        "description": "The Cat of Prodigious Size has advantage on Wisdom (Perception) checks that rely on smell."
+      },
+      {
+        "name": "Light on Its Feet",
+        "description": "When the Cat of Prodigious Size falls and isn’t Incapacitated, it can subtract up to 200 feet from the fall when calculating falling damage."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Cat of Prodigious Size makes two attacks: one with its Chomp and one with its Paw."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 32 (4d12 + 6) piercing damage, and if the target is a Medium or smaller creature, it is Grappled (escape DC 16). Until this grapple ends, the target is Restrained, and the Cat of Prodigious Size can’t bite another target."
+      },
+      {
+        "name": "Paw",
+        "description": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 19 (3d8 + 6) slashing damage."
+      },
+      {
+        "name": "Leaping Strike",
+        "description": "The Cat of Prodigious Size pulls its body low to the ground before leaping vertically 90 feet into the air. While in the air, the Cat of Prodigious Size can make a Paw attack before slamming back down to the ground. Each creature within 20 feet of the Cat of Prodigious Size when it lands must succeed on a DC 17 Strength saving throw or be knocked Prone."
+      }
+    ]
+  },
+  {
+    "name": "Clone of Viota",
+    "size": "Medium",
+    "type": "Spirit",
+    "alignment": "Neutral",
+    "armor_class": 12,
+    "hit_points": "58 (13d8)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 17,
+      "WIS": 12,
+      "CHA": 12
+    },
+    "saving_throws": {
+      "INT": 5,
+      "WIS": 3
+    },
+    "skills": {
+      "Any": "two skill proficiencies"
+    },
+    "damage_resistances": [
+      "Acid",
+      "Fire",
+      "Lightning",
+      "Thunder",
+      "Bludgeoning, Piercing, and Slashing from Nonmagical Attacks"
+    ],
+    "damage_immunities": [
+      "Cold",
+      "Necrotic",
+      "Poison"
+    ],
+    "condition_immunities": [
+      "Blinded",
+      "Charmed",
+      "Exhaustion",
+      "Frightened",
+      "Grappled",
+      "Paralyzed",
+      "Petrified",
+      "Poisoned",
+      "Prone",
+      "Restrained"
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": "11 (13 if proficient in Perception)"
+    },
+    "languages": [
+      "Common",
+      "Naku Naku",
+      "Torum"
+    ],
+    "challenge_rating": 4,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Innate Spellcasting",
+        "description": "Clone of Viota’s innate spellcasting ability is Intelligence (spell save DC 13, +5 to hit with spell attacks). It can innately cast the following spells, requiring no material components:\n- At will: Prestidigitation*, Retrieve, Task\n- 1/day each: Invisibility*, Misty Step*"
+      },
+      {
+        "name": "Lessons Learned",
+        "description": "If any Clone of Viota has fought a creature before, the current Clone of Viota can choose at the start of combat to either have advantage on all attack rolls made against that creature or advantage on saving throws against effects created by that creature."
+      },
+      {
+        "name": "Shared Experience",
+        "description": "Any Clone of Viota can spend 1 minute to perfectly recall an experience that one of her other clones had. This is true even if that clone has been killed."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Clone of Viota makes two Spectral Pass attacks."
+      },
+      {
+        "name": "Spectral Pass",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 3) force damage."
+      }
+    ]
+  },
+  {
+    "name": "Corrupted Muk",
+    "size": "Medium",
+    "type": "Undead",
+    "alignment": "Neutral Evil",
+    "armor_class": 11,
+    "hit_points": "18 (4d8)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 13,
+      "DEX": 12,
+      "CON": 11,
+      "INT": 3,
+      "WIS": 6,
+      "CHA": 5
+    },
+    "senses": {
+      "passive_perception": 8
+    },
+    "languages": [],
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Endless Resource",
+        "description": "If the Corrupted Muk is standing in a pool of Corruption or is connected to the greater Corruption in some way, it regains 10 hit points at the start of its turn; its Persistent Disease trait also automatically activates immediately after the Corrupted Muk dies."
+      },
+      {
+        "name": "Persistent Disease",
+        "description": "There is a 15 percent chance that 1 week after a Corrupted Muk is killed, a new Corrupted Muk materializes in the location where the previous one died."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Slam",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) bludgeoning damage."
+      }
+    ]
+  },
+  {
+    "name": "Crawler",
+    "size": "Large",
+    "type": "Fiend (Demon)",
+    "alignment": "Neutral",
+    "armor_class": 15,
+    "hit_points": "110 (13d10 + 39)",
+    "speed": {
+      "walk": "60 ft."
+    },
+    "ability_scores": {
+      "STR": 16,
+      "DEX": 18,
+      "CON": 17,
+      "INT": 11,
+      "WIS": 15,
+      "CHA": 10
+    },
+    "skills": {
+      "Perception": 6,
+      "Stealth": 8
+    },
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 16
+    },
+    "languages": [
+      "Torum"
+    ],
+    "challenge_rating": 4,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Hypnotic",
+        "description": "A creature that starts its turn within 30 feet of the Crawler must succeed on a DC 12 Wisdom saving throw. On a failed save, the creature must use all of its movement to get as close to the Crawler as possible."
+      },
+      {
+        "name": "Natural Camouflage",
+        "description": "The Crawler has advantage on Dexterity (Stealth) checks made to hide in swamp or wetland terrain."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Crawler makes two melee attacks."
+      },
+      {
+        "name": "Squeeze",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) bludgeoning damage. If the target is a creature, it must also make a DC 12 Intelligence saving throw. On a failed save, the target loses its memory of the last 24 hours. The target regains these memories if it is targeted by the Greater Restoration* spell."
+      },
+      {
+        "name": "Stomp",
+        "description": "Melee Weapon Attack: +6 to hit, reach 10 ft., one target. Hit: 8 (1d10 + 3) bludgeoning damage."
+      }
+    ]
+  },
+  {
+    "name": "Cuddle Bug",
+    "size": "Tiny",
+    "type": "Beast",
+    "alignment": "Neutral",
+    "armor_class": 12,
+    "hit_points": "14 (4d4 + 4)",
+    "speed": {
+      "walk": "20 ft.",
+      "burrow": "10 ft."
+    },
+    "ability_scores": {
+      "STR": 6,
+      "DEX": 12,
+      "CON": 13,
+      "INT": 6,
+      "WIS": 10,
+      "CHA": 8
+    },
+    "skills": {
+      "Stealth": 5
+    },
+    "damage_vulnerabilities": [
+      "Cold"
+    ],
+    "damage_immunities": [
+      "Fire"
+    ],
+    "senses": {
+      "darkvision": "30 ft.",
+      "passive_perception": 10
+    },
+    "languages": [],
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Heat Consumption",
+        "description": "A creature that starts its turn within 5 feet of the Cuddle Bug gains 1 Freeze Point. The effects of Freeze Points stack:\n\n- **1–3:** The creature has a −2 penalty to all attack rolls.\n- **4–8:** The creature can’t add its proficiency bonus to any Dexterity checks or Dexterity saving throws.\n- **8–13:** The creature suffers one level of Exhaustion. This level of Exhaustion goes away when the creature no longer has any Freeze Points.\n- **14–17:** The creature’s speed is halved, and it can use either an action or a bonus action on each of its turns, not both.\n- **18 or more:** At the start of each of the creature’s turns while it’s not unconscious, it takes 5 cold damage.\n\nA creature can remove all accumulated Freeze Points by taking at least 1 fire damage or finishing a short or long rest."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Drain Heat",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one creature. Hit: 5 (1d8 + 1) cold damage, and the Cuddle Bug regains hit points equal to half the damage dealt."
+      }
+    ]
+  },
+  {
+    "name": "Deep Angler",
+    "size": "Gargantuan",
+    "type": "Monstrosity",
+    "alignment": "Unaligned",
+    "armor_class": 14,
+    "hit_points": "186 (12d20 + 60)",
+    "speed": {
+      "walk": "10 ft.",
+      "swim": "60 ft."
+    },
+    "ability_scores": {
+      "STR": 22,
+      "DEX": 10,
+      "CON": 21,
+      "INT": 2,
+      "WIS": 12,
+      "CHA": 5
+    },
+    "saving_throws": {
+      "CON": 9,
+      "WIS": 5
+    },
+    "skills": {
+      "Perception": 9,
+      "Stealth": 4
+    },
+    "senses": {
+      "darkvision": "300 ft.",
+      "passive_perception": 19
+    },
+    "languages": [],
+    "challenge_rating": 10,
+    "proficiency_bonus": 4,
+    "traits": [
+      {
+        "name": "Illusionary Lure",
+        "description": "The Deep Angler can create an image of an object, effect, or creature, which surrounds its lure, causing the chosen effect to look as if it were floating in space. The image can’t create sound or smell, and physical interaction with the image reveals it to be an illusion, since things can pass through it."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Deep Angler makes two attacks: one with its Chomp and one with its Lure."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 22 (3d10 + 6) piercing damage, and the target is swallowed if it is a Large or smaller creature. A swallowed creature is Blinded and Restrained, has total cover against attacks and other effects outside the Deep Angler, and takes 11 (2d10) bludgeoning damage at the start of each of the Deep Angler’s turns. The Deep Angler can hold up to 3 creatures in its mouth at a time. If the Deep Angler takes 15 damage or more on a single turn from a creature inside it, it must succeed on a DC 19 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which enters an empty space within 10 feet of the Deep Angler. If the Deep Angler dies, a swallowed creature is no longer restrained and can escape using 10 feet of movement."
+      },
+      {
+        "name": "Lure",
+        "description": "Melee Weapon Attack: +10 to hit, reach 20 ft., one target. Hit: 19 (3d8 + 6) bludgeoning damage. If the target is a creature, it must succeed on a DC 16 Constitution saving throw or be Blinded until the end of its next turn."
+      }
+    ]
+  },
+  {
+    "name": "Minor Demon",
+    "size": "Small",
+    "type": "Fiend (Demon)",
+    "alignment": "Chaotic Evil",
+    "armor_class": 13,
+    "hit_points": "22 (5d6 + 5)",
+    "speed": {
+      "walk": "30 ft.",
+      "fly": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 14,
+      "DEX": 15,
+      "CON": 12,
+      "INT": 13,
+      "WIS": 9,
+      "CHA": 12
+    },
+    "damage_resistances": [
+      "Bludgeoning from nonmagical attacks",
+      "Piercing from nonmagical attacks",
+      "Slashing from nonmagical attacks"
+    ],
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 9
+    },
+    "languages": [
+      "Common",
+      "Torum"
+    ],
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Intrusive Thoughts",
+        "description": "A creature that starts its turn within 10 feet of the Demon must succeed on a DC 11 Intelligence saving throw or allow the Demon’s magic to influence its mind until the end of its next turn. A creature under this effect takes an extra 4 (1d8) psychic damage whenever it is hit by the Demon’s Chomp attack."
+      },
+      {
+        "name": "Magic Resistance",
+        "description": "The Demon has advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Demon makes two attacks: one with its Chomp and one with its Spectral Pass."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage."
+      },
+      {
+        "name": "Spectral Pass",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 8 (1d12 + 2) necrotic damage."
+      }
+    ]
+  },
+  {
+    "name": "Dragon",
+    "size": "Large",
+    "type": "Dragon",
+    "alignment": "Neutral",
+    "armor_class": 16,
+    "hit_points": "82 (11d10 + 22)",
+    "speed": {
+      "walk": "30 ft.",
+      "climb": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 17,
+      "DEX": 12,
+      "CON": 15,
+      "INT": 12,
+      "WIS": 11,
+      "CHA": 15
+    },
+    "saving_throws": {
+      "CON": "+4",
+      "CHA": "+4"
+    },
+    "skills": {
+      "History": "+3",
+      "Insight": "+4",
+      "Perception": "+4"
+    },
+    "senses": {
+      "blindsight": "15 ft.",
+      "darkvision": "60 ft.",
+      "passive_perception": 14
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 4,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Resting Protections",
+        "description": "While the Dragon is Unconscious, it can’t become affected or detected by spells of 3rd level or lower."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) piercing damage."
+      },
+      {
+        "name": "Draconic Charm",
+        "description": "One Humanoid the Dragon can see within 30 feet of it must succeed on a DC 12 Wisdom saving throw or be magically Charmed for 1 day. The Charmed target obeys the Dragon’s spoken commands. If the target suffers any harm from the Dragon or another creature or receives a harmful command from the Dragon, the charm ends. If a target’s saving throw is successful, or if the effect ends for it, the creature is immune to this Dragon’s Draconic Charm for the next 24 hours."
+      }
+    ]
+  },
+  {
+    "name": "Dragon Frog",
+    "size": "Medium",
+    "type": "Dragon",
+    "alignment": "Neutral",
+    "armor_class": 15,
+    "hit_points": "32 (5d8 + 10)",
+    "speed": {
+      "walk": "45 ft."
+    },
+    "ability_scores": {
+      "STR": 15,
+      "DEX": 14,
+      "CON": 15,
+      "INT": 8,
+      "WIS": 11,
+      "CHA": 10
+    },
+    "saving_throws": {
+      "DEX": "+4",
+      "CON": "+4"
+    },
+    "skills": {
+      "Athletics": "+6"
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 14
+    },
+    "languages": [
+      "Understands Common and Naku Naku but can’t speak"
+    ],
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Magic Removal",
+        "description": "When a creature or object becomes enclosed within the Dragon Frog’s mouth, any spell of 3rd level or lower on the target ends."
+      },
+      {
+        "name": "Standing Leap",
+        "description": "The Dragon Frog’s long jump is up to 30 feet and its high jump is up to 15 feet, with or without a running start."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (1d10 + 2) piercing damage."
+      },
+      {
+        "name": "Pulling Tongue",
+        "description": "The Dragon Frog lashes out its tongue at a Medium or smaller creature or object it can see within 25 feet of it. If the target is a creature, it is pulled to an unoccupied space within 5 feet of the Dragon Frog, unless it succeeds on a DC 12 Strength saving throw. If the target is an object, it falls to the ground at the Dragon Frog’s feet; if the object is being worn or carried by a creature, the creature must succeed on a contested Strength check or have the object pulled away from it."
+      }
+    ],
+    "legendary_actions": [
+      {
+        "name": "Quick Attack",
+        "description": "Immediately after the Dragon Frog pulls a creature with its Pulling Tongue, it makes a Chomp attack against it."
+      }
+    ]
+  },
+  {
+    "name": "Elder Dragon Frog",
+    "size": "Gargantuan",
+    "type": "Dragon",
+    "alignment": "Neutral Evil",
+    "armor_class": 19,
+    "hit_points": "210 (12d20 + 84)",
+    "speed": {
+      "walk": "90 ft."
+    },
+    "ability_scores": {
+      "STR": 26,
+      "DEX": 14,
+      "CON": 24,
+      "INT": 21,
+      "WIS": 13,
+      "CHA": 16
+    },
+    "saving_throws": {
+      "DEX": "+8",
+      "CON": "+13",
+      "INT": "+11",
+      "WIS": "+7"
+    },
+    "skills": {
+      "Athletics": "+14",
+      "Deception": "+9",
+      "History": "+11",
+      "Perception": "+7",
+      "Stealth": "+14"
+    },
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 17
+    },
+    "languages": [
+      "Common",
+      "Naku Naku"
+    ],
+    "challenge_rating": 17,
+    "proficiency_bonus": 5,
+    "traits": [
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If the Dragon Frog fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Magic Removal",
+        "description": "When a creature or object becomes enclosed within the Dragon Frog’s mouth, any spell of 6th level or lower on the target ends."
+      },
+      {
+        "name": "Standing Leap",
+        "description": "The Dragon Frog’s long jump is up to 90 feet and its high jump is up to 45 feet, with or without a running start."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Dragon Frog makes three attacks: one with its Chomp and two with its Claws."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 19 (2d10 + 8) piercing damage, and the target is swallowed if it is a Large or smaller creature. A swallowed creature is Blinded and Restrained, has total cover against attacks and other effects outside the Dragon Frog, and takes 11 (2d10) bludgeoning damage at the start of each of the Dragon Frog’s turns. The Dragon Frog can hold up to three creatures in its mouth at a time. If the Dragon Frog takes 20 damage or more on a single turn from a creature inside it, the Dragon Frog must succeed on a DC 23 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which enters an empty space within 10 feet of the Dragon Frog. If the Dragon Frog dies, a swallowed creature is no longer Restrained by it and can escape from the corpse using 10 feet of movement."
+      },
+      {
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +14 to hit, reach 5 ft., one target. Hit: 13 (1d10 + 8) slashing damage."
+      },
+      {
+        "name": "Croak (Recharge 5–6)",
+        "description": "The Dragon Frog lets out a ground-shaking croak that warps the environment in a 90-foot cone. Each creature in that area must make a DC 21 Dexterity saving throw. On a failed save, a target takes 66 (12d10) thunder damage and is pushed 15 feet away from the Dragon Frog. On a successful save, the target takes half as much damage and isn’t pushed. If the Dragon Frog has any creatures in its mouth when it uses its Croak, they all fall Prone in unoccupied spaces within 15 feet of the Dragon Frog."
+      }
+    ],
+    "legendary_actions": [
+      {
+        "name": "Claw",
+        "description": "The Dragon Frog makes a Claw attack."
+      },
+      {
+        "name": "Leap",
+        "description": "The Dragon Frog leaps into the air before slamming back down to the ground. Each creature within 30 feet of the Dragon Frog when it lands must succeed on a DC 22 Strength saving throw or be knocked Prone."
+      },
+      {
+        "name": "Pulling Tongue (Costs 2 Actions)",
+        "description": "The Dragon Frog lashes out its tongue at a Huge or smaller creature or object it can see within 30 feet of it. If the target is a creature, it is pulled to an unoccupied space within 5 feet of the Dragon Frog, unless it succeeds on a DC 22 Strength saving throw; the Dragon Frog can then make a Chomp attack against it as part of this same action. If the target is an object, it enters the Dragon Frog’s mouth; if the object is being worn or carried by a creature, the creature must succeed on a contested Strength check or have the object pulled away from it."
+      }
+    ]
+  },
+  {
+    "name": "Dustbunny",
+    "size": "Tiny",
+    "type": "Elemental",
+    "alignment": "Unaligned",
+    "armor_class": 12,
+    "hit_points": "2 (1d4)",
+    "speed": {
+      "walk": "40 ft."
+    },
+    "ability_scores": {
+      "STR": 3,
+      "DEX": 15,
+      "CON": 10,
+      "INT": 3,
+      "WIS": 12,
+      "CHA": 7
+    },
+    "skills": {
+      "Perception": "+3",
+      "Stealth": "+4"
+    },
+    "senses": {
+      "passive_perception": 13
+    },
+    "languages": [],
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Like the Wind",
+        "description": "The Dustbunny’s movement doesn’t provoke opportunity attacks."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Kick",
+        "description": "Melee Weapon Attack: +0 to hit, reach 5 ft., one target. Hit: 1 bludgeoning damage."
+      },
+      {
+        "name": "Dust Kick",
+        "description": "The Dustbunny kicks up dust at a creature it can see within 10 feet of it. The target must succeed on a DC 11 Constitution saving throw or become Incapacitated and begin sneezing uncontrollably until the end of its next turn."
+      },
+      {
+        "name": "Jump",
+        "description": "The Dustbunny disappears in a poof of dust, teleporting up to 20 feet to an unoccupied space it can see."
+      }
+    ]
+  },
+  {
+    "name": "Field Giant",
+    "size": "Gargantuan",
+    "type": "Spirit",
+    "alignment": "Unaligned",
+    "armor_class": 16,
+    "hit_points": "108 (8d20 + 24)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 23,
+      "DEX": 10,
+      "CON": 17,
+      "INT": 3,
+      "WIS": 14,
+      "CHA": 7
+    },
+    "skills": {
+      "Perception": "+6"
+    },
+    "senses": {
+      "darkvision": "300 ft.",
+      "passive_perception": 16
+    },
+    "languages": [],
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Keen Sight",
+        "description": "The Field Giant has advantage on Wisdom (Perception) checks that rely on sight."
+      },
+      {
+        "name": "Without Need",
+        "description": "The Field Giant doesn’t require food, drink, or sleep."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Tail Slap",
+        "description": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 15 (2d8 + 6) bludgeoning damage, and if the target is Huge or smaller, it must succeed on a DC 16 Strength saving throw or be pushed 30 feet away from the Field Giant."
+      }
+    ]
+  },
+  {
+    "name": "Fish Folk",
+    "size": "Medium",
+    "type": "Humanoid (Fish Folk)",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 12,
+    "hit_points": "19 (3d8 + 6)",
+    "speed": {
+      "walk": "30 ft.",
+      "swim": "40 ft."
+    },
+    "ability_scores": {
+      "STR": 14,
+      "DEX": 12,
+      "CON": 14,
+      "INT": 10,
+      "WIS": 12,
+      "CHA": 7
+    },
+    "skills": {
+      "Perception": "+5"
+    },
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 15
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Limited Amphibiousness",
+        "description": "The Fish Folk can breathe air and water, but it needs to be submerged at least once every 4 hours to avoid suffocating."
+      },
+      {
+        "name": "Lucky Fool (1/Day)",
+        "description": "When the Fish Folk would fail an ability check by rolling a 5 or lower on the die, it can choose to replace the die roll with a 12 instead."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Fish Folk makes two melee attacks: one with its Chomp and one with its Sword."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage."
+      },
+      {
+        "name": "Sword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage."
+      }
+    ]
+  },
+  {
+    "name": "Lionfish King",
+    "size": "Large",
+    "type": "Humanoid (Fish Folk)",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 15,
+    "armor": "Chain Shirt",
+    "hit_points": "93 (11d10 + 33)",
+    "speed": {
+      "walk": "30 ft.",
+      "swim": "50 ft."
+    },
+    "ability_scores": {
+      "STR": 19,
+      "DEX": 15,
+      "CON": 16,
+      "INT": 13,
+      "WIS": 11,
+      "CHA": 16
+    },
+    "saving_throws": {
+      "DEX": "+5",
+      "CON": "+6",
+      "INT": "+4",
+      "CHA": "+6"
+    },
+    "skills": {
+      "Deception": "+6",
+      "Intimidation": "+9",
+      "Perception": "+6",
+      "Persuasion": "+9"
+    },
+    "damage_immunities": [
+      "Poison"
+    ],
+    "condition_immunities": [
+      "Poisoned"
+    ],
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 16
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Limited Amphibiousness",
+        "description": "The Lionfish King can breathe air and water, but it needs to be submerged at least once every 12 hours to avoid suffocating."
+      },
+      {
+        "name": "Lucky Fool (2/Day)",
+        "description": "When the Lionfish King would fail an ability check or miss with an attack roll by rolling a 5 or lower on the die, he can choose to replace the die roll with a 15 instead."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Lionfish King makes three attacks: one with his Chomp and two with his Cutlass."
+      },
+      {
+        "name": "Chomp",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 9 (2d4 + 4) piercing damage."
+      },
+      {
+        "name": "Cutlass",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+      },
+      {
+        "name": "Poisonous Spray",
+        "description": "Ranged Weapon Attack: +5 to hit, range 15/30 ft., one target. Hit: 19 (3d12) poison damage. Whether the attack hits or misses, the target and each creature within 5 feet of it must succeed on a DC 14 Constitution saving throw or become Poisoned until the end of its next turn."
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Royal Decree",
+        "description": "The Lionfish King commands a Fish Folk that can hear him to use its reaction to make an attack against a creature that he can see."
+      }
+    ]
+  },
+  {
+    "name": "Giant Jellyfish",
+    "size": "Gargantuan",
+    "type": "Beast",
+    "alignment": "Unaligned",
+    "armor_class": 15,
+    "armor": "Natural Armor",
+    "hit_points": "87 (7d20 + 14)",
+    "speed": {
+      "fly": "20 ft.",
+      "swim": "20 ft.",
+      "walk": "0 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 12,
+      "CON": 15,
+      "INT": 1,
+      "WIS": 4,
+      "CHA": 10
+    },
+    "senses": {
+      "blindsight": "60 ft.",
+      "darkvision": "120 ft.",
+      "passive_perception": 7
+    },
+    "languages": [],
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Amphibious",
+        "description": "The Giant Jellyfish can breathe air and water."
+      },
+      {
+        "name": "Toxins",
+        "description": "A creature that comes in physical contact with the Giant Jellyfish must succeed on a DC 12 Constitution saving throw or take 3 (1d6) poison damage and become Stunned until the end of its next turn."
+      }
+    ],
+    "actions": []
+  },
+  {
+    "name": "Giant Koi",
+    "size": "Gargantuan",
+    "type": "Beast",
+    "alignment": "Unaligned",
+    "armor_class": 25,
+    "armor": "Natural Armor",
+    "hit_points": "1,110 (60d20 + 480)",
+    "speed": {
+      "fly": "60 ft.",
+      "swim": "60 ft.",
+      "walk": "0 ft."
+    },
+    "ability_scores": {
+      "STR": 25,
+      "DEX": 12,
+      "CON": 27,
+      "INT": 1,
+      "WIS": 7,
+      "CHA": 17
+    },
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 8
+    },
+    "languages": [],
+    "challenge_rating": 25,
+    "proficiency_bonus": 8,
+    "traits": [
+      {
+        "name": "Amphibious",
+        "description": "The Giant Koi can breathe air and water."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Giant Koi makes three Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 15,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "18 (2d10 + 7) bludgeoning damage"
+      }
+    ]
+  },
+  {
+    "name": "Goro Goro",
+    "size": "Large",
+    "type": "Fiend (Demon)",
+    "alignment": "Neutral Evil",
+    "armor_class": 17,
+    "armor": "Natural Armor",
+    "hit_points": "152 (16d10 + 64)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 15,
+      "DEX": 12,
+      "CON": 19,
+      "INT": 12,
+      "WIS": 10,
+      "CHA": 6
+    },
+    "saving_throws": {
+      "INT": 4,
+      "WIS": 3
+    },
+    "damage_resistances": [
+      "Psychic"
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 10
+    },
+    "languages": [
+      "Common",
+      "Torum"
+    ],
+    "challenge_rating": 7,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Cursed Form",
+        "description": "The Goro Goro can’t regain hit points, except through the use of its Delectable Flavor trait."
+      },
+      {
+        "name": "Delectable Flavor",
+        "description": "The Goro Goro regains 3 (1d6) hit points whenever it hits a creature with its Chomp attack that is drunk or affected by its Drunken Aura."
+      },
+      {
+        "name": "Drunken Aura",
+        "description": "Any creature hostile to the Goro Goro that starts its turn within 20 feet of it must make a DC 15 Constitution saving throw, unless the Goro Goro is Incapacitated. On a failed save, the creature is inebriated by potent fermented magic until the start of its next turn. While inebriated, a creature takes a −4 penalty to all ability checks and attack rolls."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Goro Goro makes two attacks: one with its Claw and one with its Chomp."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "11 (2d8 + 2) piercing damage"
+      },
+      {
+        "name": "Claw",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "8 (1d12 + 2) slashing damage"
+      },
+      {
+        "name": "Giant Sake Cup",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "10 ft.",
+        "target": "one target",
+        "hit": "16 (2d12 + 3) bludgeoning damage",
+        "special": "If the target is Medium or smaller, it must make a DC 12 Dexterity saving throw or become trapped under the Goro Goro’s giant sake cup. A trapped creature is Blinded and Restrained, has total cover against attacks and effects outside the cup, and suffers one level of exhaustion at the end of each of its turns. The effect ends early if the Goro Goro lifts the cup or makes another Giant Sake Cup attack. A trapped creature or an ally within 5 ft. can make a DC 15 Strength (Athletics) check to lift the cup and end the effect."
+      }
+    ]
+  },
+  {
+    "name": "Hammer Gull",
+    "size": "Large",
+    "type": "Beast",
+    "alignment": "Neutral",
+    "armor_class": 13,
+    "hit_points": "30 (4d10 + 8)",
+    "speed": {
+      "walk": "10 ft.",
+      "fly": "80 ft.",
+      "swim": "40 ft."
+    },
+    "ability_scores": {
+      "STR": 13,
+      "DEX": 17,
+      "CON": 15,
+      "INT": 6,
+      "WIS": 14,
+      "CHA": 10
+    },
+    "skills": {
+      "Perception": 4
+    },
+    "senses": {
+      "passive_perception": 14
+    },
+    "languages": [
+      "Understands Common but can't speak"
+    ],
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Keen Sight",
+        "description": "The Hammer Gull has advantage on Wisdom (Perception) checks that rely on sight."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Hammer Gull makes two Peck attacks."
+      },
+      {
+        "name": "Peck",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "8 (1d10 + 3) bludgeoning damage"
+      },
+      {
+        "name": "Boulder Drop",
+        "type": "Ranged Weapon Attack",
+        "bonus_to_hit": 5,
+        "range": "120/240 ft.",
+        "target": "one target",
+        "hit": "16 (3d8 + 3) bludgeoning damage",
+        "special": "If the target is a Large or smaller creature, it must succeed on a DC 13 Strength saving throw or be knocked Prone."
+      }
+    ]
+  },
+  {
+    "name": "Harpy",
+    "size": "Medium",
+    "type": "Monstrosity",
+    "alignment": "Neutral Evil",
+    "armor_class": 12,
+    "hit_points": "33 (6d8 + 6)",
+    "speed": {
+      "walk": "30 ft.",
+      "fly": "50 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 15,
+      "CON": 12,
+      "INT": 10,
+      "WIS": 10,
+      "CHA": 13
+    },
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Blood Frenzy",
+        "description": "The Harpy has advantage on melee attack rolls against any creature that doesn’t have all its hit points."
+      },
+      {
+        "name": "Dive Bomb",
+        "description": "If the Harpy misses its attack while flying, its movement doesn’t provoke opportunity attacks from the target."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Harpy makes two attacks with its Claws."
+      },
+      {
+        "name": "Claws",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "7 (1d10 + 2) slashing damage"
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Battle Fury (1/Day)",
+        "description": "If a Harpy sees an ally fall unconscious or die, it makes a Claw attack or gains 5 temporary hit points (its choice)."
+      }
+    ]
+  },
+  {
+    "name": "Hill Dragon",
+    "size": "Large",
+    "type": "Beast",
+    "alignment": "Unaligned",
+    "armor_class": 15,
+    "hit_points": "45 (6d10 + 12)",
+    "speed": {
+      "walk": "50 ft.",
+      "burrow": "20 ft."
+    },
+    "ability_scores": {
+      "STR": 13,
+      "DEX": 17,
+      "CON": 15,
+      "INT": 4,
+      "WIS": 10,
+      "CHA": 5
+    },
+    "skills": {
+      "Stealth": 7
+    },
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [],
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Hunting Prowess",
+        "description": "If the Hill Dragon didn’t make an attack on its previous turn, its speed increases by 15 feet. This benefit can stack up to three times (a maximum increase of 45 feet). Once the Hill Dragon makes an attack, its speed resets to normal."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Hill Dragon makes two attacks: one with its Chomp and one with its Claw."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "6 (1d6 + 3) piercing damage"
+      },
+      {
+        "name": "Claw",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d4 + 3) slashing damage"
+      },
+      {
+        "name": "Tail",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "10 ft.",
+        "target": "one target",
+        "hit": "10 (2d6 + 3) bludgeoning damage",
+        "additional_effect": "If the target is a Medium or smaller creature, it must succeed on a DC 13 Strength saving throw or be knocked Prone."
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Use of Terrain",
+        "description": "The Hill Dragon takes the Hide action; it can only use this bonus action if it is in a field or grassy environment."
+      }
+    ]
+  },
+  {
+    "name": "Howler Yipper",
+    "size": "Medium",
+    "type": "Humanoid",
+    "subtype": "Howler",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 15,
+    "hit_points": "22 (4d8 + 4)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 14,
+      "DEX": 13,
+      "CON": 12,
+      "INT": 6,
+      "WIS": 10,
+      "CHA": 7
+    },
+    "skills": {
+      "Perception": 2
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 10
+    },
+    "languages": [
+      "Howler"
+    ],
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Sleep Deprived",
+        "description": "The Howler has advantage on saving throws against being charmed or magically put to sleep."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 4,
+        "reach": "5 ft.",
+        "target": "one creature",
+        "hit": "5 (1d6 + 2) piercing damage"
+      },
+      {
+        "name": "Club",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d6 + 2) bludgeoning damage"
+      },
+      {
+        "name": "Longbow",
+        "type": "Ranged Weapon Attack",
+        "bonus_to_hit": 3,
+        "range": "150/600 ft.",
+        "target": "one target",
+        "hit": "5 (1d8 + 1) piercing damage"
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Discouraging Chuckle",
+        "description": "When a creature misses the Howler with an attack, the Howler must release a gut curling bout of laughter, provided it has its reaction available. The next time the attacker makes an attack roll or ability check before the end of its next turn, it must roll a d4 and subtract the number rolled from the total."
+      }
+    ]
+  },
+  {
+    "name": "Howler Snarler",
+    "size": "Medium",
+    "type": "Humanoid",
+    "subtype": "Howler",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 15,
+    "hit_points": "44 (8d8 + 8)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 17,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 8,
+      "WIS": 11,
+      "CHA": 9
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 10
+    },
+    "languages": [
+      "Howler"
+    ],
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Lead by Example",
+        "description": "If the Howler hits a creature with its first attack on its turn, it can forgo its second attack to bolster its allies. Each friendly creature that saw the Howler make the attack gains a +2 bonus to its attack rolls until the end of its next turn."
+      },
+      {
+        "name": "Sleep Deprived",
+        "description": "The Howler has advantage on saving throws against being charmed or magically put to sleep."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Howler makes two attacks: either one with its Chomp and one with its Club, or two with its Longbow."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one creature",
+        "hit": "6 (1d6 + 3) piercing damage"
+      },
+      {
+        "name": "Club",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "10 (2d6 + 3) bludgeoning damage"
+      },
+      {
+        "name": "Longbow",
+        "type": "Ranged Weapon Attack",
+        "bonus_to_hit": 4,
+        "range": "150/600 ft.",
+        "target": "one target",
+        "hit": "6 (1d8 + 2) piercing damage"
+      },
+      {
+        "name": "Regroup",
+        "description": "Each friendly creature within 20 feet of the Howler can move up to half its speed without provoking opportunity attacks."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Discouraging Chuckle",
+        "description": "When a creature misses the Howler with an attack, the Howler must release a gut curling bout of laughter, provided it has its reaction available. The next time the attacker makes an attack roll or ability check before the end of its next turn, it must roll a d4 and subtract the number rolled from the total."
+      }
+    ]
+  },
+  {
+    "name": "Howler Stalker",
+    "size": "Medium",
+    "type": "Humanoid",
+    "subtype": "Howler",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 15,
+    "armor_desc": "Studded Leather",
+    "hit_points": "22 (4d8 + 4)",
+    "speed": {
+      "walk": "40 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 17,
+      "CON": 12,
+      "INT": 8,
+      "WIS": 12,
+      "CHA": 8
+    },
+    "saving_throws": {
+      "DEX": 4
+    },
+    "skills": {
+      "Perception": 5,
+      "Stealth": 7,
+      "Survival": 5
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 15
+    },
+    "languages": [
+      "Howler"
+    ],
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Tricky Maneuver",
+        "description": "If the Howler hits a creature with its first Longbow attack on its turn while hidden, it can forgo its second attack to take the Hide action."
+      },
+      {
+        "name": "Paranoid",
+        "description": "The Howler can’t be surprised."
+      },
+      {
+        "name": "Sleep Deprived",
+        "description": "The Howler has advantage on saving throws against being charmed or magically put to sleep."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Howler makes three attacks: one with its Chomp and two with its Shortsword. Alternatively, it makes two attacks with its Longbow."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 3,
+        "reach": "5 ft.",
+        "target": "one creature",
+        "hit": "4 (1d6 + 1) piercing damage"
+      },
+      {
+        "name": "Shortsword",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "6 (1d6 + 3) bludgeoning damage"
+      },
+      {
+        "name": "Longbow",
+        "type": "Ranged Weapon Attack",
+        "bonus_to_hit": 5,
+        "range": "150/600 ft.",
+        "target": "one target",
+        "hit": "10 (2d6 + 3) piercing damage"
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Discouraging Chuckle",
+        "description": "When a creature misses the Howler with an attack, the Howler must release a gut curling bout of laughter, provided it has its reaction available. The next time the attacker makes an attack roll or ability check before the end of its next turn, it must roll a d4 and subtract the number rolled from the total."
+      }
+    ]
+  },
+  {
+    "name": "The Hunter",
+    "size": "Gargantuan",
+    "type": "Beast",
+    "alignment": "Neutral Good",
+    "armor_class": 25,
+    "armor_desc": "natural armor",
+    "hit_points": "512 (25d20 + 250)",
+    "speed": {
+      "walk": "60 ft.",
+      "fly": "240 ft."
+    },
+    "ability_scores": {
+      "STR": 30,
+      "DEX": 20,
+      "CON": 30,
+      "INT": 15,
+      "WIS": 20,
+      "CHA": 20
+    },
+    "saving_throws": {
+      "STR": 19,
+      "DEX": 14,
+      "WIS": 14
+    },
+    "skills": {
+      "Intimidation": 23,
+      "Perception": 23
+    },
+    "damage_immunities": [
+      "bludgeoning from nonmagical attacks",
+      "piercing from nonmagical attacks",
+      "slashing from nonmagical attacks"
+    ],
+    "condition_immunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "paralyzed",
+      "poisoned",
+      "prone",
+      "stunned"
+    ],
+    "senses": {
+      "darkvision": "240 ft.",
+      "passive_perception": 33
+    },
+    "languages": [
+      "understands Common and Torum but can’t speak"
+    ],
+    "challenge_rating": 30,
+    "xp": 155000,
+    "proficiency_bonus": 9,
+    "traits": [
+      {
+        "name": "Legendary Resistance (5/Day)",
+        "description": "If the Hunter fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Limited Magic Immunity",
+        "description": "Unless it wishes to be affected, the Hunter is immune to spells of 6th level or lower. It has advantage on saving throws against all other spells and magical effects."
+      },
+      {
+        "name": "Magic Weapons",
+        "description": "The Hunter’s weapon attacks are magical."
+      },
+      {
+        "name": "New Life",
+        "description": "When the Hunter dies, a new great beast is born into the world."
+      },
+      {
+        "name": "Spirit of Obojima (1/Day)",
+        "description": "If the Hunter drops below 250 hit points, it automatically regains 100 hit points."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Hunter makes three attacks: two with its Claw and one with Peck."
+      },
+      {
+        "name": "Claw",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 19,
+        "reach": "15 ft.",
+        "target": "one target",
+        "hit": "24 (4d6 + 10) slashing damage"
+      },
+      {
+        "name": "Peck",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 19,
+        "reach": "15 ft.",
+        "target": "one target",
+        "hit": "28 (4d8 + 10) piercing damage"
+      },
+      {
+        "name": "Inspiring Presence",
+        "description": "Each creature of the Hunter’s choice that is within 1,000 feet of the Hunter and aware of it gains inspiration and 19 (3d12) temporary hit points. Once a creature benefits from the Hunter’s Inspiring Presence, it can’t do so again until 7 days have passed."
+      }
+    ],
+    "legendary_actions": {
+      "actions_per_round": 5,
+      "options": [
+        {
+          "name": "Peck",
+          "cost": 1,
+          "description": "The Hunter makes a Peck attack."
+        },
+        {
+          "name": "Spiral Flight",
+          "cost": 2,
+          "description": "The Hunter briefly pulls its wings in while twisting its body. Each creature on top of the Hunter must succeed on a DC 22 Strength (Athletics) check or be thrown in a random direction 30 feet. Creatures flying within 30 feet are pushed 15 feet away from the Hunter."
+        },
+        {
+          "name": "Swallow",
+          "cost": 2,
+          "description": "The Hunter attempts to engulf a creature it can see within 20 feet. The target must succeed on a DC 22 Dexterity saving throw or be swallowed. While swallowed, the creature is blinded and restrained, has total cover, and takes 21 (6d6) bludgeoning damage at the start of each of the Hunter’s turns. If the Hunter takes 30+ damage in a turn from inside, it must succeed on a DC 20 Con save or regurgitate all swallowed creatures, which fall prone within 10 feet of it. If the Hunter dies, swallowed creatures are no longer restrained and can escape with 20 feet of movement."
+        },
+        {
+          "name": "Thunderous Beak",
+          "cost": 3,
+          "description": "The Hunter hisses and clacks its enormous beak, creating a thunderous sound audible for miles. Each creature within 150 feet (except the Hunter) must make a DC 20 Constitution save. On a fail: 55 (10d10) thunder damage and Deafened for 24 hours (or until cured by *Lesser Restoration*). On a success: half damage and no Deafness. Swallowed creatures auto-fail."
+        }
+      ]
+    }
+  },
+  {
+    "name": "Kafuka",
+    "size": "Small",
+    "type": "Monstrosity",
+    "alignment": "Neutral",
+    "armor_class": 14,
+    "armor_desc": "natural armor",
+    "hit_points": "49 (11d6 + 11)",
+    "speed": {
+      "walk": "30 ft.",
+      "climb": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 8,
+      "DEX": 16,
+      "CON": 12,
+      "INT": 14,
+      "WIS": 16,
+      "CHA": 17
+    },
+    "skills": {
+      "Arcana": 4,
+      "Insight": 5,
+      "Perception": 5,
+      "Stealth": 5,
+      "Survival": 5
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 15
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 2,
+    "xp": 450,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Innate Spellcasting",
+        "description": "The Kafuka’s innate spellcasting ability is Wisdom (spell save DC 13, +5 to hit with spell attacks). It can innately cast the following spells, requiring no material components:\n◊ At will: *Animal Messenger, Control Animal, Detect Magic, Druidcraft, Locate Animals or Plants, Swallow Magic*\n◊ 2/day each: *Beast Transmutation, Forest Guard, Pacify Person, Water Bullet*\n◊ 1/day: *Butterfly Storm*"
+      },
+      {
+        "name": "Mimicry",
+        "description": "The Kafuka can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations with a successful DC 13 Wisdom (Insight) check."
+      },
+      {
+        "name": "Speak with Beasts",
+        "description": "The Kafuka can comprehend and verbally communicate with Beasts as if they shared a language."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Claws",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "10 (3d4 + 3) slashing damage"
+      },
+      {
+        "name": "Summon Swarm (2/Day)",
+        "description": "If available, the Kafuka causes a group of tiny woodland animals to form a swarm and attack a creature that the Kafuka can see. This swarm of woodland creatures uses the Swarm of Rats stat block and immediately disperses when it takes damage."
+      }
+    ]
+  },
+  {
+    "name": "Lion’s Blume",
+    "size": "Medium",
+    "type": "Plant",
+    "alignment": "Unaligned",
+    "armor_class": 12,
+    "hit_points": "11 (2d8 + 2)",
+    "speed": {
+      "walk": "10 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 4,
+      "WIS": 7,
+      "CHA": 3
+    },
+    "condition_immunities": [
+      "Blinded",
+      "Deafened"
+    ],
+    "senses": {
+      "blindsight": "60 ft. (blind beyond this radius)",
+      "passive_perception": 8
+    },
+    "languages": [],
+    "challenge_rating": 0.25,
+    "xp": 50,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Thorn-Covered",
+        "description": "If the Lion’s Blume attempts to grapple a creature, the target takes 2 (1d4) piercing damage whether the grapple succeeds or not. While Grappled by the Lion’s Blume, the target takes 2 (1d4) piercing damage at the start of each of its turns."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus_to_hit": 4,
+        "reach": "10 ft.",
+        "target": "one target",
+        "hit": "4 (1d4 + 2) piercing damage"
+      }
+    ]
+  },
+  {
+    "name": "Mosslings",
+    "size": "Tiny",
+    "type": "spirit",
+    "alignment": "Unaligned",
+    "armor_class": 9,
+    "hit_points": "10 (4d4)",
+    "speed": {
+      "walk": "10 ft."
+    },
+    "ability_scores": {
+      "STR": 3,
+      "DEX": 8,
+      "CON": 11,
+      "INT": 10,
+      "WIS": 10,
+      "CHA": 12
+    },
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [
+      "Torum"
+    ],
+    "challenge_rating": 0,
+    "xp": 10,
+    "proficiency_bonus": 2,
+    "actions": [
+      {
+        "name": "Perfume Poof",
+        "description": "The Mossling can cast *Pacify Person* at will (spell save DC 11)."
+      }
+    ]
+  },
+  {
+    "name": "Pixie",
+    "size": "Tiny",
+    "type": "Spirit",
+    "alignment": "Neutral Good",
+    "armor_class": 14,
+    "hit_points": "15 (6d4)",
+    "speed": {
+      "walk": "30 ft.",
+      "fly": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 18,
+      "CON": 10,
+      "INT": 14,
+      "WIS": 15,
+      "CHA": 12
+    },
+    "skills": {
+      "Perception": 4,
+      "Stealth": 8
+    },
+    "senses": {
+      "passive_perception": 14
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 0.5,
+    "xp": 100,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Magic Resistance",
+        "description": "The Pixie has advantage on saving throws against spells and other magical effects."
+      },
+      {
+        "name": "Innate Spellcasting",
+        "description": "The Pixie’s innate spellcasting ability is Charisma (spell save DC 13, +5 to hit with spell attacks). It can innately cast the following spells, requiring no material components:\n- At will: Druidcraft, Jolt, Root Grab, Transparency\n- 1/day each: Confusion, Control Animal, Detect Thoughts, Entangle, Obscure Object, Pacify Person, Sleep, Whelm Weapon"
+      }
+    ],
+    "actions": [
+      {
+        "name": "Gift of Flight",
+        "description": "The Pixie magically grants a creature it can see a Flying speed of 30 feet. The creature keeps its Flying speed, as long as the Pixie is holding its breath. The Pixie can hold its breath for a number of minutes equal to 1 + its Constitution modifier (minimum of 30 seconds). The Pixie can only grant this effect to one creature at a time, and when the effect ends, it must wait 1 minute before using it again."
+      }
+    ]
+  },
+  {
+    "name": "Postal Knight",
+    "size": "Medium",
+    "type": "Humanoid (Any Race)",
+    "alignment": "Any Good Alignment",
+    "armor_class": 15,
+    "hit_points": "32 (5d8 + 10)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 15,
+      "DEX": 13,
+      "CON": 14,
+      "INT": 11,
+      "WIS": 13,
+      "CHA": 12
+    },
+    "skills": {
+      "Arcana": 2,
+      "Perception": 5,
+      "Stealth": 3,
+      "Survival": 5
+    },
+    "senses": {
+      "passive_perception": 15
+    },
+    "languages": [
+      "any one language (usually Common)"
+    ],
+    "challenge_rating": 0.5,
+    "xp": 100,
+    "proficiency_bonus": 2,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Postal Knight makes two melee attacks or three attacks with its Sling."
+      },
+      {
+        "name": "Frying Pan",
+        "type": "Melee Weapon Attack",
+        "bonus": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d6 + 2) bludgeoning damage"
+      },
+      {
+        "name": "Sword",
+        "type": "Melee Weapon Attack",
+        "bonus": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "6 (1d8 + 2) slashing damage"
+      },
+      {
+        "name": "Sling",
+        "type": "Ranged Weapon Attack",
+        "bonus": 3,
+        "range": "30/120 ft.",
+        "target": "one target",
+        "hit": "3 (1d4 + 1) bludgeoning damage"
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Defensive Cooking",
+        "description": "When wielding a frying pan, the Postal Knight can gain a +1 bonus to AC until the end of its next turn."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Brother in Arms",
+        "description": "If damage is dealt to a friendly creature within 5 feet of the Postal Knight, the Postal Knight and the target each take half of the damage dealt, splitting the damage between them."
+      }
+    ]
+  },
+  {
+    "name": "Rubble Golem",
+    "size": "Large",
+    "type": "Construct",
+    "alignment": "Unaligned",
+    "armor_class": 17,
+    "hit_points": "178 (17d10 + 85)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 22,
+      "DEX": 9,
+      "CON": 20,
+      "INT": 7,
+      "WIS": 11,
+      "CHA": 1
+    },
+    "damage_immunities": [
+      "poison",
+      "psychic",
+      "piercing from nonmagical attacks that aren't adamantine",
+      "slashing from nonmagical attacks that aren't adamantine"
+    ],
+    "condition_immunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "paralyzed",
+      "petrified",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 10
+    },
+    "languages": [
+      "understands the languages it knew in life but can't speak"
+    ],
+    "challenge_rating": 11,
+    "xp": 7200,
+    "proficiency_bonus": 4,
+    "traits": [
+      {
+        "name": "Immutable Form",
+        "description": "The golem is immune to any spell or effect that would alter its form."
+      },
+      {
+        "name": "Magic Resistance",
+        "description": "The golem has advantage on saving throws against spells and other magical effects."
+      },
+      {
+        "name": "Magic Weapons",
+        "description": "The golem’s weapon attacks are magical."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The golem makes two slam attacks."
+      },
+      {
+        "name": "Slam",
+        "type": "Melee Weapon Attack",
+        "bonus": 10,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "19 (3d8 + 6) bludgeoning damage"
+      },
+      {
+        "name": "Collapse",
+        "description": "Recharge 5–6. The golem targets a 15-foot-diameter circle within 15 feet of itself. Each creature in the area must make a DC 17 Dexterity saving throw or be crushed as the golem leaps and lands in the designated location, turning into a shockwave of rubble and transforming into its rubble form. On a failed save, a creature takes 22 (5d8) bludgeoning damage and is knocked prone. On a successful save, the creature takes half as much damage and isn’t knocked prone.\n\nWhile the golem is in rubble form:\n- The area of impact is difficult terrain.\n- The golem is incapacitated and has resistance to all damage.\n- It automatically fails Dexterity saving throws.\n\nThe golem returns to its original form at the start of its next turn, shunting any creature in its space to an unoccupied space within 5 feet."
+      }
+    ]
+  },
+  {
+    "name": "Seaweed Elemental",
+    "size": "Large",
+    "type": "Elemental",
+    "alignment": "Neutral",
+    "armor_class": 14,
+    "hit_points": "102 (12d10 + 36)",
+    "speed": {
+      "walk": "30 ft.",
+      "swim": "90 ft."
+    },
+    "ability_scores": {
+      "STR": 17,
+      "DEX": 15,
+      "CON": 16,
+      "INT": 5,
+      "WIS": 9,
+      "CHA": 8
+    },
+    "damage_resistances": [
+      "bludgeoning from nonmagical attacks",
+      "piercing from nonmagical attacks",
+      "slashing from nonmagical attacks"
+    ],
+    "damage_immunities": [
+      "poison"
+    ],
+    "condition_immunities": [
+      "exhaustion",
+      "grappled",
+      "paralyzed",
+      "petrified",
+      "poisoned",
+      "prone",
+      "restrained",
+      "unconscious"
+    ],
+    "senses": {
+      "blindsight": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": [],
+    "challenge_rating": 5,
+    "xp": 1800,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Entangling Form",
+        "description": "A creature that touches the Seaweed Elemental or hits it with a melee attack while within 5 feet of it must succeed on a DC 14 Strength saving throw or become Restrained by the elemental. At the start of each of the Restrained creature’s turns, it takes 5 (1d10) bludgeoning damage. The Restrained creature can use its action to repeat the saving throw, ending the effect on a success. If the elemental moves more than 10 feet away from the creature, the effect ends."
+      },
+      {
+        "name": "False Appearance",
+        "description": "If the Seaweed Elemental is motionless at the start of combat, it has advantage on its initiative roll. If a creature hasn't observed the elemental move or act, that creature must succeed on a DC 18 Intelligence (Investigation) check to discern it isn't ordinary seaweed."
+      },
+      {
+        "name": "Mostly Clumps",
+        "description": "The Seaweed Elemental can move through a space as narrow as 5 inches wide without squeezing."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The elemental makes two Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "type": "Melee Weapon Attack",
+        "bonus": 6,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "10 (2d6 + 3) bludgeoning damage plus 3 (1d6) poison damage"
+      }
+    ]
+  },
+  {
+    "name": "Sheep Dragon",
+    "size": "Large",
+    "type": "Beast",
+    "alignment": "Unaligned",
+    "armor_class": 14,
+    "hit_points": "75 (10d8 + 30)",
+    "speed": {
+      "walk": "20 ft.",
+      "fly": "90 ft."
+    },
+    "ability_scores": {
+      "STR": 13,
+      "DEX": 16,
+      "CON": 16,
+      "INT": 5,
+      "WIS": 10,
+      "CHA": 7
+    },
+    "skills": {
+      "Perception": 2
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 12
+    },
+    "languages": [
+      "understands Common but can’t speak"
+    ],
+    "challenge_rating": 3,
+    "xp": 700,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Rush",
+        "description": "If the sheep dragon moves at least 20 feet in a straight line, during which it moves within 5 feet of a creature and flies past it, that creature must make a DC 14 Strength saving throw. On a failed save, the creature is pulled 10 feet in the direction the sheep dragon is moving and knocked prone, and the sheep dragon doesn’t provoke an opportunity attack from it. On a successful save, the creature isn’t pulled or knocked prone, and if it makes an opportunity attack against the sheep dragon, it does so with disadvantage."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The sheep dragon makes two attacks: one with its Bite and one with its Headbutt. Alternatively, it makes three Wind Pistol attacks."
+      },
+      {
+        "name": "Bite",
+        "type": "Melee Weapon Attack",
+        "bonus": 3,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d8 + 1) piercing damage"
+      },
+      {
+        "name": "Headbutt",
+        "type": "Melee Weapon Attack",
+        "bonus": 3,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "4 (1d6 + 1) bludgeoning damage"
+      },
+      {
+        "name": "Wind Pistol",
+        "type": "Ranged Weapon Attack",
+        "bonus": 5,
+        "range": "100/200 ft.",
+        "target": "one target",
+        "hit": "5 (1d4 + 3) bludgeoning damage"
+      }
+    ]
+  },
+  {
+    "name": "Skeletal Fish",
+    "size": "Medium",
+    "type": "Swarm of Tiny Beasts",
+    "alignment": "Unaligned",
+    "armor_class": 13,
+    "hit_points": "35 (10d8 - 10)",
+    "speed": {
+      "fly": "40 ft.",
+      "swim": "40 ft.",
+      "walk": "0 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 15,
+      "CON": 9,
+      "INT": 1,
+      "WIS": 4,
+      "CHA": 2
+    },
+    "damage_resistances": [
+      "piercing",
+      "slashing"
+    ],
+    "damage_immunities": [
+      "poison"
+    ],
+    "condition_immunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "grappled",
+      "paralyzed",
+      "petrified",
+      "poisoned",
+      "prone",
+      "restrained",
+      "stunned"
+    ],
+    "senses": {
+      "blindsight": "60 ft. (blind beyond this distance)",
+      "passive_perception": 7
+    },
+    "languages": [],
+    "challenge_rating": 1,
+    "xp": 200,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Shrapnel",
+        "description": "If a creature within 5 feet of the swarm hits it with a melee attack while the swarm isn’t underwater, the creature must make a DC 10 Wisdom saving throw. On a failed save, the creature flinches, giving it disadvantage on the next attack roll it makes this turn."
+      },
+      {
+        "name": "Skeletonized",
+        "description": "The swarm doesn’t require air, food, drink, or sleep."
+      },
+      {
+        "name": "Swarm",
+        "description": "The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny fish. The swarm can’t regain hit points or gain temporary hit points."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus": 4,
+        "reach": "0 ft.",
+        "target": "one target in the swarm’s space",
+        "hit": "16 (4d6 + 2) piercing damage, or 9 (2d6 + 2) if the swarm has half of its hit points or fewer"
+      }
+    ]
+  },
+  {
+    "name": "Sky King",
+    "size": "Gargantuan",
+    "type": "Beast",
+    "alignment": "Neutral Good",
+    "armor_class": 25,
+    "hit_points": "350 (20d20 + 140)",
+    "speed": {
+      "walk": "0 ft.",
+      "fly": "120 ft.",
+      "swim": "120 ft."
+    },
+    "ability_scores": {
+      "STR": 25,
+      "DEX": 20,
+      "CON": 25,
+      "INT": 18,
+      "WIS": 30,
+      "CHA": 20
+    },
+    "saving_throws": {
+      "DEX": 14,
+      "INT": 13,
+      "WIS": 19
+    },
+    "skills": {
+      "Insight": 19,
+      "Perception": 19
+    },
+    "damage_immunities": [
+      "poison",
+      "bludgeoning from nonmagical attacks",
+      "piercing from nonmagical attacks",
+      "slashing from nonmagical attacks"
+    ],
+    "condition_immunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "frightened",
+      "petrified",
+      "poisoned",
+      "stunned"
+    ],
+    "senses": {
+      "blindsight": "150 ft.",
+      "passive_perception": 29
+    },
+    "languages": [
+      "understands Common",
+      "understands Torum (can’t speak)"
+    ],
+    "challenge_rating": 28,
+    "xp": 120000,
+    "proficiency_bonus": 9,
+    "traits": [
+      {
+        "name": "Cloud Trail",
+        "description": "Wherever the Sky King flies, it creates a trail of giant fluffy white clouds in its wake."
+      },
+      {
+        "name": "Legendary Resistance (5/Day)",
+        "description": "If the Sky King fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Limited Magic Immunity",
+        "description": "Unless it wishes to be affected, the Sky King is immune to spells of 6th level or lower. It has advantage on saving throws against all other spells and magical effects."
+      },
+      {
+        "name": "Magic Weapons",
+        "description": "The Sky King's weapon attacks are magical."
+      },
+      {
+        "name": "New Life",
+        "description": "When the Sky King dies, a new great beast is born into the world."
+      },
+      {
+        "name": "Spirit of Obojima (1/Day)",
+        "description": "If the Sky King drops below 150 hit points, a giant storm begins to brew above and the oceans become uneasy. For the next minute, creatures that touch the Sky King or hit it with a melee attack take 9 (2d10) lightning damage."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Sky King makes three attacks: two with its Chomp and one with its Tail."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus": 16,
+        "reach": "15 ft.",
+        "target": "one target",
+        "hit": "17 (3d6 + 7) piercing damage"
+      },
+      {
+        "name": "Tail",
+        "type": "Melee Weapon Attack",
+        "bonus": 16,
+        "reach": "15 ft.",
+        "target": "one target",
+        "hit": "20 (3d8 + 7) bludgeoning damage"
+      },
+      {
+        "name": "Inspiring Presence",
+        "description": "Each creature of the Sky King’s choice within 300 feet that can see or hear it gains inspiration and a flying speed of 30 feet for 1 minute. Once a creature benefits, it can’t again for 7 days."
+      }
+    ],
+    "legendary_actions": {
+      "description": "The Sky King can take 5 legendary actions, choosing from the options below. Only one legendary action can be used at a time and only at the end of another creature’s turn. The Sky King regains spent legendary actions at the start of its turn.",
+      "actions": [
+        {
+          "name": "Chomp",
+          "description": "The Sky King makes a Chomp attack."
+        },
+        {
+          "name": "Turbulent Shift (Costs 2 Actions)",
+          "description": "The air or water surrounding the Sky King spins violently. Each creature within 60 ft. (except the Sky King) must make a DC 20 Constitution saving throw. On a failed save, the creature takes 28 (8d6) bludgeoning damage and is disoriented until the end of its next turn (disadvantage on ability checks and saving throws). On a success, the creature takes half damage and isn't disoriented. Objects and structures in the area take maximum damage."
+        },
+        {
+          "name": "Nullify (Costs 3 Actions)",
+          "description": "All spells of 3rd level or lower within 120 feet are suspended (as per Antimagic Field) until the start of the Sky King's next turn."
+        }
+      ]
+    }
+  },
+  {
+    "name": "Jumaga the Sky Salamander",
+    "size": "Gargantuan",
+    "type": "Beast",
+    "alignment": "Neutral",
+    "armor_class": 22,
+    "hit_points": "462 (25d20 + 200)",
+    "speed": {
+      "walk": "20 ft.",
+      "fly": "150 ft."
+    },
+    "ability_scores": {
+      "STR": 24,
+      "DEX": 24,
+      "CON": 26,
+      "INT": 13,
+      "WIS": 16,
+      "CHA": 30
+    },
+    "saving_throws": {
+      "DEX": 14,
+      "CON": 15
+    },
+    "skills": {
+      "Perception": 10,
+      "Stealth": 14
+    },
+    "damage_immunities": [
+      "bludgeoning from nonmagical attacks",
+      "piercing from nonmagical attacks",
+      "slashing from nonmagical attacks"
+    ],
+    "senses": {
+      "darkvision": "120 ft.",
+      "truesight": "60 ft.",
+      "passive_perception": 20
+    },
+    "languages": [
+      "understands Common",
+      "understands Torum (can't speak)"
+    ],
+    "challenge_rating": 23,
+    "xp": 50000,
+    "proficiency_bonus": 7,
+    "traits": [
+      {
+        "name": "Color Shift",
+        "description": "Jumaga naturally changes color to blend into its environment, giving it advantage on Dexterity (Stealth) checks made to hide from creatures that are more than 300 feet away."
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If Jumaga fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Magic Weapons",
+        "description": "Jumaga's weapon attacks are magical."
+      },
+      {
+        "name": "New Life",
+        "description": "When Jumaga dies, a new great beast is born into the world."
+      },
+      {
+        "name": "Spirit of Obojima (1/Day)",
+        "description": "If Jumaga drops below 200 hit points, it glows a bright orange for 1 minute. During that time, its Chomp deals an extra 5 (1d10) poison damage on a hit, and it regains 5 (1d10) hit points each time it is targeted by a spell of 3rd level or lower."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "Jumaga makes three attacks: two with its Chomp and one with its Tail."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus": 14,
+        "reach": "15 ft.",
+        "target": "one target",
+        "hit": "21 (4d6 + 7) piercing damage"
+      },
+      {
+        "name": "Tail",
+        "type": "Melee Weapon Attack",
+        "bonus": 14,
+        "reach": "30 ft.",
+        "target": "one target",
+        "hit": "25 (4d8 + 7) bludgeoning damage"
+      },
+      {
+        "name": "Paralyzing Breath (Recharge 5–6)",
+        "description": "Jumaga exhales a paralyzing breath in a 60-foot cone. Each creature in that area must succeed on a DC 23 Constitution saving throw or be paralyzed for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
+      }
+    ],
+    "legendary_actions": {
+      "description": "Jumaga can take 3 legendary actions, choosing from the options below. Only one legendary action option can be used at a time and only at the end of another creature’s turn. Jumaga regains spent legendary actions at the start of its turn.",
+      "actions": [
+        {
+          "name": "Tail Attack",
+          "description": "Jumaga makes a Tail attack."
+        },
+        {
+          "name": "Skin Toxins (Costs 2 Actions)",
+          "description": "Jumaga’s body secretes a dangerous toxin. Until the start of its next turn, creatures that touch it or hit it with a melee attack take 16 (3d10) poison damage."
+        },
+        {
+          "name": "Bestial Hiss (Costs 3 Actions)",
+          "description": "Jumaga produces a thunderous hiss. Each creature within 150 feet must succeed on a DC 25 Wisdom saving throw or be Pacified until the end of their next turn."
+        }
+      ]
+    }
+  },
+  {
+    "name": "Slagger",
+    "size": "Huge",
+    "type": "Spirit",
+    "alignment": "Neutral",
+    "armor_class": 16,
+    "hit_points": "126 (11d12 + 55)",
+    "speed": {
+      "fly": "60 ft. (hover)"
+    },
+    "ability_scores": {
+      "STR": 18,
+      "DEX": 10,
+      "CON": 20,
+      "INT": 7,
+      "WIS": 12,
+      "CHA": 8
+    },
+    "damage_immunities": [
+      "fire",
+      "poison"
+    ],
+    "condition_immunities": [
+      "petrified",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvision": "120 ft.",
+      "passive_perception": 11
+    },
+    "languages": [
+      "Torum"
+    ],
+    "challenge_rating": 8,
+    "xp": 3900,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Heat Wave",
+        "description": "A creature that starts its turn within 20 feet of the Slagger takes 2 (1d4) fire damage. If the creature is wearing metal armor or wielding metal weapons, the damage is doubled."
+      },
+      {
+        "name": "Scorch",
+        "description": "Flammable objects ignite if they come within 15 feet of the Slagger."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Slagger uses its Cough. It then makes one Slam attack."
+      },
+      {
+        "name": "Slam",
+        "type": "Melee Weapon Attack",
+        "bonus": 7,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "25 (6d6 + 4) bludgeoning damage"
+      },
+      {
+        "name": "Spew Magma (Recharge 5–6)",
+        "type": "Ranged Weapon Attack",
+        "bonus": 7,
+        "range": "30/90 ft.",
+        "target": "three targets",
+        "hit": "18 (2d12 + 5) fire damage. Regardless of whether the attacks hit or miss, the area within 5 feet of each target is covered in lava. The lava is considered difficult terrain, and a creature that starts its turn in the lava takes 6 (1d12) fire damage. The lava cools and hardens after 1 minute, at which point it becomes harmless and is no longer difficult terrain."
+      },
+      {
+        "name": "Cough",
+        "description": "The Slagger coughs a sulfurous cloud in a 30-foot cone. Each creature in the area must make a DC 18 Constitution saving throw, taking 13 (2d12) poison damage on a failed save, or half as much on a successful one."
+      }
+    ]
+  },
+  {
+    "name": "Green Slime",
+    "size": "Small",
+    "type": "Ooze",
+    "alignment": "Neutral Evil",
+    "armor_class": 13,
+    "hit_points": "19 (3d6 + 9)",
+    "speed": {
+      "walk": "20 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 16,
+      "CON": 16,
+      "INT": 11,
+      "WIS": 11,
+      "CHA": 9
+    },
+    "condition_immunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "prone"
+    ],
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [],
+    "challenge_rating": 0.25,
+    "xp": 50,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Amorphous",
+        "description": "The green slime can move through a space as narrow as 1 inch wide without squeezing."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Spike",
+        "type": "Melee Weapon Attack",
+        "bonus": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d4 + 3) piercing damage plus 2 (1d4) acid damage"
+      },
+      {
+        "name": "Flee",
+        "description": "To save itself from danger, the green slime can sever off a part of its body to cause a distraction. The slime chooses to lose any number of hit points when using this ability. For each hit point lost, a tiny copy of the slime leaps from its body and moves 30 feet in a random direction, after which it falls lifeless."
+      }
+    ]
+  },
+  {
+    "name": "Yellow Slime",
+    "size": "Medium",
+    "type": "Ooze",
+    "alignment": "Neutral Evil",
+    "armor_class": 14,
+    "hit_points": "90 (12d8 + 36)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 17,
+      "CON": 16,
+      "INT": 11,
+      "WIS": 12,
+      "CHA": 9
+    },
+    "condition_immunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "prone"
+    ],
+    "senses": {
+      "passive_perception": 11
+    },
+    "languages": [],
+    "challenge_rating": 5,
+    "xp": 1800,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Amorphous",
+        "description": "The Yellow Slime can move through a space as narrow as 1 inch wide without squeezing."
+      },
+      {
+        "name": "Horrid Stench",
+        "description": "When a creature starts its turn within 20 feet of the Yellow Slime, it must make a DC 14 Constitution saving throw or be gagged by the terrible smell. On a failed save, the creature must use all of its movement to move away from the slime by the safest available route."
+      },
+      {
+        "name": "Sticky",
+        "description": "If the Yellow Slime doesn’t move for a round, the space it occupies becomes slathered in a sticky, acrid yellow coating. For all creatures except Oozes, the space is difficult terrain, and when the creature enters or starts its turn there, it must succeed on a DC 14 Constitution saving throw or take 4 (1d8) acid damage."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Yellow Slime makes one Spike attack and uses its Arrange."
+      },
+      {
+        "name": "Spike",
+        "type": "Melee Weapon Attack",
+        "bonus": 7,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "7 (1d6 + 4) piercing damage plus 7 (2d6) acid damage"
+      },
+      {
+        "name": "Arrange",
+        "description": "The Yellow Slime attempts to pull a creature within 5 feet through its body into another space. The target must succeed on a DC 15 Strength saving throw or take 4 (1d8) acid damage and be moved to an unoccupied space within 10 feet of the slime."
+      }
+    ]
+  },
+  {
+    "name": "Orange Slime",
+    "size": "Large",
+    "type": "Ooze",
+    "alignment": "Neutral Evil",
+    "armor_class": 16,
+    "hit_points": "157 (15d10 + 75)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 20,
+      "DEX": 16,
+      "CON": 20,
+      "INT": 12,
+      "WIS": 14,
+      "CHA": 9
+    },
+    "saving_throws": {
+      "STR": 9,
+      "DEX": 7,
+      "WIS": 6
+    },
+    "condition_immunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "prone"
+    ],
+    "senses": {
+      "passive_perception": 12
+    },
+    "languages": [],
+    "challenge_rating": 10,
+    "xp": 5900,
+    "proficiency_bonus": 4,
+    "traits": [
+      {
+        "name": "Amorphous",
+        "description": "The Orange Slime can move through a space as narrow as 1 inch wide without squeezing."
+      },
+      {
+        "name": "Explosive",
+        "description": "If the Orange Slime takes fire damage, a portion of its body explodes. Each creature within 10 feet of the slime must make a DC 17 Dexterity saving throw, taking fire damage equal to the amount dealt to the slime on a failed save, or half as much on a success."
+      },
+      {
+        "name": "Steaming",
+        "description": "If water touches the Orange Slime, a burning hot wave of steam erupts from it, filling the area within 20 feet. The area is heavily obscured until the end of the slime’s next turn or until a strong wind disperses it. This steam does not impede the vision of Orange and Yellow Slimes."
+      },
+      {
+        "name": "Sulfurous Haze",
+        "description": "Creatures within 60 feet of the slime take a −5 penalty to ranged attack rolls against it."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Orange Slime makes two Spike attacks and uses its Arrange."
+      },
+      {
+        "name": "Spike",
+        "type": "Melee Weapon Attack",
+        "bonus": 9,
+        "reach": "10 ft.",
+        "target": "one target",
+        "hit": "18 (3d8 + 5) bludgeoning damage plus 9 (2d8) fire damage"
+      },
+      {
+        "name": "Arrange",
+        "description": "The Orange Slime attempts to pull a creature within 10 feet of it through its body and into another space. The target must succeed on a DC 17 Strength saving throw or take 13 (3d8) fire damage and be moved to an unoccupied space within 15 feet of the slime."
+      }
+    ]
+  },
+  {
+    "name": "Corrupted Slime",
+    "size": "Small",
+    "type": "Ooze",
+    "alignment": "Neutral",
+    "armor_class": 13,
+    "hit_points": "45 (7d6 + 21)",
+    "speed": {
+      "walk": "20 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 16,
+      "CON": 16,
+      "INT": 11,
+      "WIS": 11,
+      "CHA": 9
+    },
+    "condition_immunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "prone"
+    ],
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [],
+    "challenge_rating": 1,
+    "xp": 200,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Amorphous",
+        "description": "The corrupted slime can move through a space as narrow as 1 inch wide without squeezing."
+      },
+      {
+        "name": "Sickness",
+        "description": "Each time a creature comes in contact with the corrupted slime, it must succeed on a DC 13 Constitution saving throw or suffer one level of exhaustion. Once a creature has been affected by a corrupted slime’s Sickness, it is immune for the next 24 hours."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Spike",
+        "type": "Melee Weapon Attack",
+        "bonus": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "6 (1d6 + 3) piercing damage plus 3 (1d6) necrotic damage"
+      },
+      {
+        "name": "Drain",
+        "description": "The corrupted slime deals 2 (1d4) necrotic damage to each creature affected by its sickness within 120 feet. It then regains hit points equal to the total damage dealt."
+      }
+    ]
+  },
+  {
+    "name": "Snowball Spirits",
+    "size": "Medium",
+    "type": "Swarm of Tiny Spirits",
+    "alignment": "Neutral",
+    "armor_class": 14,
+    "hit_points": "58 (9d8 + 18)",
+    "speed": {
+      "walk": "60 ft."
+    },
+    "ability_scores": {
+      "STR": 17,
+      "DEX": 12,
+      "CON": 15,
+      "INT": 11,
+      "WIS": 10,
+      "CHA": 10
+    },
+    "damage_vulnerabilities": [
+      "fire"
+    ],
+    "damage_resistances": [
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "damage_immunities": [
+      "cold"
+    ],
+    "condition_immunities": [
+      "grappled",
+      "paralyzed",
+      "prone",
+      "restrained",
+      "unconscious"
+    ],
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [],
+    "challenge_rating": 4,
+    "xp": 1100,
+    "proficiency_bonus": 2,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The snowball spirits make two Pelt attacks."
+      },
+      {
+        "name": "Pelt",
+        "type": "Ranged Weapon Attack",
+        "bonus": 5,
+        "range": "20/40 ft.",
+        "target": "one target",
+        "hit": "6 (1d6 + 3) bludgeoning damage"
+      },
+      {
+        "name": "Slam",
+        "type": "Melee Weapon Attack",
+        "bonus": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "17 (4d6 + 3) bludgeoning damage. If the target is at least one size smaller than the snowball spirits, it must succeed on a DC 14 Strength saving throw or be whelmed.",
+        "additional_effect": "A whelmed creature is grappled (escape DC 14) and moves with the snowball spirits. A nearby creature may use an action and succeed on a DC 14 Strength check to free the grappled creature. The spirits can only whelm one creature at a time unless they are Huge, in which case they can whelm up to three."
+      },
+      {
+        "name": "Snowball",
+        "description": "Whenever the snowball spirits take the Dash action, they can make a Slam attack as part of that action. Alternatively, if in snowy terrain, they may absorb snow during movement, grow by one size category, and regain 10 hit points."
+      }
+    ]
+  },
+  {
+    "name": "Soda Slime",
+    "size": "Tiny",
+    "type": "Ooze",
+    "alignment": "Unaligned",
+    "armor_class": 11,
+    "armor_desc": "can armor",
+    "hit_points": "17 (5d4 + 5)",
+    "speed": {
+      "walk": "10 ft.",
+      "climb": "10 ft."
+    },
+    "ability_scores": {
+      "STR": 8,
+      "DEX": 12,
+      "CON": 12,
+      "INT": 3,
+      "WIS": 6,
+      "CHA": 2
+    },
+    "skills": {
+      "Stealth": "+5"
+    },
+    "condition_immunities": [
+      "blinded",
+      "deafened",
+      "exhaustion",
+      "prone"
+    ],
+    "senses": {
+      "blindsight": "60 ft. (blind beyond this radius)",
+      "passive_perception": 8
+    },
+    "languages": [
+      "understands Common but doesn’t speak"
+    ],
+    "challenge_rating": 0.5,
+    "xp": 100,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "False Appearance",
+        "description": "If the soda slime is motionless at the start of combat, it has advantage on its initiative roll. Moreover, if a creature hasn’t observed the soda slime move or act, that creature must succeed on a DC 18 Intelligence (Investigation) check to discern that the soda slime isn’t an ordinary soda can."
+      },
+      {
+        "name": "Soda Pop",
+        "description": "When a soda slime is reduced to 0 hit points, each creature within 10 feet must succeed on a DC 10 Dexterity saving throw or take 6 (1d10 + 1) force damage as it explodes in a fizzy pop."
+      },
+      {
+        "name": "Sticky Nature",
+        "description": "The soda slime can occupy the same space as another creature. While in the same space as the soda slime, a creature has disadvantage on attack rolls and Dexterity checks. When a creature leaves the soda slime’s space, it must first make a DC 10 Strength (Athletics) check, carrying the slime with it on a failure."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Smack",
+        "type": "Melee Weapon Attack",
+        "bonus": 3,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "5 (1d8 + 1) bludgeoning damage plus 9 (2d8) poison damage"
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Sticky Tendril",
+        "description": "When a hostile creature’s movement provokes an opportunity attack from the soda slime, it forces the provoking creature to make a DC 12 Dexterity saving throw, causing it to fall prone on a failed save."
+      }
+    ]
+  },
+  {
+    "name": "Spirit",
+    "size": "Medium",
+    "type": "Spirit",
+    "alignment": "Any Neutral or Good Alignment",
+    "armor_class": 10,
+    "hit_points": "16 (3d8 + 3)",
+    "speed": {
+      "walk": "30 ft.",
+      "flying_form": "Flying 30 ft. (hover)"
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 10,
+      "CON": 12,
+      "INT": 10,
+      "WIS": 12,
+      "CHA": 12
+    },
+    "skills": {
+      "Arcana": "+2"
+    },
+    "senses": {
+      "passive_perception": 11
+    },
+    "languages": [
+      "Common",
+      "Torum"
+    ],
+    "challenge_rating": 0.125,
+    "xp": 25,
+    "proficiency_bonus": 2,
+    "actions": [
+      {
+        "name": "Smack",
+        "type": "Melee Weapon Attack",
+        "bonus": 2,
+        "reach": "5 ft.",
+        "target": "one creature",
+        "hit": "2 (1d4) bludgeoning damage"
+      }
+    ]
+  },
+  {
+    "name": "Animalistic Spirit",
+    "size": "Medium",
+    "type": "Spirit",
+    "alignment": "Unaligned",
+    "armor_class": 15,
+    "hit_points": "39 (6d8 + 12)",
+    "speed": {
+      "walk": "40 ft."
+    },
+    "ability_scores": {
+      "STR": 15,
+      "DEX": 15,
+      "CON": 15,
+      "INT": 7,
+      "WIS": 12,
+      "CHA": 9
+    },
+    "skills": {
+      "Intimidation": "+1",
+      "Perception": "+3",
+      "Stealth": "+4"
+    },
+    "senses": {
+      "passive_perception": 13
+    },
+    "languages": [
+      "Common",
+      "Torum"
+    ],
+    "challenge_rating": 1,
+    "xp": 200,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Promising Threat",
+        "description": "The bestial spirit has advantage on Charisma (Intimidation) checks if the target has seen it hit a creature with its Chomp attack in the past minute."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "bonus": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "hit": "9 (2d6 + 2) piercing damage. If the target is a creature, it must succeed on a DC 14 Strength saving throw or be knocked prone."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Devour",
+        "description": "When the bestial spirit reduces a creature to 0 hit points, it consumes some of the creature’s essence, regaining 1d10 hit points."
+      }
+    ]
+  },
+  {
+    "name": "Pest Spirit",
+    "size": "Tiny",
+    "type": "Spirit",
+    "alignment": "Unaligned",
+    "armor_class": 11,
+    "hit_points": "10 (4d4)",
+    "speed": {
+      "walk": "20 ft.",
+      "flying_form": "Flying 20 ft. (0 ft. walk)"
+    },
+    "ability_scores": {
+      "STR": 3,
+      "DEX": 12,
+      "CON": 11,
+      "INT": 10,
+      "WIS": 10,
+      "CHA": 12
+    },
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [
+      "Torum"
+    ],
+    "challenge_rating": 0,
+    "xp": 10,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Distracting Maneuver",
+        "description": "When the Pest Spirit takes the Dash action, it doesn’t provoke opportunity attacks until the end of its turn."
+      },
+      {
+        "name": "Hard to Catch",
+        "description": "The Pest Spirit has advantage on ability checks and saving throws against grapples and other effects that would impede its movement."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Frustration",
+        "description": "The Pest Spirit interacts with a creature within 5 feet of it. The target must succeed on a DC 10 Wisdom saving throw or the spirit gains inspiration."
+      }
+    ]
+  },
+  {
+    "name": "Stone Whale",
+    "size": "Huge",
+    "type": "Beast",
+    "alignment": "Neutral",
+    "armor_class": 16,
+    "hit_points": "85 (9d8 + 45)",
+    "speed": {
+      "walk": "0 ft.",
+      "fly": "60 ft.",
+      "swim": "60 ft."
+    },
+    "ability_scores": {
+      "STR": 20,
+      "DEX": 10,
+      "CON": 20,
+      "INT": 8,
+      "WIS": 13,
+      "CHA": 11
+    },
+    "skills": {
+      "Perception": 4
+    },
+    "damage_resistances": [
+      "bludgeoning from nonmagical attacks",
+      "piercing from nonmagical attacks",
+      "slashing from nonmagical attacks"
+    ],
+    "damage_immunities": [
+      "poison"
+    ],
+    "condition_immunities": [
+      "paralyzed",
+      "petrified",
+      "poisoned"
+    ],
+    "senses": {
+      "blindsight": "120 ft.",
+      "passive_perception": 14
+    },
+    "languages": [],
+    "challenge_rating": 6,
+    "xp": 2300,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Earth Aquatic",
+        "description": "The stone whale can move through stone and earth as if they were difficult terrain."
+      },
+      {
+        "name": "Echolocation",
+        "description": "The stone whale can’t use its blindsight while deafened."
+      },
+      {
+        "name": "Hold Breath",
+        "description": "The stone whale can hold its breath for 30 minutes."
+      },
+      {
+        "name": "Keen Hearing",
+        "description": "The stone whale has advantage on Wisdom (Perception) checks that rely on hearing."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Bite",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 8,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "22 (5d6 + 5) bludgeoning damage"
+      }
+    ]
+  },
+  {
+    "name": "Stul",
+    "size": "Medium",
+    "type": "Monstrosity",
+    "alignment": "Unaligned",
+    "armor_class": 16,
+    "armor_desc": "natural armor",
+    "hit_points": "52 (8d8 + 16)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 16,
+      "DEX": 8,
+      "CON": 15,
+      "INT": 2,
+      "WIS": 8,
+      "CHA": 7
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": [],
+    "challenge_rating": 3,
+    "xp": 700,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Hallucinatory Chatter",
+        "description": "If a creature starts its turn within 30 feet of the Stul and can hear it, the Stul can force the creature to make a DC 12 Wisdom saving throw if the Stul isn’t incapacitated. On a failed save, the creature becomes charmed for 1 minute. An affected creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. The effect ends early if it takes damage or another creature uses an action to shake it out of its stupor."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Bite",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 5,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "12 (2d8 + 3) piercing damage plus 4 (1d8) poison damage"
+      },
+      {
+        "name": "Beckon",
+        "description": "The Stul commands any number of creatures charmed by its Hallucinatory Chatter to approach it. Each creature must spend its action on its next turn to move as close to the Stul as it can."
+      },
+      {
+        "name": "Mental Invasion",
+        "description": "One creature the Stul chooses that can see it must succeed on a DC 13 Wisdom saving throw or be forced to use its reaction to move its full speed in the opposite direction of the Stul."
+      }
+    ]
+  },
+  {
+    "name": "Urugama",
+    "size": "Medium",
+    "type": "Spirit",
+    "alignment": "Neutral Evil",
+    "armor_class": 15,
+    "hit_points": "90 (12d10 + 24)",
+    "speed": {
+      "fly": "120 ft. (hover)"
+    },
+    "ability_scores": {
+      "STR": 9,
+      "DEX": 20,
+      "CON": 14,
+      "INT": 14,
+      "WIS": 10,
+      "CHA": 6
+    },
+    "damage_resistances": [
+      "Lightning",
+      "Thunder",
+      "Bludgeoning, Piercing, and Slashing from Nonmagical Attacks"
+    ],
+    "damage_immunities": [
+      "Poison"
+    ],
+    "condition_immunities": [
+      "Exhaustion",
+      "Grappled",
+      "Paralyzed",
+      "Petrified",
+      "Poisoned",
+      "Prone",
+      "Restrained",
+      "Unconscious"
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 10
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 6,
+    "xp": 2300,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Severed Body",
+        "description": "Urugama has four spectral bodies, each of which can take actions. These different bodies can’t move more than 100 feet away from each other, and Urugama divides its movement among its four bodies as it chooses."
+      },
+      {
+        "name": "Shifting Form",
+        "description": "At the start of Urugama’s turn, one of its bodies is randomly selected as the true Urugama. Only the true body can take damage or suffer effects that round. The other bodies can be targeted but are unaffected and allow effects and attacks to pass through harmlessly."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "Two of Urugama’s forms make a spectral pass attack."
+      },
+      {
+        "name": "Spectral Pass",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 8,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "14 (2d8 + 5) necrotic damage"
+      },
+      {
+        "name": "Haunting Chuckle",
+        "description": "If at least three of Urugama’s bodies are within 20 feet of each other, they can release a haunting chuckle. All creatures within 30 feet of an Urugama body that can hear them must succeed on a DC 13 Wisdom saving throw or suffer one level of exhaustion. On a failed save, the creature is immune to Urugama’s Haunting Chuckle for the next 24 hours."
+      }
+    ]
+  },
+  {
+    "name": "Vespoma",
+    "size": "Medium",
+    "type": "Monstrosity",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 12,
+    "hit_points": "33 (6d8 + 6)",
+    "speed": {
+      "walk": "20 ft.",
+      "climb": "40 ft.",
+      "fly": "20 ft."
+    },
+    "ability_scores": {
+      "STR": 12,
+      "DEX": 14,
+      "CON": 12,
+      "INT": 7,
+      "WIS": 10,
+      "CHA": 13
+    },
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": [
+      "understands Common but doesn’t speak"
+    ],
+    "challenge_rating": 1,
+    "xp": 200,
+    "proficiency_bonus": 2,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Vespoma makes two attacks: one with its chomp and one with its claws."
+      },
+      {
+        "name": "Chomp",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "4 (1d4 + 2) piercing damage"
+      },
+      {
+        "name": "Claws",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 4,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "7 (2d4 + 2) slashing damage"
+      },
+      {
+        "name": "Master’s Voice",
+        "description": "The Vespoma can cast the *Command* spell at will, using Charisma as its spellcasting ability (save DC 12). The DC increases by 1 for each other Vespoma within 30 feet (maximum DC 20)."
+      }
+    ]
+  },
+  {
+    "name": "Vile Corruption",
+    "size": "Large",
+    "type": "Monstrosity (Shapechanger)",
+    "alignment": "Chaotic Neutral",
+    "armor_class": 16,
+    "hit_points": "127 (15d10 + 45)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 18,
+      "DEX": 16,
+      "CON": 16,
+      "INT": 11,
+      "WIS": 7,
+      "CHA": 9
+    },
+    "skills": {
+      "Acrobatics": 6
+    },
+    "senses": {
+      "blindsight": "90 ft. (blind beyond this radius)",
+      "passive_perception": 8
+    },
+    "languages": [],
+    "challenge_rating": 8,
+    "xp": 3900,
+    "proficiency_bonus": 3,
+    "traits": [
+      {
+        "name": "Flammable",
+        "description": "The Vile Corruption is considered flammable and ignites as if it were a flammable object. If it takes more than 35 fire damage from a single attack or effect, or if it is on fire for 3 or more rounds, it explodes in a black ball of flames. Each creature within 20 feet must make a DC 14 Dexterity saving throw, taking 35 (10d6) fire damage on a failed save, or half as much on a success."
+      },
+      {
+        "name": "Magic Resistance",
+        "description": "The Vile Corruption has advantage on saving throws against spells and magical effects."
+      },
+      {
+        "name": "Shapechanger",
+        "description": "The Vile Corruption can change its shape to match any beast, demon, elemental, monstrosity, or spirit at will. Its stats remain the same, and it retains a watery appearance."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The Vile Corruption makes three attacks: one with its Bestial Bite and two with its Claw Mimicry."
+      },
+      {
+        "name": "Bestial Bite",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 7,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "11 (2d6 + 4) piercing damage",
+        "additional_effect": "The target must succeed on a DC 14 Constitution saving throw or have putrid water forced into their stomach, nullifying any potions currently affecting them."
+      },
+      {
+        "name": "Claw Mimicry",
+        "type": "Melee Weapon Attack",
+        "attack_bonus": 7,
+        "reach": "5 ft.",
+        "target": "one target",
+        "damage": "7 (1d6 + 4) slashing damage"
+      },
+      {
+        "name": "Avian Mimicry",
+        "description": "Waterlogged copies of songbirds burst forth toward up to 3 creatures within 30 feet. Each target must make a DC 14 Dexterity saving throw, taking 11 (2d10) necrotic damage on a failed save, or half as much on a success."
+      }
+    ]
+  },
+  {
+    "name": "Wandering Door",
+    "size": "Large",
+    "type": "Construct",
+    "alignment": "Lawful Neutral",
+    "armor_class": 12,
+    "hit_points": "8 (1d10 + 3)",
+    "speed": {
+      "walk": "150 ft.",
+      "climb": "150 ft."
+    },
+    "ability_scores": {
+      "STR": 17,
+      "DEX": 14,
+      "CON": 16,
+      "INT": 14,
+      "WIS": 16,
+      "CHA": 10
+    },
+    "saving_throws": {
+      "STR": 11,
+      "DEX": 10,
+      "CON": 11,
+      "INT": 10,
+      "WIS": 11,
+      "CHA": 8
+    },
+    "skills": {
+      "Acrobatics": 10,
+      "Athletics": 11,
+      "Perception": 11,
+      "Stealth": 10
+    },
+    "damage_immunities": [
+      "All"
+    ],
+    "condition_immunities": [
+      "Blinded",
+      "Charmed",
+      "Deafened",
+      "Exhaustion",
+      "Frightened",
+      "Grappled",
+      "Incapacitated",
+      "Paralyzed",
+      "Petrified",
+      "Poisoned",
+      "Prone",
+      "Restrained",
+      "Stunned",
+      "Unconscious"
+    ],
+    "senses": {
+      "blindsight": "300 ft.",
+      "passive_perception": 21
+    },
+    "languages": [
+      "understands all languages but can’t speak"
+    ],
+    "challenge_rating": 0,
+    "xp": 10,
+    "proficiency_bonus": 8,
+    "traits": [
+      {
+        "name": "Dispel Susceptibility",
+        "description": "The Wandering Door becomes a mundane pile of rubble if it’s targeted by a Dispel Magic spell of 7th level or higher."
+      },
+      {
+        "name": "Doorway",
+        "description": "A creature that enters the Wandering Door can teleport to any doorway on any plane. If unaware of its magic, they are teleported to a random doorway."
+      },
+      {
+        "name": "Immutable Form",
+        "description": "The Wandering Door is immune to any spell or effect that would alter its form."
+      },
+      {
+        "name": "Legendary Resistance (7/Day)",
+        "description": "If the Wandering Door fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Like the Wind",
+        "description": "The Wandering Door’s movement doesn’t provoke opportunity attacks."
+      },
+      {
+        "name": "Magic Resistance",
+        "description": "The Wandering Door has advantage on saving throws against spells and magical effects."
+      },
+      {
+        "name": "Special Feet",
+        "description": "The Wandering Door can walk on all surfaces, including walls and water."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Leap!",
+        "description": "The Wandering Door leaps 60 feet vertically into the air."
+      },
+      {
+        "name": "Shake!",
+        "description": "The Wandering Door shakes violently. All creatures on top must succeed on a DC 19 Strength saving throw or be thrown off, landing prone in an unoccupied space within 10 feet."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Flee!!!",
+        "description": "If a creature moves within 30 feet of the Wandering Door, it moves up to 100 feet away."
+      },
+      {
+        "name": "Shake!",
+        "description": "When a creature lands on the Wandering Door, it shakes. All creatures on top must succeed on a DC 19 Strength saving throw or be thrown off, landing prone within 10 feet."
+      }
+    ]
+  },
+  {
+    "name": "Watchwood Tree",
+    "size": "Large",
+    "type": "Plant",
+    "alignment": "Neutral Evil",
+    "armor_class": 13,
+    "hit_points": "25 (3d10 + 9)",
+    "speed": {
+      "walk": "10 ft."
+    },
+    "ability_scores": {
+      "STR": 15,
+      "DEX": 6,
+      "CON": 16,
+      "INT": 5,
+      "WIS": 10,
+      "CHA": 3
+    },
+    "skills": {
+      "Perception": 4
+    },
+    "damage_vulnerabilities": [
+      "Fire"
+    ],
+    "condition_immunities": [
+      "Deafened",
+      "Prone"
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 14
+    },
+    "languages": [],
+    "challenge_rating": 0.5,
+    "xp": 100,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "False Appearance",
+        "description": "If the Watchwood Tree is motionless at the start of combat, it has advantage on its initiative roll. If a creature hasn’t observed it move or act, that creature must succeed on a DC 18 Intelligence (Investigation) check to discern that it isn’t an ordinary tree."
+      },
+      {
+        "name": "Unruly Earth",
+        "description": "The ground within a 15-foot radius centered on the Watchwood Tree is difficult terrain for all creatures except the Watchwood Tree."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Root Slam",
+        "description": "Melee Weapon Attack: +4 to hit, reach 15 ft., one target. Hit: 9 (2d6 + 2) bludgeoning damage."
+      },
+      {
+        "name": "Watching Eye (Recharge 6)",
+        "description": "Each creature of the Watchwood Tree’s choice within a 15-foot cone must succeed on a DC 12 Wisdom saving throw or become restrained. A creature that can’t be frightened automatically succeeds. The Watchwood Tree can then immediately make a Root Slam attack against each creature that failed the saving throw. A restrained creature can use its action to make a DC 12 Wisdom check to end the effect."
+      }
+    ]
+  },
+  {
+    "name": "Witch",
+    "size": "Medium",
+    "type": "Humanoid (Any Race)",
+    "alignment": "Any Alignment",
+    "armor_class": 10,
+    "hit_points": "33 (6d8 + 6)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 11,
+      "DEX": 13,
+      "CON": 12,
+      "INT": 14,
+      "WIS": 13,
+      "CHA": 14
+    },
+    "skills": {
+      "History": 4,
+      "Survival": 5,
+      "Persuasion": 4
+    },
+    "senses": {
+      "passive_perception": 11
+    },
+    "languages": [
+      "any one language (usually Common)"
+    ],
+    "challenge_rating": 2,
+    "xp": 450,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Coven Member",
+        "description": "The witch has advantage on Charisma (Persuasion) checks involving a witch coven."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Unarmed Strike",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one creature. Hit: 1 bludgeoning damage."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The witch is a 4th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 12, +4 to hit with spell attacks). The witch has the following wizard spells prepared:\n\n- Cantrips (at will): Light*, Mending*, Message*, Retrieve, Task\n- 1st level (4 slots): Bubble Lift, Detect Magic*, Duplicate\n- 2nd level (3 slots): Levitate*, Shared Vision"
+      }
+    ]
+  },
+  {
+    "name": "Yokario",
+    "size": "Small",
+    "type": "Humanoid (Yokario)",
+    "alignment": "Neutral",
+    "armor_class": 14,
+    "hit_points": "13 (3d6 + 3)",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "ability_scores": {
+      "STR": 10,
+      "DEX": 14,
+      "CON": 12,
+      "INT": 10,
+      "WIS": 8,
+      "CHA": 8
+    },
+    "skills": {
+      "Performance": 3
+    },
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": [
+      "Common"
+    ],
+    "challenge_rating": 0.25,
+    "xp": 50,
+    "proficiency_bonus": 2,
+    "traits": [
+      {
+        "name": "Drum Line",
+        "description": "If the Yokario makes an attack against a creature that has been hit by one of its allies’ Drum Mallets since the end of the Yokario’s last turn, its Drum Mallet has an attack bonus of +6 instead of +4."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Drum Mallet",
+        "description": "Melee Weapon Attack: +4 to hit (or +6 with Drum Line), reach 5 ft., one target. Hit: 5 (1d6 + 2) bludgeoning damage."
+      },
+      {
+        "name": "Sling",
+        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 4 (1d4 + 2) bludgeoning damage."
+      }
+    ]
+  }
+];
+
+// Helper functions
+export const getCreatureByName = (name: string): Creature | undefined => {
+  return creatures.find(creature => creature.name === name);
+};
+
+export const getCreaturesByType = (type: string): Creature[] => {
+  return creatures.filter(creature => creature.type.toLowerCase().includes(type.toLowerCase()));
+};
+
+export const getCreaturesByCR = (cr: number): Creature[] => {
+  return creatures.filter(creature => creature.challenge_rating === cr);
+};
+
+export const getCreaturesBySize = (size: string): Creature[] => {
+  return creatures.filter(creature => creature.size.toLowerCase() === size.toLowerCase());
+};

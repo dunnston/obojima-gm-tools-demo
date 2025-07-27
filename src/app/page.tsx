@@ -12,6 +12,8 @@ import DatabaseView from '@/components/DatabaseView';
 import Settings from '@/components/Settings';
 import InitiativeTracker from '@/components/InitiativeTracker';
 import QuestLog from '@/components/QuestLog';
+import Credits from '@/components/Credits';
+import DowntimeTracker from '@/components/DowntimeTracker';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
@@ -36,8 +38,12 @@ export default function Home() {
         return <DatabaseView />;
       case 'initiative':
         return <InitiativeTracker />;
+      case 'downtime':
+        return <DowntimeTracker />;
       case 'settings':
         return <Settings />;
+      case 'credits':
+        return <Credits />;
       default:
         return <PotionBrewing />;
     }
