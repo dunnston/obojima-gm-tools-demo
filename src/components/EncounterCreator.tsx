@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { creatures, Creature, Encounter } from '@/data/creatures';
 import StatBlock from './StatBlock';
 import { calculateEncounterDifficulty, getEncounterDifficultyRating } from '@/utils/encounterCalculator';
-import { PlusIcon, TrashIcon, EyeIcon, BookmarkIcon, CalculatorIcon } from '@heroicons/react/24/outline';
+import { syncService } from '@/services/sync';
+import { PlusIcon, TrashIcon, EyeIcon, BookmarkIcon, CalculatorIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getCreatureImagePath } from '@/utils/imageUtils';
 
 interface EncounterCreature {
@@ -24,17 +25,38 @@ export default function EncounterCreator() {
   const [searchTerm, setSearchTerm] = useState('');
   const [savedEncounters, setSavedEncounters] = useState<Encounter[]>([]);
   const [partyLevel, setPartyLevel] = useState(5);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
-  // Load saved encounters from localStorage on component mount
-  useEffect(() => {
+  // Validator for encounter data
+  const validateEncounter = (encounter: any): Encounter => ({
+    ...encounter,
+    created_at: new Date(encounter.created_at),
+    updated_at: new Date(encounter.updated_at)
+  });
+
+  // Load encounters with sync
+  const loadEncounters = async () => {
+    setSyncStatus('syncing');
     try {
-      const saved = localStorage.getItem('obojima-encounters');
-      if (saved) {
-        setSavedEncounters(JSON.parse(saved));
-      }
+      const encounterData = await syncService.syncWithFallback('encounters', 'obojima-encounters', validateEncounter);
+      setSavedEncounters(encounterData);
+      setSyncStatus('idle');
     } catch (error) {
-      console.error('Error loading saved encounters:', error);
+      console.error('Error loading encounters:', error);
+      setSyncStatus('error');
     }
+  };
+
+  // Load encounters on mount
+  useEffect(() => {
+    loadEncounters();
+    
+    // Set up auto-sync
+    syncService.startSync(loadEncounters, 5000);
+    
+    return () => {
+      syncService.stopSync();
+    };
   }, []);
 
   // Filter creatures based on search term
@@ -85,7 +107,18 @@ export default function EncounterCreator() {
     setShowStatBlock(true);
   };
 
-  const saveEncounter = () => {
+  // Save encounters with sync
+  const saveEncounters = async (updatedEncounters: Encounter[]) => {
+    try {
+      await syncService.saveWithFallback('encounters', 'obojima-encounters', updatedEncounters);
+      setSavedEncounters(updatedEncounters);
+    } catch (error) {
+      console.error('Error saving encounters:', error);
+      alert('Error saving encounter data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  const saveEncounter = async () => {
     if (!encounterName.trim()) {
       alert('Please enter an encounter name');
       return;
@@ -108,16 +141,9 @@ export default function EncounterCreator() {
     };
 
     const updated = [...savedEncounters, newEncounter];
-    setSavedEncounters(updated);
-    
-    try {
-      localStorage.setItem('obojima-encounters', JSON.stringify(updated));
-      alert('Encounter saved successfully!');
-      clearEncounter();
-    } catch (error) {
-      console.error('Error saving encounter:', error);
-      alert('Error saving encounter');
-    }
+    await saveEncounters(updated);
+    alert('Encounter saved successfully!');
+    clearEncounter();
   };
 
   const clearEncounter = () => {
@@ -136,11 +162,10 @@ export default function EncounterCreator() {
     setEncounterCreatures(encounter.creatures);
   };
 
-  const deleteEncounter = (encounterId: string) => {
+  const deleteEncounter = async (encounterId: string) => {
     if (confirm('Are you sure you want to delete this encounter?')) {
       const updated = savedEncounters.filter(e => e.id !== encounterId);
-      setSavedEncounters(updated);
-      localStorage.setItem('obojima-encounters', JSON.stringify(updated));
+      await saveEncounters(updated);
     }
   };
 
@@ -148,8 +173,26 @@ export default function EncounterCreator() {
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-white">Encounter Creator</h1>
-        <p className="text-slate-400">Build custom encounters with Obojima creatures</p>
+        <div className="flex items-center justify-center gap-3">
+          <h1 className="text-3xl font-bold text-white">Encounter Creator</h1>
+          {/* Minimal sync status indicator */}
+          {syncStatus === 'syncing' && (
+            <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+          )}
+          {syncStatus === 'error' && (
+            <span className="text-xs text-amber-400">Offline</span>
+          )}
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          <p className="text-slate-400">Build custom encounters with Obojima creatures</p>
+          <button
+            onClick={loadEncounters}
+            className="p-2 text-slate-400 hover:text-white transition-colors"
+            title="Refresh"
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

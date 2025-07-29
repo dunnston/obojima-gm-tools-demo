@@ -107,3 +107,48 @@ export function resetSettings(): AppSettings {
   }
   return defaultAppSettings;
 }
+
+// Sync-enabled settings functions
+import { syncService } from '@/services/sync';
+
+export async function getSettingsWithSync(): Promise<AppSettings> {
+  if (typeof window === 'undefined') return defaultAppSettings;
+  
+  try {
+    const result = await syncService.getSettings();
+    if (result.success && result.data) {
+      // Merge with defaults to ensure all properties exist
+      return {
+        ...defaultAppSettings,
+        ...result.data,
+        vendingMachine: {
+          ...defaultVendingMachineSettings,
+          ...result.data.vendingMachine,
+        },
+      };
+    } else {
+      // Fall back to localStorage
+      return getSettings();
+    }
+  } catch (error) {
+    console.error('Error loading settings with sync:', error);
+    return getSettings();
+  }
+}
+
+export async function saveSettingsWithSync(settings: AppSettings): Promise<void> {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // Save to localStorage first for offline support
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    
+    // Save to sync service
+    const result = await syncService.saveSetting('appSettings', settings);
+    if (!result.success) {
+      console.warn('Settings saved locally but sync failed');
+    }
+  } catch (error) {
+    console.error('Error saving settings with sync:', error);
+  }
+}

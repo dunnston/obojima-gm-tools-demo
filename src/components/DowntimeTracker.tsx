@@ -14,6 +14,7 @@ import {
 } from '@/data/downtime';
 import { PlayerCharacter } from '@/data/characters';
 import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate } from '@/data/obojimaCalendar';
+import { syncService } from '@/services/sync';
 import {
   CalendarDaysIcon,
   UserGroupIcon,
@@ -26,7 +27,8 @@ import {
   MusicalNoteIcon,
   BookOpenIcon,
   BuildingOfficeIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import DowntimeDashboard from './DowntimeDashboard';
 import DowntimeActivityForm from './DowntimeActivityForm';
@@ -50,80 +52,103 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   const [showNewActivityForm, setShowNewActivityForm] = useState(false);
   const [filterCharacter, setFilterCharacter] = useState<string>('all');
   const [filterType, setFilterType] = useState<DowntimeActivityType | 'all'>('all');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   // Convert Obojima date to JS date for compatibility with existing downtime calculation functions
   const currentGameDate = obojimaDateToJSDate(currentObojimaDate);
 
+  // Validator for downtime activity data
+  const validateDowntimeActivity = (activity: any): SpecificDowntimeActivity => {
+    // Migrate old property names to new ones
+    const migratedActivity = { ...activity };
+    
+    // Migrate sword school properties
+    if (activity.type === 'sword_school' && activity.totalWeeksTrained !== undefined && activity.totalPhasesTrained === undefined) {
+      migratedActivity.totalPhasesTrained = activity.totalWeeksTrained;
+    }
+    
+    // Migrate witch coven properties
+    if (activity.type === 'witch_coven' && activity.weeksStudied !== undefined && activity.phasesStudied === undefined) {
+      migratedActivity.phasesStudied = activity.weeksStudied;
+    }
+    
+    return {
+      ...migratedActivity,
+      startDate: new Date(activity.startDate),
+      created_at: new Date(activity.created_at),
+      updated_at: new Date(activity.updated_at),
+      nextAttemptDate: activity.nextAttemptDate ? new Date(activity.nextAttemptDate) : undefined
+    };
+  };
+
+  // Validator for character data
+  const validateCharacter = (char: any): PlayerCharacter => ({
+    ...char,
+    createdAt: new Date(char.createdAt),
+    updatedAt: new Date(char.updatedAt)
+  });
+
+  // Load all data with sync
+  const loadAllData = async () => {
+    setSyncStatus('syncing');
+    try {
+      // Load activities and characters in parallel
+      const [activityData, characterData] = await Promise.all([
+        syncService.syncWithFallback('downtime', 'obojima-downtime-activities', validateDowntimeActivity),
+        syncService.syncWithFallback('characters', 'obojima-characters', validateCharacter)
+      ]);
+
+      setActivities(activityData);
+      setCharacters(characterData);
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('Error loading downtime data:', error);
+      setSyncStatus('error');
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
-    const savedActivities = localStorage.getItem('obojima-downtime-activities');
-    if (savedActivities) {
-      const parsed = JSON.parse(savedActivities);
-      const activitiesWithDates = parsed.map((activity: any) => {
-        // Migrate old property names to new ones
-        const migratedActivity = { ...activity };
-        
-        // Migrate sword school properties
-        if (activity.type === 'sword_school' && activity.totalWeeksTrained !== undefined && activity.totalPhasesTrained === undefined) {
-          migratedActivity.totalPhasesTrained = activity.totalWeeksTrained;
-        }
-        
-        // Migrate witch coven properties
-        if (activity.type === 'witch_coven' && activity.weeksStudied !== undefined && activity.phasesStudied === undefined) {
-          migratedActivity.phasesStudied = activity.weeksStudied;
-        }
-        
-        return {
-          ...migratedActivity,
-          startDate: new Date(activity.startDate),
-          created_at: new Date(activity.created_at),
-          updated_at: new Date(activity.updated_at),
-          nextAttemptDate: activity.nextAttemptDate ? new Date(activity.nextAttemptDate) : undefined
-        };
-      });
-      setActivities(activitiesWithDates);
-    }
-
-    const savedCharacters = localStorage.getItem('obojima-characters');
-    if (savedCharacters) {
-      const parsed = JSON.parse(savedCharacters);
-      const charactersWithDates = parsed.map((char: any) => ({
-        ...char,
-        createdAt: new Date(char.createdAt),
-        updatedAt: new Date(char.updatedAt)
-      }));
-      setCharacters(charactersWithDates);
-    }
-
-    // Game date is now managed by the parent component via Obojima calendar
+    loadAllData();
+    
+    // Set up auto-sync
+    syncService.startSync(loadAllData, 5000);
+    
+    return () => {
+      syncService.stopSync();
+    };
   }, []);
 
-  // Save activities whenever they change
-  useEffect(() => {
-    if (activities.length > 0) {
-      localStorage.setItem('obojima-downtime-activities', JSON.stringify(activities));
+  // Save activities with sync
+  const saveActivities = async (updatedActivities: SpecificDowntimeActivity[]) => {
+    try {
+      await syncService.saveWithFallback('downtime', 'obojima-downtime-activities', updatedActivities);
+      setActivities(updatedActivities);
+    } catch (error) {
+      console.error('Error saving downtime activities:', error);
+      alert('Error saving downtime data. Data saved locally but may not sync to other devices.');
     }
-  }, [activities]);
+  };
 
-  // Game date is now managed by the parent component via Obojima calendar
-
-  const handleCreateActivity = (type: DowntimeActivityType, characterId: string) => {
+  const handleCreateActivity = async (type: DowntimeActivityType, characterId: string) => {
     const character = characters.find(c => c.id === characterId);
     if (!character) return;
 
     const newActivity = createEmptyDowntimeActivity(type, characterId, character.characterName);
     // Override the start date with current game date
     newActivity.startDate = currentGameDate;
-    setActivities([...activities, newActivity]);
+    const updatedActivities = [...activities, newActivity];
+    await saveActivities(updatedActivities);
     setSelectedActivity(newActivity);
     setShowNewActivityForm(false);
   };
 
-  const handleUpdateActivity = (activityId: string, updates: Partial<SpecificDowntimeActivity>) => {
-    setActivities(prev => prev.map(activity => 
+  const handleUpdateActivity = async (activityId: string, updates: Partial<SpecificDowntimeActivity>) => {
+    const updatedActivities = activities.map(activity => 
       activity.id === activityId 
         ? { ...activity, ...updates, updated_at: new Date() } as SpecificDowntimeActivity
         : activity
-    ));
+    );
+    await saveActivities(updatedActivities);
 
     // Also update selectedActivity if it's the one being updated
     if (selectedActivity && selectedActivity.id === activityId) {
@@ -131,9 +156,10 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
     }
   };
 
-  const handleDeleteActivity = (activityId: string) => {
+  const handleDeleteActivity = async (activityId: string) => {
     if (confirm('Are you sure you want to delete this downtime activity?')) {
-      setActivities(prev => prev.filter(activity => activity.id !== activityId));
+      const updatedActivities = activities.filter(activity => activity.id !== activityId);
+      await saveActivities(updatedActivities);
       setSelectedActivity(null);
     }
   };
@@ -231,15 +257,30 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Downtime Tracker</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-white mb-2">Downtime Tracker</h1>
+              {/* Minimal sync status indicator */}
+              {syncStatus === 'syncing' && (
+                <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+              )}
+              {syncStatus === 'error' && (
+                <span className="text-xs text-amber-400">Offline</span>
+              )}
+            </div>
             <p className="text-slate-400">Manage character downtime activities between sessions</p>
           </div>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => {
+              onClick={loadAllData}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Refresh"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={async () => {
                 if (confirm('Are you sure you want to clear ALL downtime activities? This cannot be undone.')) {
-                  localStorage.removeItem('obojima-downtime-activities');
-                  setActivities([]);
+                  await saveActivities([]);
                   setSelectedActivity(null);
                 }
               }}

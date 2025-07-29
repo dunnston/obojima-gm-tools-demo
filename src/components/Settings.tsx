@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings } from '@/data/settings';
+import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
@@ -10,11 +10,39 @@ import { magicItems } from '@/data/magicItems';
 export default function Settings() {
   const [settings, setSettings] = useState<AppSettings>(getSettings());
   const [activeTab, setActiveTab] = useState<'vendingMachine'>('vendingMachine');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+
+  // Load settings with sync on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   // Auto-save settings when they change
   useEffect(() => {
-    saveSettings(settings);
+    if (settings !== getSettings()) {
+      saveSettingsAsync(settings);
+    }
   }, [settings]);
+
+  const loadSettings = async () => {
+    setSyncStatus('syncing');
+    try {
+      const syncedSettings = await getSettingsWithSync();
+      setSettings(syncedSettings);
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      setSyncStatus('error');
+    }
+  };
+
+  const saveSettingsAsync = async (newSettings: AppSettings) => {
+    try {
+      await saveSettingsWithSync(newSettings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
+  };
 
   const updateVendingMachineSettings = (updates: Partial<VendingMachineSettings>) => {
     setSettings(prev => ({
@@ -40,8 +68,24 @@ export default function Settings() {
         <div className="flex items-center justify-center gap-3">
           <CogIcon className="h-8 w-8 text-slate-400" />
           <h1 className="text-3xl font-bold text-white">Settings</h1>
+          {/* Minimal sync status indicator */}
+          {syncStatus === 'syncing' && (
+            <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+          )}
+          {syncStatus === 'error' && (
+            <span className="text-xs text-amber-400">Offline</span>
+          )}
         </div>
-        <p className="text-slate-400">Customize your app preferences and behavior</p>
+        <div className="flex items-center justify-center gap-3">
+          <p className="text-slate-400">Customize your app preferences and behavior</p>
+          <button
+            onClick={loadSettings}
+            className="p-2 text-slate-400 hover:text-white transition-colors"
+            title="Refresh"
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Settings Navigation */}

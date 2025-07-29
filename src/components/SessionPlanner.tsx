@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
+import { syncService } from '@/services/sync';
 import { 
   PlusIcon, 
   PlayIcon, 
@@ -18,7 +19,8 @@ import {
   GiftIcon,
   DocumentTextIcon,
   EyeSlashIcon,
-  BoltIcon
+  BoltIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 export default function SessionPlanner({ onPageChange }: { onPageChange?: (page: string) => void }) {
@@ -27,70 +29,83 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
   const [isCreating, setIsCreating] = useState(false);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [encounters, setEncounters] = useState<Encounter[]>([]);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   
-  // Load data on mount
-  useEffect(() => {
+  // Validator for session data
+  const validateSession = (session: any): GameSession => ({
+    ...session,
+    date: new Date(session.date),
+    createdAt: new Date(session.createdAt),
+    updatedAt: new Date(session.updatedAt),
+    // Ensure all arrays exist with defaults
+    playerCharacters: session.playerCharacters || [],
+    music: session.music || [],
+    secretsAndClues: session.secretsAndClues || [],
+    encounters: session.encounters || [],
+    npcs: session.npcs || [],
+    creatures: session.creatures || [],
+    treasure: session.treasure || [],
+    scenes: session.scenes || []
+  });
+
+  // Validator for character data
+  const validateCharacter = (char: any): PlayerCharacter => ({
+    ...char,
+    createdAt: new Date(char.createdAt),
+    updatedAt: new Date(char.updatedAt)
+  });
+
+  // Validator for encounter data
+  const validateEncounter = (encounter: any): Encounter => ({
+    ...encounter,
+    created_at: new Date(encounter.created_at),
+    updated_at: new Date(encounter.updated_at)
+  });
+
+  // Load all data with sync
+  const loadAllData = async () => {
+    setSyncStatus('syncing');
     try {
-      // Load sessions
-      const savedSessions = localStorage.getItem('obojima-sessions');
-      if (savedSessions) {
-        const parsed = JSON.parse(savedSessions);
-        const sessionsWithDates = parsed.map((session: any) => ({
-          ...session,
-          date: new Date(session.date),
-          createdAt: new Date(session.createdAt),
-          updatedAt: new Date(session.updatedAt),
-          // Ensure all arrays exist with defaults
-          playerCharacters: session.playerCharacters || [],
-          music: session.music || [],
-          secretsAndClues: session.secretsAndClues || [],
-          encounters: session.encounters || [],
-          npcs: session.npcs || [],
-          creatures: session.creatures || [],
-          treasure: session.treasure || [],
-          scenes: session.scenes || []
-        }));
-        setSessions(sessionsWithDates);
-      }
+      // Load sessions, characters, and encounters in parallel
+      const [sessionData, characterData, encounterData] = await Promise.all([
+        syncService.syncWithFallback('sessions', 'obojima-sessions', validateSession),
+        syncService.syncWithFallback('characters', 'obojima-characters', validateCharacter),
+        syncService.syncWithFallback('encounters', 'obojima-encounters', validateEncounter)
+      ]);
 
-      // Load characters
-      const savedCharacters = localStorage.getItem('obojima-characters');
-      if (savedCharacters) {
-        const parsed = JSON.parse(savedCharacters);
-        const charactersWithDates = parsed.map((char: any) => ({
-          ...char,
-          createdAt: new Date(char.createdAt),
-          updatedAt: new Date(char.updatedAt)
-        }));
-        setCharacters(charactersWithDates);
-      }
-
-      // Load encounters
-      const savedEncounters = localStorage.getItem('obojima-encounters');
-      if (savedEncounters) {
-        const parsed = JSON.parse(savedEncounters);
-        const encountersWithDates = parsed.map((encounter: any) => ({
-          ...encounter,
-          created_at: new Date(encounter.created_at),
-          updated_at: new Date(encounter.updated_at)
-        }));
-        setEncounters(encountersWithDates);
-      }
+      setSessions(sessionData);
+      setCharacters(characterData);
+      setEncounters(encounterData);
+      setSyncStatus('idle');
     } catch (error) {
       console.error('Error loading session data:', error);
-    }
-  }, []);
-
-  const saveSessions = (updatedSessions: GameSession[]) => {
-    try {
-      localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
-      setSessions(updatedSessions);
-    } catch (error) {
-      console.error('Error saving sessions:', error);
+      setSyncStatus('error');
     }
   };
 
-  const createSession = (name: string, date: Date, playerCharacters: string[]) => {
+  // Load data on mount
+  useEffect(() => {
+    loadAllData();
+    
+    // Set up auto-sync
+    syncService.startSync(loadAllData, 5000);
+    
+    return () => {
+      syncService.stopSync();
+    };
+  }, []);
+
+  const saveSessions = async (updatedSessions: GameSession[]) => {
+    try {
+      await syncService.saveWithFallback('sessions', 'obojima-sessions', updatedSessions);
+      setSessions(updatedSessions);
+    } catch (error) {
+      console.error('Error saving sessions:', error);
+      alert('Error saving session data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  const createSession = async (name: string, date: Date, playerCharacters: string[]) => {
     const newSession: GameSession = {
       id: `session-${Date.now()}-${Math.random()}`,
       ...createEmptySession(),
@@ -102,28 +117,28 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
     };
 
     const updatedSessions = [...sessions, newSession];
-    saveSessions(updatedSessions);
+    await saveSessions(updatedSessions);
     setSelectedSession(newSession);
     setIsCreating(false);
   };
 
-  const updateSession = (sessionId: string, updates: Partial<GameSession>) => {
+  const updateSession = async (sessionId: string, updates: Partial<GameSession>) => {
     const updatedSessions = sessions.map(session => 
       session.id === sessionId 
         ? { ...session, ...updates, updatedAt: new Date() }
         : session
     );
-    saveSessions(updatedSessions);
+    await saveSessions(updatedSessions);
     
     if (selectedSession && selectedSession.id === sessionId) {
       setSelectedSession({ ...selectedSession, ...updates, updatedAt: new Date() });
     }
   };
 
-  const deleteSession = (sessionId: string) => {
+  const deleteSession = async (sessionId: string) => {
     if (confirm('Are you sure you want to delete this session?')) {
       const updatedSessions = sessions.filter(session => session.id !== sessionId);
-      saveSessions(updatedSessions);
+      await saveSessions(updatedSessions);
       
       if (selectedSession && selectedSession.id === sessionId) {
         setSelectedSession(null);
@@ -157,16 +172,34 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Session Planner</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-white mb-2">Session Planner</h1>
+              {/* Minimal sync status indicator */}
+              {syncStatus === 'syncing' && (
+                <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+              )}
+              {syncStatus === 'error' && (
+                <span className="text-xs text-amber-400">Offline</span>
+              )}
+            </div>
             <p className="text-slate-400">Plan and manage your tabletop RPG sessions</p>
           </div>
-          <button
-            onClick={() => setIsCreating(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
-          >
-            <PlusIcon className="h-5 w-5" />
-            New Session
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadAllData}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Refresh"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setIsCreating(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              <PlusIcon className="h-5 w-5" />
+              New Session
+            </button>
+          </div>
         </div>
 
         {/* Session List */}
