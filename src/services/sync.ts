@@ -6,68 +6,228 @@ export interface SyncResult<T> {
   error?: string;
 }
 
+export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings';
+
 class SyncService {
   private cache: Map<string, any> = new Map();
   private syncInterval: NodeJS.Timeout | null = null;
+  private syncCallbacks: Map<string, (() => void)[]> = new Map();
 
-  async getCharacters(): Promise<SyncResult<any[]>> {
+  // Generic data fetching
+  async getData(dataType: DataType): Promise<SyncResult<any[]>> {
     try {
-      const response = await fetch(`${API_BASE}/api/characters`);
+      const response = await fetch(`${API_BASE}/api/${dataType}`);
       if (!response.ok) throw new Error('Failed to fetch');
       
       const data = await response.json();
-      this.cache.set('characters', data.characters);
-      return { success: true, data: data.characters };
+      const dataKey = Object.keys(data)[0]; // e.g., 'characters', 'sessions', etc.
+      const items = data[dataKey] || [];
+      
+      this.cache.set(dataType, items);
+      return { success: true, data: items };
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error(`Sync error for ${dataType}:`, error);
       // Fall back to cache if available
-      const cached = this.cache.get('characters');
+      const cached = this.cache.get(dataType);
       if (cached) {
         return { success: true, data: cached };
       }
-      return { success: false, error: 'Failed to sync characters' };
+      return { success: false, error: `Failed to sync ${dataType}` };
     }
   }
 
-  async saveCharacter(character: any): Promise<SyncResult<void>> {
+  // Generic data saving
+  async saveData(dataType: DataType, item: any): Promise<SyncResult<void>> {
     try {
-      const response = await fetch(`${API_BASE}/api/characters`, {
+      const response = await fetch(`${API_BASE}/api/${dataType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(character),
+        body: JSON.stringify(item),
       });
       
       if (!response.ok) throw new Error('Failed to save');
       return { success: true };
     } catch (error) {
-      console.error('Save error:', error);
-      return { success: false, error: 'Failed to save character' };
+      console.error(`Save error for ${dataType}:`, error);
+      return { success: false, error: `Failed to save ${dataType}` };
     }
   }
 
-  async deleteCharacter(id: string): Promise<SyncResult<void>> {
+  // Generic data deletion
+  async deleteData(dataType: DataType, id: string): Promise<SyncResult<void>> {
     try {
-      const response = await fetch(`${API_BASE}/api/characters?id=${id}`, {
+      const response = await fetch(`${API_BASE}/api/${dataType}?id=${id}`, {
         method: 'DELETE',
       });
       
       if (!response.ok) throw new Error('Failed to delete');
       return { success: true };
     } catch (error) {
-      console.error('Delete error:', error);
-      return { success: false, error: 'Failed to delete character' };
+      console.error(`Delete error for ${dataType}:`, error);
+      return { success: false, error: `Failed to delete ${dataType}` };
     }
   }
 
-  // Start polling for updates
-  startSync(onUpdate: () => void, interval = 5000) {
+  // Settings-specific methods (since they work differently)
+  async getSettings(): Promise<SyncResult<any>> {
+    try {
+      const response = await fetch(`${API_BASE}/api/settings`);
+      if (!response.ok) throw new Error('Failed to fetch');
+      
+      const data = await response.json();
+      this.cache.set('settings', data.settings);
+      return { success: true, data: data.settings };
+    } catch (error) {
+      console.error('Settings sync error:', error);
+      const cached = this.cache.get('settings');
+      if (cached) {
+        return { success: true, data: cached };
+      }
+      return { success: false, error: 'Failed to sync settings' };
+    }
+  }
+
+  async saveSetting(key: string, value: any): Promise<SyncResult<void>> {
+    try {
+      const response = await fetch(`${API_BASE}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to save');
+      return { success: true };
+    } catch (error) {
+      console.error('Settings save error:', error);
+      return { success: false, error: 'Failed to save setting' };
+    }
+  }
+
+  // Convenience methods for backward compatibility
+  async getCharacters(): Promise<SyncResult<any[]>> {
+    return this.getData('characters');
+  }
+
+  async saveCharacter(character: any): Promise<SyncResult<void>> {
+    return this.saveData('characters', character);
+  }
+
+  async deleteCharacter(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('characters', id);
+  }
+
+  // New convenience methods for other data types
+  async getSessions(): Promise<SyncResult<any[]>> {
+    return this.getData('sessions');
+  }
+
+  async saveSession(session: any): Promise<SyncResult<void>> {
+    return this.saveData('sessions', session);
+  }
+
+  async deleteSession(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('sessions', id);
+  }
+
+  async getQuests(): Promise<SyncResult<any[]>> {
+    return this.getData('quests');
+  }
+
+  async saveQuest(quest: any): Promise<SyncResult<void>> {
+    return this.saveData('quests', quest);
+  }
+
+  async deleteQuest(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('quests', id);
+  }
+
+  async getEncounters(): Promise<SyncResult<any[]>> {
+    return this.getData('encounters');
+  }
+
+  async saveEncounter(encounter: any): Promise<SyncResult<void>> {
+    return this.saveData('encounters', encounter);
+  }
+
+  async deleteEncounter(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('encounters', id);
+  }
+
+  async getDowntimeActivities(): Promise<SyncResult<any[]>> {
+    return this.getData('downtime');
+  }
+
+  async saveDowntimeActivity(activity: any): Promise<SyncResult<void>> {
+    return this.saveData('downtime', activity);
+  }
+
+  async deleteDowntimeActivity(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('downtime', id);
+  }
+
+  async getCompanions(): Promise<SyncResult<any[]>> {
+    return this.getData('companions');
+  }
+
+  async saveCompanion(companion: any): Promise<SyncResult<void>> {
+    return this.saveData('companions', companion);
+  }
+
+  async deleteCompanion(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('companions', id);
+  }
+
+  async getNpcs(): Promise<SyncResult<any[]>> {
+    return this.getData('npcs');
+  }
+
+  async saveNpc(npc: any): Promise<SyncResult<void>> {
+    return this.saveData('npcs', npc);
+  }
+
+  async deleteNpc(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('npcs', id);
+  }
+
+  // Register callbacks for specific data types
+  onDataUpdate(dataType: DataType, callback: () => void) {
+    if (!this.syncCallbacks.has(dataType)) {
+      this.syncCallbacks.set(dataType, []);
+    }
+    this.syncCallbacks.get(dataType)?.push(callback);
+  }
+
+  // Start polling for updates with support for multiple data types
+  startSync(dataTypes: DataType[] | (() => void), onUpdate?: () => void, interval = 5000) {
     this.stopSync();
     
+    // Handle backward compatibility
+    if (typeof dataTypes === 'function') {
+      // Old API: startSync(callback, interval)
+      const callback = dataTypes;
+      const oldInterval = onUpdate as number || interval;
+      callback();
+      this.syncInterval = setInterval(callback, oldInterval);
+      return;
+    }
+    
+    // New API: startSync(['characters', 'sessions'], callback, interval)
+    const types = dataTypes as DataType[];
+    const callback = onUpdate!;
+    
     // Initial sync
-    onUpdate();
+    callback();
     
     // Poll for updates
-    this.syncInterval = setInterval(onUpdate, interval);
+    this.syncInterval = setInterval(() => {
+      callback();
+      
+      // Trigger specific callbacks for each data type
+      types.forEach(dataType => {
+        const callbacks = this.syncCallbacks.get(dataType) || [];
+        callbacks.forEach(cb => cb());
+      });
+    }, interval);
   }
 
   stopSync() {
@@ -77,36 +237,52 @@ class SyncService {
     }
   }
 
-  // Generic methods for other data types
-  async getData(endpoint: string): Promise<SyncResult<any>> {
+  // Helper method to sync data with localStorage fallback
+  async syncWithFallback(dataType: DataType, localStorageKey: string, validator?: (item: any) => any): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE}/api/${endpoint}`);
-      if (!response.ok) throw new Error('Failed to fetch');
+      const result = await this.getData(dataType);
       
-      const data = await response.json();
-      this.cache.set(endpoint, data);
-      return { success: true, data };
-    } catch (error) {
-      const cached = this.cache.get(endpoint);
-      if (cached) {
-        return { success: true, data: cached };
+      if (result.success && result.data) {
+        const validatedData = validator ? result.data.map(validator) : result.data;
+        
+        // Update localStorage as backup
+        localStorage.setItem(localStorageKey, JSON.stringify(validatedData));
+        return validatedData;
+      } else {
+        // Fall back to localStorage
+        const savedData = localStorage.getItem(localStorageKey);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          return validator ? parsed.map(validator) : parsed;
+        }
+        return [];
       }
-      return { success: false, error: `Failed to sync ${endpoint}` };
+    } catch (error) {
+      console.error(`Error syncing ${dataType}:`, error);
+      
+      // Fall back to localStorage
+      const savedData = localStorage.getItem(localStorageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        return validator ? parsed.map(validator) : parsed;
+      }
+      return [];
     }
   }
 
-  async saveData(endpoint: string, data: any): Promise<SyncResult<void>> {
+  // Helper method to save data with localStorage backup
+  async saveWithFallback(dataType: DataType, localStorageKey: string, items: any[]): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE}/api/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      // Save to localStorage immediately for offline support
+      localStorage.setItem(localStorageKey, JSON.stringify(items));
       
-      if (!response.ok) throw new Error('Failed to save');
-      return { success: true };
+      // Save each item to API
+      for (const item of items) {
+        await this.saveData(dataType, item);
+      }
     } catch (error) {
-      return { success: false, error: `Failed to save to ${endpoint}` };
+      console.error(`Error saving ${dataType}:`, error);
+      throw new Error(`Error saving data. Data saved locally but may not sync to other devices.`);
     }
   }
 }
