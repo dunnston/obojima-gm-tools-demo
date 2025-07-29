@@ -70,6 +70,26 @@ export async function POST(request: NextRequest) {
       case 'settings':
         migrateSettings(data);
         break;
+        
+      case 'user-potions':
+        migrateData('user_potions', data);
+        break;
+        
+      case 'user-ingredients':
+        migrateData('user_ingredients', data);
+        break;
+        
+      case 'user-creatures':
+        migrateData('user_creatures', data);
+        break;
+        
+      case 'user-magic-items':
+        migrateData('user_magic_items', data);
+        break;
+        
+      case 'user-companion-types':
+        migrateData('user_companion_types', data);
+        break;
       
       default:
         return NextResponse.json({ error: 'Unknown data type' }, { status: 400 });

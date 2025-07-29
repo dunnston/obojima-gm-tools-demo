@@ -6,7 +6,7 @@ export interface SyncResult<T> {
   error?: string;
 }
 
-export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings';
+export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types';
 
 class SyncService {
   private cache: Map<string, any> = new Map();
@@ -187,6 +187,67 @@ class SyncService {
 
   async deleteNpc(id: string): Promise<SyncResult<void>> {
     return this.deleteData('npcs', id);
+  }
+
+  // User-generated content methods
+  async getUserPotions(): Promise<SyncResult<any[]>> {
+    return this.getData('user-potions');
+  }
+
+  async saveUserPotion(potion: any): Promise<SyncResult<void>> {
+    return this.saveData('user-potions', potion);
+  }
+
+  async deleteUserPotion(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('user-potions', id);
+  }
+
+  async getUserIngredients(): Promise<SyncResult<any[]>> {
+    return this.getData('user-ingredients');
+  }
+
+  async saveUserIngredient(ingredient: any): Promise<SyncResult<void>> {
+    return this.saveData('user-ingredients', ingredient);
+  }
+
+  async deleteUserIngredient(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('user-ingredients', id);
+  }
+
+  async getUserCreatures(): Promise<SyncResult<any[]>> {
+    return this.getData('user-creatures');
+  }
+
+  async saveUserCreature(creature: any): Promise<SyncResult<void>> {
+    return this.saveData('user-creatures', creature);
+  }
+
+  async deleteUserCreature(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('user-creatures', id);
+  }
+
+  async getUserMagicItems(): Promise<SyncResult<any[]>> {
+    return this.getData('user-magic-items');
+  }
+
+  async saveUserMagicItem(item: any): Promise<SyncResult<void>> {
+    return this.saveData('user-magic-items', item);
+  }
+
+  async deleteUserMagicItem(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('user-magic-items', id);
+  }
+
+  async getUserCompanionTypes(): Promise<SyncResult<any[]>> {
+    return this.getData('user-companion-types');
+  }
+
+  async saveUserCompanionType(type: any): Promise<SyncResult<void>> {
+    return this.saveData('user-companion-types', type);
+  }
+
+  async deleteUserCompanionType(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('user-companion-types', id);
   }
 
   // Register callbacks for specific data types

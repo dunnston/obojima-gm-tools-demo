@@ -25,8 +25,10 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   UserGroupIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { syncService } from '@/services/sync';
 
 type TabType = 'potions' | 'ingredients' | 'creatures' | 'magicItems' | 'npcs' | 'companionTypes' | 'companions';
 
@@ -44,9 +46,50 @@ export default function DatabaseView() {
   const [modifiedCompanionTypes, setModifiedCompanionTypes] = useState<any[]>([]);
   const [modifiedCompanions, setModifiedCompanions] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
-  // Load saved data from localStorage on component mount
-  useEffect(() => {
+  // Load all user-generated data with sync
+  const loadAllUserData = async () => {
+    setSyncStatus('syncing');
+    try {
+      // Load all user-generated content in parallel
+      const [
+        potionData,
+        ingredientData, 
+        creatureData,
+        magicItemData,
+        npcData,
+        companionTypeData,
+        companionData
+      ] = await Promise.all([
+        syncService.syncWithFallback('user-potions', 'modifiedPotions'),
+        syncService.syncWithFallback('user-ingredients', 'modifiedIngredients'),
+        syncService.syncWithFallback('user-creatures', 'modifiedCreatures'),
+        syncService.syncWithFallback('user-magic-items', 'modifiedMagicItems'),
+        syncService.syncWithFallback('npcs', 'modifiedNPCs'),
+        syncService.syncWithFallback('user-companion-types', 'modifiedCompanionTypes'),
+        syncService.syncWithFallback('companions', 'modifiedCompanions')
+      ]);
+
+      setModifiedPotions(potionData);
+      setModifiedIngredients(ingredientData);
+      setModifiedCreatures(creatureData);
+      setModifiedMagicItems(magicItemData);
+      setModifiedNPCs(npcData);
+      setModifiedCompanionTypes(companionTypeData);
+      setModifiedCompanions(companionData);
+      setIsLoaded(true);
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setSyncStatus('error');
+      // Fall back to localStorage loading
+      loadFromLocalStorage();
+    }
+  };
+
+  // Fallback localStorage loading (keeping original logic)
+  const loadFromLocalStorage = () => {
     if (typeof window !== 'undefined') {
       const savedIngredients = localStorage.getItem('modifiedIngredients');
       const savedPotions = localStorage.getItem('modifiedPotions');
@@ -121,9 +164,85 @@ export default function DatabaseView() {
       
       setIsLoaded(true);
     }
+  };
+
+  // Load data on mount with sync
+  useEffect(() => {
+    loadAllUserData();
+    
+    // Set up auto-sync (less frequent for database content)
+    syncService.startSync(loadAllUserData, 10000);
+    
+    return () => {
+      syncService.stopSync();
+    };
   }, []);
 
-  // Save to localStorage whenever modified data changes
+  // Sync-enabled save functions
+  const saveUserPotions = async (potions: any[]) => {
+    try {
+      await syncService.saveWithFallback('user-potions', 'modifiedPotions', potions);
+      setModifiedPotions(potions);
+    } catch (error) {
+      console.error('Error saving user potions:', error);
+    }
+  };
+
+  const saveUserIngredients = async (ingredients: any[]) => {
+    try {
+      await syncService.saveWithFallback('user-ingredients', 'modifiedIngredients', ingredients);
+      setModifiedIngredients(ingredients);
+    } catch (error) {
+      console.error('Error saving user ingredients:', error);
+    }
+  };
+
+  const saveUserCreatures = async (creatures: any[]) => {
+    try {
+      await syncService.saveWithFallback('user-creatures', 'modifiedCreatures', creatures);
+      setModifiedCreatures(creatures);
+    } catch (error) {
+      console.error('Error saving user creatures:', error);
+    }
+  };
+
+  const saveUserMagicItems = async (items: any[]) => {
+    try {
+      await syncService.saveWithFallback('user-magic-items', 'modifiedMagicItems', items);
+      setModifiedMagicItems(items);
+    } catch (error) {
+      console.error('Error saving user magic items:', error);
+    }
+  };
+
+  const saveUserCompanionTypes = async (types: any[]) => {
+    try {
+      await syncService.saveWithFallback('user-companion-types', 'modifiedCompanionTypes', types);
+      setModifiedCompanionTypes(types);
+    } catch (error) {
+      console.error('Error saving user companion types:', error);
+    }
+  };
+
+  const saveNPCs = async (npcs: any[]) => {
+    try {
+      await syncService.saveWithFallback('npcs', 'modifiedNPCs', npcs);
+      setModifiedNPCs(npcs);
+    } catch (error) {
+      console.error('Error saving NPCs:', error);
+    }
+  };
+
+  const saveCompanions = async (companions: any[]) => {
+    try {
+      await syncService.saveWithFallback('companions', 'modifiedCompanions', companions);
+      setModifiedCompanions(companions);
+    } catch (error) {
+      console.error('Error saving companions:', error);
+    }
+  };
+
+  // Save to localStorage whenever modified data changes (keeping for backup)
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
       localStorage.setItem('modifiedIngredients', JSON.stringify(modifiedIngredients));
