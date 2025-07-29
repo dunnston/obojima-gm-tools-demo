@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import PotionBrewing from '@/components/PotionBrewing';
 import VendingMachine from '@/components/VendingMachine';
@@ -14,9 +14,36 @@ import InitiativeTracker from '@/components/InitiativeTracker';
 import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
+import ObojimaCalendar from '@/components/ObojimaCalendar';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
+  
+  // Add Obojima calendar state here - this will be passed to both calendar and downtime tracker
+  const [currentObojimaDate, setCurrentObojimaDate] = useState({ year: 1, season: 'Spring', phase: 'New Moon', day: 1, cycle: 1 });
+
+  // Load saved date from localStorage after component mounts
+  useEffect(() => {
+    const saved = localStorage.getItem('obojima-current-date');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Ensure cycle property exists for backward compatibility
+        if (!parsed.cycle) {
+          parsed.cycle = 1;
+        }
+        setCurrentObojimaDate(parsed);
+      } catch {
+        // Keep default value
+      }
+    }
+  }, []);
+
+  // Save Obojima date to localStorage when it changes
+  const handleObojimaDateChange = (newDate: any) => {
+    setCurrentObojimaDate(newDate);
+    localStorage.setItem('obojima-current-date', JSON.stringify(newDate));
+  };
 
   const renderPage = () => {
     switch (currentPage) {
@@ -38,8 +65,10 @@ export default function Home() {
         return <DatabaseView />;
       case 'initiative':
         return <InitiativeTracker />;
+      case 'calendar':
+        return <ObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} />;
       case 'downtime':
-        return <DowntimeTracker />;
+        return <DowntimeTracker currentObojimaDate={currentObojimaDate} />;
       case 'settings':
         return <Settings />;
       case 'credits':

@@ -26,11 +26,11 @@ export interface DowntimeActivity {
 // Sword School Training
 export interface SwordSchoolActivity extends DowntimeActivity {
   type: 'sword_school';
-  totalWeeksTrained: number;
-  currentMasterAC: number; // 30 - weeks trained
+  totalPhasesTrained: number;
+  currentMasterAC: number; // 30 - phases trained
   attemptedDuel: boolean;
   duelResult?: 'success' | 'fail';
-  nextAttemptDate?: Date; // if failed, +3 months
+  nextAttemptDate?: Date; // if failed, +12 phases (~3 months)
   masterTechniqueLearned: boolean;
   questsCompleted: string[];
 }
@@ -42,7 +42,7 @@ export interface WitchCovenActivity extends DowntimeActivity {
   type: 'witch_coven';
   covenName: string;
   status: CovenStatus;
-  weeksStudied: number;
+  phasesStudied: number;
   oathTaken: boolean;
   accessToResources: string[]; // potions, spells, training
   covenBoons: string[];
@@ -138,7 +138,7 @@ export const createEmptyDowntimeActivity = (type: DowntimeActivityType, characte
     characterId,
     characterName,
     startDate: new Date(),
-    duration: 7, // default 1 week
+    duration: 8, // default 1 phase (~8 days)
     status: 'active' as DowntimeStatus,
     created_at: new Date(),
     updated_at: new Date()
@@ -149,7 +149,7 @@ export const createEmptyDowntimeActivity = (type: DowntimeActivityType, characte
       return {
         ...baseActivity,
         type: 'sword_school',
-        totalWeeksTrained: 0,
+        totalPhasesTrained: 0,
         currentMasterAC: 30,
         attemptedDuel: false,
         masterTechniqueLearned: false,
@@ -162,7 +162,7 @@ export const createEmptyDowntimeActivity = (type: DowntimeActivityType, characte
         type: 'witch_coven',
         covenName: '',
         status: 'apprentice',
-        weeksStudied: 0,
+        phasesStudied: 0,
         oathTaken: false,
         accessToResources: [],
         covenBoons: [],
@@ -176,7 +176,7 @@ export const createEmptyDowntimeActivity = (type: DowntimeActivityType, characte
         ...baseActivity,
         type: 'crafting',
         itemBeingCrafted: '',
-        daysRequired: 7,
+        daysRequired: 8,
         progress: 0,
         materialsUsed: []
       };
@@ -231,6 +231,13 @@ export const calculateWeeksElapsed = (startDate: Date, endDate: Date = new Date(
   return Math.floor(days / 7);
 };
 
+// Calculate phases elapsed (Obojima calendar - 7.5 days per phase average)
+export const calculatePhasesElapsed = (startDate: Date, endDate: Date = new Date()): number => {
+  const days = calculateDaysElapsed(startDate, endDate);
+  // Each moon cycle = 30 days (4 phases), so average = 7.5 days per phase
+  return Math.floor(days / 7.5);
+};
+
 // Check if a date has passed
 export const hasDatePassed = (date: Date): boolean => {
   return new Date(date) <= new Date();
@@ -248,6 +255,12 @@ export const addMonths = (date: Date, months: number): Date => {
   const result = new Date(date);
   result.setMonth(result.getMonth() + months);
   return result;
+};
+
+// Add phases to a date (1 phase = 7.5 days average)
+export const addPhases = (date: Date, phases: number): Date => {
+  // Use 7.5 days per phase average (30 days per 4-phase cycle)
+  return addDays(date, Math.round(phases * 7.5));
 };
 
 // Format date for display
@@ -286,11 +299,12 @@ export const getStatusColorClasses = (status: DowntimeStatus): string => {
 
 // Coven names in Obojima
 export const covenNames = [
-  'The Patchwork Robe',
-  'The Fish Head Coven',
-  'The Cloud Cap Coven',
-  'The Wandering Coven',
-  'The Moonlight Sisters'
+  'Fish Head',
+  'Cloud Cap',
+  'Patchwork Robe',
+  'The Tall Hats',
+  'Crowsworn',
+  'League of the Gilded Gourd'
 ];
 
 // Common crafting items
@@ -354,3 +368,39 @@ export const studySubjects = [
   'Ancient Languages',
   'Martial Techniques'
 ];
+
+// Obojima Calendar Integration
+import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate, jsDateToObojimaDate, phasesBetweenObojimaDate } from './obojimaCalendar';
+
+export const formatDowntimeObojimaDate = (date: Date): string => {
+  try {
+    const obojimaDate = jsDateToObojimaDate(date);
+    return formatObojimaDate(obojimaDate);
+  } catch {
+    // Fallback to regular date formatting if conversion fails
+    return formatDowntimeDate(date);
+  }
+};
+
+export const addDaysToObojimaDate = (startDate: Date, daysToAdd: number): Date => {
+  try {
+    const obojimaDate = jsDateToObojimaDate(startDate);
+    const newObojimaDate = jsDateToObojimaDate(addDays(startDate, daysToAdd));
+    return obojimaDateToJSDate(newObojimaDate);
+  } catch {
+    // Fallback to regular date math if conversion fails
+    return addDays(startDate, daysToAdd);
+  }
+};
+
+// Calculate phases elapsed using accurate Obojima calendar system
+export const calculateObojimaPhases = (startDate: Date, endDate: Date = new Date()): number => {
+  try {
+    const startObojimaDate = jsDateToObojimaDate(startDate);
+    const endObojimaDate = jsDateToObojimaDate(endDate);
+    return phasesBetweenObojimaDate(startObojimaDate, endObojimaDate);
+  } catch {
+    // Fallback to regular phase calculation if conversion fails
+    return calculatePhasesElapsed(startDate, endDate);
+  }
+};

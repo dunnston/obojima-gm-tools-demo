@@ -4,8 +4,12 @@ import { useState } from 'react';
 import { 
   SwordSchoolActivity,
   calculateWeeksElapsed,
+  calculatePhasesElapsed,
+  calculateObojimaPhases,
   formatDowntimeDate,
+  formatDowntimeObojimaDate,
   addMonths,
+  addPhases,
   hasDatePassed
 } from '@/data/downtime';
 import {
@@ -17,7 +21,8 @@ import {
   PlusIcon,
   TrashIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 interface SwordSchoolTrackerProps {
@@ -54,25 +59,28 @@ export default function SwordSchoolTracker({
 
   const [rollInput, setRollInput] = useState('');
 
-  // Calculate current training progress
-  const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
-  const totalWeeksTrained = activity.totalWeeksTrained + weeksElapsed;
-  const currentMasterAC = Math.max(0, 30 - totalWeeksTrained);
+  // Calculate current training progress using accurate Obojima calendar
+  const phasesElapsed = calculateObojimaPhases(activity.startDate, currentGameDate);
+  // Handle backward compatibility for existing activities
+  const basePhasesTraining = activity.totalPhasesTrained ?? (activity as any).totalWeeksTrained ?? 0;
+  const totalPhasesTrained = basePhasesTraining + phasesElapsed;
+  const currentMasterAC = Math.max(0, 30 - totalPhasesTrained);
   
   // Check if can attempt duel - fix date comparison
   const canAttemptDuel = !activity.attemptedDuel || 
     (activity.duelResult === 'fail' && activity.nextAttemptDate && currentGameDate >= new Date(activity.nextAttemptDate));
 
-  const handleAddWeekTraining = () => {
-    // Update the base weeks trained and reset start date to current game date
-    // This prevents double-counting elapsed weeks
-    const newWeeksTrained = totalWeeksTrained + 1;
-    const newMasterAC = Math.max(0, 30 - newWeeksTrained);
+  const handleAddPhaseTraining = () => {
+    // Update the base phases trained and reset start date to current game date
+    // This prevents double-counting elapsed phases
+    const newPhasesTrained = totalPhasesTrained + 1;
+    const newMasterAC = Math.max(0, 30 - newPhasesTrained);
+    
     
     onUpdate({
-      totalWeeksTrained: newWeeksTrained,
+      totalPhasesTrained: newPhasesTrained,
       currentMasterAC: newMasterAC,
-      startDate: currentGameDate // Reset start date to prevent elapsed weeks from accumulating
+      startDate: currentGameDate // Reset start date to prevent elapsed phases from accumulating
     });
   };
 
@@ -145,7 +153,7 @@ export default function SwordSchoolTracker({
       onUpdate({
         attemptedDuel: true,
         duelResult: success ? 'success' : 'fail',
-        nextAttemptDate: success ? undefined : addMonths(currentGameDate, 3),
+        nextAttemptDate: success ? undefined : addPhases(currentGameDate, 12),
         masterTechniqueLearned: success,
         status: success ? 'completed' : activity.status
       });
@@ -181,12 +189,35 @@ export default function SwordSchoolTracker({
               <p className="text-slate-400">{activity.characterName}</p>
             </div>
           </div>
-          <button
-            onClick={onDelete}
-            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
-          >
-            <TrashIcon className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (confirm('Reset all training progress? This cannot be undone.')) {
+                  onUpdate({
+                    totalPhasesTrained: 0,
+                    currentMasterAC: 30,
+                    attemptedDuel: false,
+                    duelResult: undefined,
+                    nextAttemptDate: undefined,
+                    masterTechniqueLearned: false,
+                    questsCompleted: [],
+                    startDate: currentGameDate // Use current game date, not system date
+                  });
+                }
+              }}
+              className="p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 rounded-lg transition-colors"
+              title="Reset Training Progress"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Delete Activity"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -198,8 +229,8 @@ export default function SwordSchoolTracker({
           
           <div className="text-center p-4 bg-slate-700/50 rounded-lg">
             <CalendarDaysIcon className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white">{totalWeeksTrained}</div>
-            <div className="text-sm text-slate-400">Weeks Trained</div>
+            <div className="text-3xl font-bold text-white">{totalPhasesTrained}</div>
+            <div className="text-sm text-slate-400">Phases Trained</div>
           </div>
 
           <div className="text-center p-4 bg-slate-700/50 rounded-lg">
@@ -220,21 +251,21 @@ export default function SwordSchoolTracker({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-400">Master AC Reduction</span>
-              <span className="text-sm text-slate-300">{totalWeeksTrained} / 30 weeks</span>
+              <span className="text-sm text-slate-300">{totalPhasesTrained} / 30 phases</span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2">
               <div
                 className="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full transition-all"
-                style={{ width: `${Math.min((totalWeeksTrained / 30) * 100, 100)}%` }}
+                style={{ width: `${Math.min((totalPhasesTrained / 30) * 100, 100)}%` }}
               />
             </div>
           </div>
 
           <button
-            onClick={handleAddWeekTraining}
+            onClick={handleAddPhaseTraining}
             className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
-            Log Week of Training (+1)
+            Log Phase of Training (+1)
           </button>
         </div>
       </div>

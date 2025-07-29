@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PlayerCharacter } from '@/data/characters';
 import CharacterForm from './CharacterForm';
+import { syncService } from '@/services/sync';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -10,9 +11,8 @@ import {
   UserIcon, 
   MagnifyingGlassIcon,
   EyeIcon,
-  ShieldCheckIcon,
   EyeSlashIcon,
-  MagnifyingGlassCircleIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 export default function CharacterManager() {
@@ -22,38 +22,136 @@ export default function CharacterManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState<PlayerCharacter | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
-  // Load characters from localStorage on mount
-  useEffect(() => {
+  // Validate and fix character data structure
+  const validateCharacter = (char: any): PlayerCharacter => {
+    // Ensure stats object exists with all required properties
+    const defaultStats = {
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10
+    };
+    
+    return {
+      ...char,
+      stats: char.stats ? { ...defaultStats, ...char.stats } : defaultStats,
+      createdAt: char.createdAt ? new Date(char.createdAt) : new Date(),
+      updatedAt: char.updatedAt ? new Date(char.updatedAt) : new Date(),
+      // Ensure other required fields
+      currentHp: char.currentHp || char.maxHp || 10,
+      maxHp: char.maxHp || 10,
+      ac: char.ac || 10,
+      level: char.level || 1,
+      passivePerception: char.passivePerception || 10
+    };
+  };
+
+  // Load characters from API or localStorage fallback
+  const loadCharacters = async () => {
+    setSyncStatus('syncing');
+    
     try {
-      const savedCharacters = localStorage.getItem('obojima-characters');
-      if (savedCharacters) {
-        const parsed = JSON.parse(savedCharacters);
-        // Convert date strings back to Date objects
-        const charactersWithDates = parsed.map((char: any) => ({
-          ...char,
-          createdAt: new Date(char.createdAt),
-          updatedAt: new Date(char.updatedAt)
-        }));
-        setCharacters(charactersWithDates);
+      // Try to load from API first
+      const result = await syncService.getCharacters();
+      
+      if (result.success && result.data) {
+        const validatedCharacters = result.data.map(validateCharacter);
+        setCharacters(validatedCharacters);
+        setSyncStatus('idle');
+      } else {
+        // Fall back to localStorage if API fails
+        const savedCharacters = localStorage.getItem('obojima-characters');
+        if (savedCharacters) {
+          const parsed = JSON.parse(savedCharacters);
+          const validatedCharacters = parsed.map(validateCharacter);
+          setCharacters(validatedCharacters);
+        }
+        setSyncStatus('error');
       }
     } catch (error) {
       console.error('Error loading characters:', error);
-    }
-  }, []);
-
-  // Save characters to localStorage
-  const saveCharacters = (updatedCharacters: PlayerCharacter[]) => {
-    try {
-      localStorage.setItem('obojima-characters', JSON.stringify(updatedCharacters));
-      setCharacters(updatedCharacters);
-    } catch (error) {
-      console.error('Error saving characters:', error);
-      alert('Error saving character data');
+      setSyncStatus('error');
+      
+      // Fall back to localStorage
+      try {
+        const savedCharacters = localStorage.getItem('obojima-characters');
+        if (savedCharacters) {
+          const parsed = JSON.parse(savedCharacters);
+          const validatedCharacters = parsed.map(validateCharacter);
+          setCharacters(validatedCharacters);
+        }
+      } catch (localError) {
+        console.error('Error loading from localStorage:', localError);
+      }
     }
   };
 
-  const handleAddCharacter = (characterData: Omit<PlayerCharacter, 'id' | 'createdAt' | 'updatedAt'>) => {
+  // One-time migration from localStorage to database
+  const migrateFromLocalStorage = async () => {
+    try {
+      const migrationDone = localStorage.getItem('obojima-migration-complete');
+      if (migrationDone) return;
+      
+      const savedCharacters = localStorage.getItem('obojima-characters');
+      if (savedCharacters) {
+        const parsed = JSON.parse(savedCharacters);
+        if (parsed.length > 0) {
+          // Validate characters before migration
+          const validatedCharacters = parsed.map(validateCharacter);
+          
+          const response = await fetch('/api/migrate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: validatedCharacters, type: 'characters' })
+          });
+          
+          if (response.ok) {
+            console.log('Successfully migrated characters from localStorage');
+            localStorage.setItem('obojima-migration-complete', 'true');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Migration error:', error);
+    }
+  };
+
+  // Initial load and set up auto-sync
+  useEffect(() => {
+    migrateFromLocalStorage().then(() => {
+      loadCharacters();
+    });
+    
+    // Set up polling for updates every 5 seconds
+    syncService.startSync(loadCharacters, 5000);
+    
+    return () => {
+      syncService.stopSync();
+    };
+  }, []);
+
+  // Save characters to both API and localStorage
+  const saveCharacters = async (updatedCharacters: PlayerCharacter[]) => {
+    try {
+      // Save to localStorage immediately for offline support
+      localStorage.setItem('obojima-characters', JSON.stringify(updatedCharacters));
+      setCharacters(updatedCharacters);
+      
+      // Save each character to API
+      for (const character of updatedCharacters) {
+        await syncService.saveCharacter(character);
+      }
+    } catch (error) {
+      console.error('Error saving characters:', error);
+      alert('Error saving character data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  const handleAddCharacter = async (characterData: Omit<PlayerCharacter, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newCharacter: PlayerCharacter = {
       ...characterData,
       id: Date.now().toString(),
@@ -62,11 +160,11 @@ export default function CharacterManager() {
     };
 
     const updatedCharacters = [...characters, newCharacter];
-    saveCharacters(updatedCharacters);
-    setShowForm(false);
+    await saveCharacters(updatedCharacters);
+    closeForm();
   };
 
-  const handleEditCharacter = (characterData: Omit<PlayerCharacter, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleEditCharacter = async (characterData: Omit<PlayerCharacter, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!editingCharacter) return;
 
     const updatedCharacter: PlayerCharacter = {
@@ -80,16 +178,18 @@ export default function CharacterManager() {
       char.id === editingCharacter.id ? updatedCharacter : char
     );
 
-    saveCharacters(updatedCharacters);
-    setEditingCharacter(null);
-    setShowForm(false);
+    await saveCharacters(updatedCharacters);
+    closeForm();
   };
 
-  const handleDeleteCharacter = (characterId: string) => {
+  const handleDeleteCharacter = async (characterId: string) => {
     const character = characters.find(c => c.id === characterId);
     if (character && confirm(`Are you sure you want to delete ${character.characterName}?`)) {
       const updatedCharacters = characters.filter(char => char.id !== characterId);
-      saveCharacters(updatedCharacters);
+      await saveCharacters(updatedCharacters);
+      
+      // Also delete from API
+      await syncService.deleteCharacter(characterId);
     }
   };
 
@@ -121,36 +221,52 @@ export default function CharacterManager() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-3">
-          <UserIcon className="h-8 w-8 text-emerald-400" />
-          <h1 className="text-3xl font-bold text-white">Player Characters</h1>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-2">Character Manager</h1>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-300">Manage player characters for your Obojima campaign</p>
+          {/* Minimal sync status indicator */}
+          <div className="flex items-center gap-2">
+            {syncStatus === 'syncing' && (
+              <ArrowPathIcon className="h-4 w-4 text-blue-400 animate-spin" />
+            )}
+            {syncStatus === 'error' && (
+              <span className="text-xs text-amber-400">Offline</span>
+            )}
+            <button
+              onClick={loadCharacters}
+              className="p-1 text-gray-400 hover:text-white transition-colors"
+              title="Refresh"
+            >
+              <ArrowPathIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <p className="text-slate-400">Manage your party's character information and details</p>
-        
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Add New Character
-        </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="max-w-md mx-auto">
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+      {/* Search and Add Character */}
+      <div className="mb-6 flex gap-4">
+        <div className="flex-1 relative">
           <input
             type="text"
             placeholder="Search characters..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+            className="w-full bg-slate-800 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <MagnifyingGlassIcon className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
         </div>
+        <button
+          onClick={() => {
+            setEditingCharacter(null);
+            setShowForm(true);
+          }}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Add Character
+        </button>
       </div>
 
       {/* Characters Grid */}
@@ -233,26 +349,26 @@ export default function CharacterManager() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">AC</div>
-                    <div className="text-white font-bold">{character.armorClass || 0}</div>
+                    <div className="text-white font-bold">{character.ac || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">HP</div>
-                    <div className="text-white font-bold">{character.hitPoints || 0}/{character.maxHitPoints || 0}</div>
+                    <div className="text-white font-bold">{character.currentHp || 0}/{character.maxHp || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">PP</div>
                     <div className="text-white font-bold">{character.passivePerception || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
-                    <div className="text-xs text-slate-400">PI</div>
-                    <div className="text-white font-bold">{character.passiveInsight || 0}</div>
+                    <div className="text-xs text-slate-400">Level</div>
+                    <div className="text-white font-bold">{character.level || 1}</div>
                   </div>
                 </div>
 
-                {character.characterGoal && (
+                {character.notes && (
                   <div className="bg-slate-700/20 rounded-lg p-3">
-                    <div className="text-xs text-slate-400 mb-1">Goal:</div>
-                    <div className="text-sm text-slate-300 line-clamp-2">{character.characterGoal}</div>
+                    <div className="text-xs text-slate-400 mb-1">Notes:</div>
+                    <div className="text-sm text-slate-300 line-clamp-2">{character.notes}</div>
                   </div>
                 )}
               </div>
@@ -319,11 +435,11 @@ export default function CharacterManager() {
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Armor Class</div>
-                  <div className="text-white font-bold">{selectedCharacter.armorClass}</div>
+                  <div className="text-white font-bold">{selectedCharacter.ac}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Hit Points</div>
-                  <div className="text-white font-bold">{selectedCharacter.hitPoints || 0} / {selectedCharacter.maxHitPoints || 0}</div>
+                  <div className="text-white font-bold">{selectedCharacter.currentHp || 0} / {selectedCharacter.maxHp || 0}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Perception</div>
@@ -334,11 +450,11 @@ export default function CharacterManager() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Insight</div>
-                  <div className="text-white font-bold">{selectedCharacter.passiveInsight}</div>
+                  <div className="text-white font-bold">{10 + Math.floor((selectedCharacter.stats.wisdom - 10) / 2)}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Investigation</div>
-                  <div className="text-white font-bold">{selectedCharacter.passiveInvestigation}</div>
+                  <div className="text-white font-bold">{10 + Math.floor((selectedCharacter.stats.intelligence - 10) / 2)}</div>
                 </div>
               </div>
 
@@ -352,7 +468,7 @@ export default function CharacterManager() {
 
               {/* Character Traits */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {selectedCharacter.boons.length > 0 && (
+                {selectedCharacter.boons && selectedCharacter.boons.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-yellow-400 mb-3">Boons</h3>
                     <ul className="space-y-1">
@@ -363,7 +479,7 @@ export default function CharacterManager() {
                   </div>
                 )}
 
-                {selectedCharacter.personalityTraits.length > 0 && (
+                {selectedCharacter.personalityTraits && selectedCharacter.personalityTraits.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-blue-400 mb-3">Personality Traits</h3>
                     <ul className="space-y-1">
@@ -374,7 +490,7 @@ export default function CharacterManager() {
                   </div>
                 )}
 
-                {selectedCharacter.ideals.length > 0 && (
+                {selectedCharacter.ideals && selectedCharacter.ideals.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-green-400 mb-3">Ideals</h3>
                     <ul className="space-y-1">
@@ -385,7 +501,7 @@ export default function CharacterManager() {
                   </div>
                 )}
 
-                {selectedCharacter.bonds.length > 0 && (
+                {selectedCharacter.bonds && selectedCharacter.bonds.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-purple-400 mb-3">Bonds</h3>
                     <ul className="space-y-1">
@@ -396,7 +512,7 @@ export default function CharacterManager() {
                   </div>
                 )}
 
-                {selectedCharacter.flaws.length > 0 && (
+                {selectedCharacter.flaws && selectedCharacter.flaws.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4 md:col-span-2">
                     <h3 className="text-lg font-semibold text-red-400 mb-3">Flaws</h3>
                     <ul className="space-y-1">

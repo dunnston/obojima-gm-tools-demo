@@ -7,9 +7,13 @@ import {
   createEmptyDowntimeActivity,
   getActivityTypeDisplayName,
   calculateWeeksElapsed,
-  formatDowntimeDate
+  calculatePhasesElapsed,
+  calculateObojimaPhases,
+  formatDowntimeDate,
+  formatDowntimeObojimaDate
 } from '@/data/downtime';
 import { PlayerCharacter } from '@/data/characters';
+import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate } from '@/data/obojimaCalendar';
 import {
   CalendarDaysIcon,
   UserGroupIcon,
@@ -34,7 +38,11 @@ import CarousingTracker from './downtime/CarousingTracker';
 import LearningTracker from './downtime/LearningTracker';
 import FactionWorkTracker from './downtime/FactionWorkTracker';
 
-export default function DowntimeTracker() {
+interface DowntimeTrackerProps {
+  currentObojimaDate: ObojimaDate;
+}
+
+export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerProps) {
   const [activities, setActivities] = useState<SpecificDowntimeActivity[]>([]);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [selectedView, setSelectedView] = useState<'dashboard' | 'activities'>('dashboard');
@@ -42,20 +50,36 @@ export default function DowntimeTracker() {
   const [showNewActivityForm, setShowNewActivityForm] = useState(false);
   const [filterCharacter, setFilterCharacter] = useState<string>('all');
   const [filterType, setFilterType] = useState<DowntimeActivityType | 'all'>('all');
-  const [currentGameDate, setCurrentGameDate] = useState(new Date());
+  // Convert Obojima date to JS date for compatibility with existing downtime calculation functions
+  const currentGameDate = obojimaDateToJSDate(currentObojimaDate);
 
   // Load data on mount
   useEffect(() => {
     const savedActivities = localStorage.getItem('obojima-downtime-activities');
     if (savedActivities) {
       const parsed = JSON.parse(savedActivities);
-      const activitiesWithDates = parsed.map((activity: any) => ({
-        ...activity,
-        startDate: new Date(activity.startDate),
-        created_at: new Date(activity.created_at),
-        updated_at: new Date(activity.updated_at),
-        nextAttemptDate: activity.nextAttemptDate ? new Date(activity.nextAttemptDate) : undefined
-      }));
+      const activitiesWithDates = parsed.map((activity: any) => {
+        // Migrate old property names to new ones
+        const migratedActivity = { ...activity };
+        
+        // Migrate sword school properties
+        if (activity.type === 'sword_school' && activity.totalWeeksTrained !== undefined && activity.totalPhasesTrained === undefined) {
+          migratedActivity.totalPhasesTrained = activity.totalWeeksTrained;
+        }
+        
+        // Migrate witch coven properties
+        if (activity.type === 'witch_coven' && activity.weeksStudied !== undefined && activity.phasesStudied === undefined) {
+          migratedActivity.phasesStudied = activity.weeksStudied;
+        }
+        
+        return {
+          ...migratedActivity,
+          startDate: new Date(activity.startDate),
+          created_at: new Date(activity.created_at),
+          updated_at: new Date(activity.updated_at),
+          nextAttemptDate: activity.nextAttemptDate ? new Date(activity.nextAttemptDate) : undefined
+        };
+      });
       setActivities(activitiesWithDates);
     }
 
@@ -70,10 +94,7 @@ export default function DowntimeTracker() {
       setCharacters(charactersWithDates);
     }
 
-    const savedGameDate = localStorage.getItem('obojima-current-game-date');
-    if (savedGameDate) {
-      setCurrentGameDate(new Date(savedGameDate));
-    }
+    // Game date is now managed by the parent component via Obojima calendar
   }, []);
 
   // Save activities whenever they change
@@ -83,16 +104,15 @@ export default function DowntimeTracker() {
     }
   }, [activities]);
 
-  // Save game date whenever it changes
-  useEffect(() => {
-    localStorage.setItem('obojima-current-game-date', currentGameDate.toISOString());
-  }, [currentGameDate]);
+  // Game date is now managed by the parent component via Obojima calendar
 
   const handleCreateActivity = (type: DowntimeActivityType, characterId: string) => {
     const character = characters.find(c => c.id === characterId);
     if (!character) return;
 
     const newActivity = createEmptyDowntimeActivity(type, characterId, character.characterName);
+    // Override the start date with current game date
+    newActivity.startDate = currentGameDate;
     setActivities([...activities, newActivity]);
     setSelectedActivity(newActivity);
     setShowNewActivityForm(false);
@@ -104,6 +124,11 @@ export default function DowntimeTracker() {
         ? { ...activity, ...updates, updated_at: new Date() } as SpecificDowntimeActivity
         : activity
     ));
+
+    // Also update selectedActivity if it's the one being updated
+    if (selectedActivity && selectedActivity.id === activityId) {
+      setSelectedActivity(prev => prev ? { ...prev, ...updates, updated_at: new Date() } as SpecificDowntimeActivity : null);
+    }
   };
 
   const handleDeleteActivity = (activityId: string) => {
@@ -210,14 +235,24 @@ export default function DowntimeTracker() {
             <p className="text-slate-400">Manage character downtime activities between sessions</p>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to clear ALL downtime activities? This cannot be undone.')) {
+                  localStorage.removeItem('obojima-downtime-activities');
+                  setActivities([]);
+                  setSelectedActivity(null);
+                }
+              }}
+              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+            >
+              Clear All Data
+            </button>
             <div className="text-right">
               <p className="text-sm text-slate-400">Current Game Date</p>
-              <input
-                type="date"
-                value={currentGameDate.toISOString().split('T')[0]}
-                onChange={(e) => setCurrentGameDate(new Date(e.target.value))}
-                className="px-3 py-1 bg-slate-700 border border-slate-600 rounded-lg text-white"
-              />
+              <div className="px-3 py-1 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm">
+                {formatObojimaDate(currentObojimaDate)}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Use Calendar to change date</p>
             </div>
             <button
               onClick={() => setShowNewActivityForm(true)}
@@ -303,7 +338,7 @@ export default function DowntimeTracker() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredActivities.map(activity => {
               const Icon = getActivityIcon(activity.type);
-              const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
+              const phasesElapsed = calculateObojimaPhases(activity.startDate, currentGameDate);
               
               return (
                 <div
@@ -330,11 +365,11 @@ export default function DowntimeTracker() {
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center gap-2 text-slate-300">
                       <CalendarDaysIcon className="h-4 w-4" />
-                      Started {formatDowntimeDate(activity.startDate)}
+                      Started {formatDowntimeObojimaDate(activity.startDate)}
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
                       <ClockIcon className="h-4 w-4" />
-                      {weeksElapsed} weeks elapsed
+                      {phasesElapsed} phases elapsed
                     </div>
                   </div>
                 </div>

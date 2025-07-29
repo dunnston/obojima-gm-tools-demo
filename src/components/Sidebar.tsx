@@ -35,6 +35,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'initiative', name: 'Initiative Tracker', icon: BoltIcon, color: 'text-yellow-400' },
     { id: 'characters', name: 'Player Characters', icon: UserIcon, color: 'text-cyan-400' },
     { id: 'notes', name: 'Session Planner', icon: BookOpenIcon, color: 'text-blue-400' },
+    { id: 'calendar', name: 'Obojima Calendar', icon: CalendarDaysIcon, color: 'text-sky-400' },
     { id: 'downtime', name: 'Downtime Tracker', icon: CalendarDaysIcon, color: 'text-violet-400' },
     { id: 'quests', name: 'Quest Log', icon: DocumentTextIcon, color: 'text-rose-400' },
     { id: 'database', name: 'Database', icon: CircleStackIcon, color: 'text-amber-400' },

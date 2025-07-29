@@ -5,7 +5,10 @@ import {
   getActivityTypeDisplayName,
   getStatusColorClasses,
   calculateWeeksElapsed,
-  formatDowntimeDate
+  calculatePhasesElapsed,
+  calculateObojimaPhases,
+  formatDowntimeDate,
+  formatDowntimeObojimaDate
 } from '@/data/downtime';
 import { PlayerCharacter } from '@/data/characters';
 import {
@@ -57,7 +60,7 @@ export default function DowntimeDashboard({
 
   // Calculate progress for different activity types
   const getActivityProgress = (activity: SpecificDowntimeActivity): { label: string; value: string } => {
-    const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
+    const phasesElapsed = calculateObojimaPhases(activity.startDate, currentGameDate);
 
     switch (activity.type) {
       case 'sword_school':

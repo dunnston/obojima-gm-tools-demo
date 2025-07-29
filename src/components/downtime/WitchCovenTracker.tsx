@@ -5,6 +5,8 @@ import {
   WitchCovenActivity,
   CovenStatus,
   calculateWeeksElapsed,
+  calculatePhasesElapsed,
+  calculateObojimaPhases,
   covenNames
 } from '@/data/downtime';
 import {
@@ -39,9 +41,11 @@ export default function WitchCovenTracker({
   const [newRivalry, setNewRivalry] = useState('');
   const [curseDescription, setCurseDescription] = useState(activity.covenCurse || '');
 
-  // Calculate current progress
-  const weeksElapsed = calculateWeeksElapsed(activity.startDate, currentGameDate);
-  const totalWeeksStudied = activity.weeksStudied + weeksElapsed;
+  // Calculate current progress using accurate Obojima calendar
+  const phasesElapsed = calculateObojimaPhases(activity.startDate, currentGameDate);
+  // Handle backward compatibility for existing activities
+  const basePhasesStudied = activity.phasesStudied ?? (activity as any).weeksStudied ?? 0;
+  const totalPhasesStudied = basePhasesStudied + phasesElapsed;
 
   const statusColors: Record<CovenStatus, string> = {
     apprentice: 'text-blue-400',
@@ -50,23 +54,35 @@ export default function WitchCovenTracker({
     rejected: 'text-red-400'
   };
 
-  const handleAddWeekStudy = () => {
+  const handleAddPhaseStudy = () => {
+    // Update the base phases studied and reset start date to current game date
+    // This prevents double-counting elapsed phases
+    const newPhasesStudied = totalPhasesStudied + 1;
+    
     onUpdate({
-      weeksStudied: activity.weeksStudied + 1
+      phasesStudied: newPhasesStudied,
+      startDate: currentGameDate // Reset start date to prevent elapsed phases from accumulating
     });
   };
 
   const handleStatusChange = (newStatus: CovenStatus) => {
+    // Don't allow selecting member or oathbound directly
+    if (newStatus === 'member' || newStatus === 'oathbound') {
+      return;
+    }
+    
     const updates: Partial<WitchCovenActivity> = { status: newStatus };
     
-    if (newStatus === 'oathbound') {
-      updates.oathTaken = true;
-    } else if (newStatus === 'rejected') {
+    if (newStatus === 'rejected') {
       updates.status = 'rejected';
       updates.accessToResources = [];
     }
     
     onUpdate(updates);
+  };
+
+  const handleAdvanceToMember = () => {
+    onUpdate({ status: 'member' });
   };
 
   const handleBreachOath = () => {
@@ -170,8 +186,8 @@ export default function WitchCovenTracker({
 
           <div className="text-center p-4 bg-slate-700/50 rounded-lg">
             <CalendarDaysIcon className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white">{totalWeeksStudied}</div>
-            <div className="text-sm text-slate-400">Weeks Studied</div>
+            <div className="text-3xl font-bold text-white">{totalPhasesStudied}</div>
+            <div className="text-sm text-slate-400">Phases Studied</div>
           </div>
         </div>
       </div>
@@ -198,22 +214,37 @@ export default function WitchCovenTracker({
           <div>
             <label className="block text-sm text-slate-400 mb-2">Status Progression</label>
             <div className="flex items-center gap-2">
-              {(['apprentice', 'member', 'oathbound'] as CovenStatus[]).map((status, index) => (
-                <button
-                  key={status}
-                  onClick={() => handleStatusChange(status)}
-                  disabled={activity.status === 'rejected'}
-                  className={`flex-1 px-3 py-2 rounded-lg font-medium capitalize transition-all ${
-                    activity.status === status
-                      ? 'bg-purple-600 text-white'
-                      : activity.status === 'rejected'
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+              {/* Only apprentice is clickable */}
+              <button
+                onClick={() => handleStatusChange('apprentice')}
+                disabled={activity.status === 'rejected' || activity.status === 'oathbound'}
+                className={`flex-1 px-3 py-2 rounded-lg font-medium capitalize transition-all ${
+                  activity.status === 'apprentice'
+                    ? 'bg-purple-600 text-white'
+                    : activity.status === 'rejected' || activity.status === 'oathbound'
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                }`}
+              >
+                Apprentice
+              </button>
+              
+              {/* Member and Oathbound are status displays only */}
+              <div className={`flex-1 px-3 py-2 rounded-lg font-medium capitalize text-center ${
+                activity.status === 'member'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-slate-700 text-slate-500'
+              }`}>
+                Member
+              </div>
+              
+              <div className={`flex-1 px-3 py-2 rounded-lg font-medium capitalize text-center ${
+                activity.status === 'oathbound'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-slate-700 text-slate-500'
+              }`}>
+                Oathbound
+              </div>
             </div>
           </div>
 
@@ -232,10 +263,10 @@ export default function WitchCovenTracker({
           )}
 
           <button
-            onClick={handleAddWeekStudy}
+            onClick={handleAddPhaseStudy}
             className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
           >
-            Log Week of Study (+1)
+            Log Phase of Study (+1)
           </button>
         </div>
       </div>
@@ -247,13 +278,46 @@ export default function WitchCovenTracker({
           
           <div className="space-y-4">
             {!activity.oathTaken ? (
-              <button
-                onClick={() => onUpdate({ oathTaken: true, status: 'oathbound' })}
-                disabled={activity.status === 'apprentice'}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
-              >
-                Take the Coven Oath
-              </button>
+              <>
+                {/* Check eligibility for member status */}
+                {activity.status === 'apprentice' && (
+                  <div className="p-4 bg-slate-700/50 rounded-lg space-y-2">
+                    <p className="text-sm text-slate-300">Requirements for Member Status:</p>
+                    <ul className="text-sm text-slate-400 space-y-1">
+                      <li className={`flex items-center gap-2 ${
+                        totalPhasesStudied >= 48 ? 'text-emerald-400' : ''
+                      }`}>
+                        <CheckIcon className={`h-4 w-4 ${totalPhasesStudied >= 48 ? '' : 'opacity-30'}`} />
+                        Study for 1 year ({totalPhasesStudied}/48 phases)
+                      </li>
+                      <li className={`flex items-center gap-2 ${
+                        activity.covenQuests.length >= 4 ? 'text-emerald-400' : ''
+                      }`}>
+                        <CheckIcon className={`h-4 w-4 ${activity.covenQuests.length >= 4 ? '' : 'opacity-30'}`} />
+                        Complete 4 quests ({activity.covenQuests.length}/4 completed)
+                      </li>
+                    </ul>
+                    {totalPhasesStudied >= 48 && activity.covenQuests.length >= 4 && (
+                      <button
+                        onClick={handleAdvanceToMember}
+                        className="w-full mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                      >
+                        Advance to Member Status
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Take Oath button only for members */}
+                {activity.status === 'member' && (
+                  <button
+                    onClick={() => onUpdate({ oathTaken: true, status: 'oathbound' })}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all"
+                  >
+                    Take the Coven Oath
+                  </button>
+                )}
+              </>
             ) : (
               <div className="space-y-3">
                 <div className="p-4 bg-purple-500/20 border border-purple-400/50 rounded-lg">
