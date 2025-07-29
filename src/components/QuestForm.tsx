@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, addQuest, updateQuest, QUEST_REWARD_TYPES, QuestStatus } from '@/data/quests';
+import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, QUEST_REWARD_TYPES, QuestStatus, loadQuests } from '@/data/quests';
+import { syncService } from '@/services/sync';
 import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import QuestRewardSelector from './QuestRewardSelector';
 
@@ -86,7 +87,7 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
     setFormData(prev => ({ ...prev, rewards: newRewards }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim() || !formData.questGiver.trim()) {
@@ -96,13 +97,42 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
 
     const questData = formDataToQuest(formData);
 
-    if (isEditing && quest) {
-      updateQuest(quest.id, questData);
-    } else {
-      addQuest(questData);
-    }
+    try {
+      // Load current quests with sync
+      const currentQuests = await syncService.syncWithFallback('quests', 'obojima-quests');
+      
+      let updatedQuests;
+      
+      if (isEditing && quest) {
+        // Update existing quest
+        const updatedQuest = {
+          ...quest,
+          ...questData,
+          dateUpdated: new Date(),
+          dateCompleted: questData.status === 'completed' ? new Date() : 
+                         questData.status && questData.status !== 'completed' ? undefined : 
+                         quest.dateCompleted
+        };
+        updatedQuests = currentQuests.map(q => q.id === quest.id ? updatedQuest : q);
+      } else {
+        // Add new quest
+        const now = new Date();
+        const newQuest: Quest = {
+          ...questData,
+          id: `quest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          dateCreated: now,
+          dateUpdated: now
+        };
+        updatedQuests = [...currentQuests, newQuest];
+      }
 
-    onSave();
+      // Save with sync
+      await syncService.saveWithFallback('quests', 'obojima-quests', updatedQuests);
+      onSave();
+    } catch (error) {
+      console.error('Error saving quest:', error);
+      alert('Error saving quest. Please try again.');
+    }
   };
 
   const statusOptions: { value: QuestStatus; label: string }[] = [
