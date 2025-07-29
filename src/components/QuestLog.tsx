@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Quest, QuestStatus, loadQuests, deleteQuest, updateQuest } from '@/data/quests';
-import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Quest, QuestStatus, updateQuest } from '@/data/quests';
+import { syncService } from '@/services/sync';
+import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
 
 export default function QuestLog() {
@@ -11,9 +12,53 @@ export default function QuestLog() {
   const [showForm, setShowForm] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [expandedQuest, setExpandedQuest] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+
+  // Load quests with sync fallback
+  const loadQuests = async () => {
+    setSyncStatus('syncing');
+    try {
+      const syncedQuests = await syncService.syncWithFallback('quests', 'obojima-quests');
+      setQuests(syncedQuests);
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('Error loading quests:', error);
+      setSyncStatus('error');
+    }
+  };
+
+  // Save quests with sync
+  const saveQuests = async (updatedQuests: Quest[]) => {
+    try {
+      await syncService.saveWithFallback('quests', 'obojima-quests', updatedQuests);
+      setQuests(updatedQuests);
+    } catch (error) {
+      console.error('Error saving quests:', error);
+      alert('Error saving quest data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  // Delete quest with sync
+  const deleteQuest = async (questId: string) => {
+    try {
+      const updatedQuests = quests.filter(quest => quest.id !== questId);
+      await saveQuests(updatedQuests);
+      await syncService.deleteQuest(questId);
+    } catch (error) {
+      console.error('Error deleting quest:', error);
+      alert('Error deleting quest. Changes may not sync to other devices.');
+    }
+  };
 
   useEffect(() => {
-    setQuests(loadQuests());
+    loadQuests();
+    
+    // Set up auto-sync
+    syncService.startSync(loadQuests, 5000);
+    
+    return () => {
+      syncService.stopSync();
+    };
   }, []);
 
   const tabs: { status: QuestStatus; label: string; color: string }[] = [
@@ -35,15 +80,14 @@ export default function QuestLog() {
     setShowForm(true);
   };
 
-  const handleDeleteQuest = (questId: string) => {
+  const handleDeleteQuest = async (questId: string) => {
     if (confirm('Are you sure you want to delete this quest?')) {
-      deleteQuest(questId);
-      setQuests(loadQuests());
+      await deleteQuest(questId);
     }
   };
 
-  const handleFormSave = () => {
-    setQuests(loadQuests());
+  const handleFormSave = async () => {
+    await loadQuests();
     setShowForm(false);
     setEditingQuest(null);
   };
@@ -57,7 +101,7 @@ export default function QuestLog() {
     setExpandedQuest(expandedQuest === questId ? null : questId);
   };
 
-  const toggleObjective = (questId: string, objectiveId: string) => {
+  const toggleObjective = async (questId: string, objectiveId: string) => {
     const quest = quests.find(q => q.id === questId);
     if (!quest) return;
 
@@ -66,7 +110,7 @@ export default function QuestLog() {
     );
 
     updateQuest(questId, { objectives: updatedObjectives });
-    setQuests(loadQuests());
+    await loadQuests();
   };
 
   const getStatusIcon = (status: QuestStatus) => {
@@ -94,18 +138,36 @@ export default function QuestLog() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              Quest Log
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                Quest Log
+              </h1>
+              {/* Minimal sync status indicator */}
+              {syncStatus === 'syncing' && (
+                <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+              )}
+              {syncStatus === 'error' && (
+                <span className="text-xs text-amber-400">Offline</span>
+              )}
+            </div>
             <p className="text-slate-400 mt-2">Track your adventures and objectives</p>
           </div>
-          <button
-            onClick={handleAddQuest}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-medium"
-          >
-            <PlusIcon className="h-5 w-5" />
-            New Quest
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadQuests}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Refresh"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleAddQuest}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-medium"
+            >
+              <PlusIcon className="h-5 w-5" />
+              New Quest
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
