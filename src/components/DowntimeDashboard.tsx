@@ -192,7 +192,7 @@ export default function DowntimeDashboard({
 
               {activities.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {activities.map(activity => {
+                  {activities.map((activity) => {
                     const progress = getActivityProgress(activity);
                     const StatusIcon = getStatusIcon(activity.status);
                     
@@ -244,7 +244,7 @@ export default function DowntimeDashboard({
           <div className="space-y-3">
             {upcomingEvents.map((event, index) => (
               <div
-                key={index}
+                key={`${event.activity.id}-${event.date.getTime()}`}
                 onClick={() => onSelectActivity(event.activity)}
                 className="flex items-center gap-4 p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 cursor-pointer transition-colors"
               >

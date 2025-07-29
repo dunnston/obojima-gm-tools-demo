@@ -110,12 +110,8 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   useEffect(() => {
     loadAllData();
     
-    // Set up auto-sync
-    syncService.startSync(loadAllData, 5000);
-    
-    return () => {
-      syncService.stopSync();
-    };
+    // Note: Auto-sync disabled to prevent conflicts with other components
+    // Users can manually refresh using the refresh button
   }, []);
 
   // Save activities with sync

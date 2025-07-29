@@ -53,12 +53,8 @@ export default function QuestLog() {
   useEffect(() => {
     loadQuests();
     
-    // Set up auto-sync
-    syncService.startSync(loadQuests, 5000);
-    
-    return () => {
-      syncService.stopSync();
-    };
+    // Note: Auto-sync disabled to prevent conflicts with other components
+    // Users can manually refresh using the refresh button
   }, []);
 
   const tabs: { status: QuestStatus; label: string; color: string }[] = [
@@ -109,8 +105,12 @@ export default function QuestLog() {
       obj.id === objectiveId ? { ...obj, completed: !obj.completed } : obj
     );
 
-    updateQuest(questId, { objectives: updatedObjectives });
-    await loadQuests();
+    // Update quest using sync service instead of old localStorage function
+    const updatedQuests = quests.map(q => 
+      q.id === questId ? { ...q, objectives: updatedObjectives, dateUpdated: new Date() } : q
+    );
+    
+    await saveQuests(updatedQuests);
   };
 
   const getStatusIcon = (status: QuestStatus) => {

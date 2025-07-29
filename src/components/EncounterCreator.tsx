@@ -51,12 +51,8 @@ export default function EncounterCreator() {
   useEffect(() => {
     loadEncounters();
     
-    // Set up auto-sync
-    syncService.startSync(loadEncounters, 5000);
-    
-    return () => {
-      syncService.stopSync();
-    };
+    // Note: Auto-sync disabled to prevent conflicts with other components
+    // Users can manually refresh using the refresh button
   }, []);
 
   // Filter creatures based on search term

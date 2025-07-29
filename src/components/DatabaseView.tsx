@@ -170,12 +170,8 @@ export default function DatabaseView() {
   useEffect(() => {
     loadAllUserData();
     
-    // Set up auto-sync (less frequent for database content)
-    syncService.startSync(loadAllUserData, 10000);
-    
-    return () => {
-      syncService.stopSync();
-    };
+    // Note: Auto-sync disabled to prevent conflicts with other components
+    // Users can manually refresh using the refresh button
   }, []);
 
   // Sync-enabled save functions
