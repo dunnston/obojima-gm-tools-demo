@@ -27,13 +27,14 @@ export default function QuestLog() {
     }
   };
 
-  // Save quests with sync
-  const saveQuests = async (updatedQuests: Quest[]) => {
+  // Save individual quest with sync
+  const saveQuest = async (quest: Quest) => {
     try {
-      await syncService.saveWithFallback('quests', 'obojima-quests', updatedQuests);
-      setQuests(updatedQuests);
+      await syncService.saveQuest(quest);
+      // Reload all quests to get fresh data
+      await loadQuests();
     } catch (error) {
-      console.error('Error saving quests:', error);
+      console.error('Error saving quest:', error);
       alert('Error saving quest data. Data saved locally but may not sync to other devices.');
     }
   };
@@ -41,9 +42,9 @@ export default function QuestLog() {
   // Delete quest with sync
   const deleteQuest = async (questId: string) => {
     try {
-      const updatedQuests = quests.filter(quest => quest.id !== questId);
-      await saveQuests(updatedQuests);
       await syncService.deleteQuest(questId);
+      // Reload all quests to get fresh data
+      await loadQuests();
     } catch (error) {
       console.error('Error deleting quest:', error);
       alert('Error deleting quest. Changes may not sync to other devices.');
@@ -105,12 +106,14 @@ export default function QuestLog() {
       obj.id === objectiveId ? { ...obj, completed: !obj.completed } : obj
     );
 
-    // Update quest using sync service instead of old localStorage function
-    const updatedQuests = quests.map(q => 
-      q.id === questId ? { ...q, objectives: updatedObjectives, dateUpdated: new Date() } : q
-    );
+    // Update quest using individual quest save
+    const updatedQuest = { 
+      ...quest, 
+      objectives: updatedObjectives, 
+      dateUpdated: new Date() 
+    };
     
-    await saveQuests(updatedQuests);
+    await saveQuest(updatedQuest);
   };
 
   const getStatusIcon = (status: QuestStatus) => {

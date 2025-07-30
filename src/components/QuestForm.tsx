@@ -98,11 +98,6 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
     const questData = formDataToQuest(formData);
 
     try {
-      // Load current quests with sync
-      const currentQuests = await syncService.syncWithFallback('quests', 'obojima-quests');
-      
-      let updatedQuests;
-      
       if (isEditing && quest) {
         // Update existing quest
         const updatedQuest = {
@@ -113,7 +108,7 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
                          questData.status && questData.status !== 'completed' ? undefined : 
                          quest.dateCompleted
         };
-        updatedQuests = currentQuests.map(q => q.id === quest.id ? updatedQuest : q);
+        await syncService.saveQuest(updatedQuest);
       } else {
         // Add new quest
         const now = new Date();
@@ -123,11 +118,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
           dateCreated: now,
           dateUpdated: now
         };
-        updatedQuests = [...currentQuests, newQuest];
+        await syncService.saveQuest(newQuest);
       }
 
-      // Save with sync
-      await syncService.saveWithFallback('quests', 'obojima-quests', updatedQuests);
       onSave();
     } catch (error) {
       console.error('Error saving quest:', error);
