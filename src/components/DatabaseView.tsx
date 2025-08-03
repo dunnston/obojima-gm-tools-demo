@@ -443,8 +443,8 @@ export default function DatabaseView() {
           }
           return prev;
         } else {
-          // For existing items, replace the existing one
-          const filtered = prev.filter(item => item.name !== updatedItem.name);
+          // For existing items, replace the existing one using the original name
+          const filtered = prev.filter(item => item.name !== editingItem.name);
           return [...filtered, updatedItem];
         }
       });
@@ -467,8 +467,8 @@ export default function DatabaseView() {
           }
           return prev;
         } else {
-          // For existing items, replace the existing one
-          const filtered = prev.filter(item => !(item.name === updatedItem.name && item.number === updatedItem.number));
+          // For existing items, replace the existing one using the original values
+          const filtered = prev.filter(item => !(item.name === editingItem.name && item.number === editingItem.number));
           return [...filtered, updatedItem];
         }
       });
@@ -484,8 +484,8 @@ export default function DatabaseView() {
           }
           return prev;
         } else {
-          // For existing items, replace the existing one
-          const filtered = prev.filter(item => item.name !== updatedItem.name);
+          // For existing items, replace the existing one using the original name
+          const filtered = prev.filter(item => item.name !== editingItem.name);
           return [...filtered, updatedItem];
         }
       });
@@ -501,8 +501,8 @@ export default function DatabaseView() {
           }
           return modifiedMagicItems;
         } else {
-          // For existing items, replace the existing one
-          const filtered = modifiedMagicItems.filter(item => item.name !== updatedItem.name);
+          // For existing items, replace the existing one using the original name
+          const filtered = modifiedMagicItems.filter(item => item.name !== editingItem.name);
           return [...filtered, updatedItem];
         }
       })();
