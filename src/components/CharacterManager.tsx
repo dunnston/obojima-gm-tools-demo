@@ -38,15 +38,22 @@ export default function CharacterManager() {
     
     return {
       ...char,
-      stats: char.stats ? { ...defaultStats, ...char.stats } : defaultStats,
       createdAt: char.createdAt ? new Date(char.createdAt) : new Date(),
       updatedAt: char.updatedAt ? new Date(char.updatedAt) : new Date(),
-      // Ensure other required fields
-      currentHp: char.currentHp || char.maxHp || 10,
-      maxHp: char.maxHp || 10,
-      ac: char.ac || 10,
+      // Ensure required fields with backward compatibility
       level: char.level || 1,
-      passivePerception: char.passivePerception || 10
+      armorClass: char.armorClass || char.ac || 10,
+      hitPoints: char.hitPoints || char.currentHp || char.maxHitPoints || char.maxHp || 10,
+      maxHitPoints: char.maxHitPoints || char.maxHp || 10,
+      passivePerception: char.passivePerception || 10,
+      passiveInsight: char.passiveInsight || 10,
+      passiveInvestigation: char.passiveInvestigation || 10,
+      characterGoal: char.characterGoal || '',
+      boons: char.boons || [],
+      personalityTraits: char.personalityTraits || [],
+      ideals: char.ideals || [],
+      bonds: char.bonds || [],
+      flaws: char.flaws || []
     };
   };
 
@@ -349,11 +356,11 @@ export default function CharacterManager() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">AC</div>
-                    <div className="text-white font-bold">{character.ac || 0}</div>
+                    <div className="text-white font-bold">{character.armorClass || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">HP</div>
-                    <div className="text-white font-bold">{character.currentHp || 0}/{character.maxHp || 0}</div>
+                    <div className="text-white font-bold">{character.hitPoints || 0}/{character.maxHitPoints || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
                     <div className="text-xs text-slate-400">PP</div>
@@ -431,15 +438,15 @@ export default function CharacterManager() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Class</div>
-                  <div className="text-white font-bold">{selectedCharacter.class || 'Unknown'}</div>
+                  <div className="text-white font-bold">{selectedCharacter.class || 'Unknown'} {selectedCharacter.level || 1}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Armor Class</div>
-                  <div className="text-white font-bold">{selectedCharacter.ac}</div>
+                  <div className="text-white font-bold">{selectedCharacter.armorClass || 0}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Hit Points</div>
-                  <div className="text-white font-bold">{selectedCharacter.currentHp || 0} / {selectedCharacter.maxHp || 0}</div>
+                  <div className="text-white font-bold">{selectedCharacter.hitPoints || 0} / {selectedCharacter.maxHitPoints || 0}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Perception</div>
@@ -450,11 +457,11 @@ export default function CharacterManager() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Insight</div>
-                  <div className="text-white font-bold">{10 + Math.floor((selectedCharacter.stats.wisdom - 10) / 2)}</div>
+                  <div className="text-white font-bold">{selectedCharacter.passiveInsight || 10}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">Passive Investigation</div>
-                  <div className="text-white font-bold">{10 + Math.floor((selectedCharacter.stats.intelligence - 10) / 2)}</div>
+                  <div className="text-white font-bold">{selectedCharacter.passiveInvestigation || 10}</div>
                 </div>
               </div>
 

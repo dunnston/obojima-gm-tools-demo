@@ -60,16 +60,31 @@ export function calculateDC(ingredient: Ingredient, location: Location, isSpecif
 }
 
 // Get all ingredients available in a location (native or not)
-export function getIngredientsInLocation(location: Location): {
+export function getIngredientsInLocation(location: Location, searchType: SearchType): {
   native: Ingredient[];
   nonNative: Ingredient[];
 } {
+  // Filter by type based on search type
+  const typeFilter = (ingredient: Ingredient) => {
+    if (searchType === 'salvage') {
+      // Salvage only finds Other and Salvage types
+      return ingredient.type === 'Other' || ingredient.type === 'Salvage';
+    } else {
+      // Survival finds everything except Other and Salvage
+      return ingredient.type !== 'Other' && ingredient.type !== 'Salvage';
+    }
+  };
+  
   const native = ingredients.filter(ingredient => 
-    ingredient.locations.includes(location) && ingredient.rarity !== 'Rare'
+    ingredient.locations.includes(location) && 
+    ingredient.rarity !== 'Rare' &&
+    typeFilter(ingredient)
   );
   
   const nonNative = ingredients.filter(ingredient => 
-    !ingredient.locations.includes(location) && ingredient.rarity !== 'Rare'
+    !ingredient.locations.includes(location) && 
+    ingredient.rarity !== 'Rare' &&
+    typeFilter(ingredient)
   );
 
   return { native, nonNative };
@@ -78,7 +93,7 @@ export function getIngredientsInLocation(location: Location): {
 // Random foraging - find whatever is available based on roll
 export function performRandomForaging(attempt: ForagingAttempt): ForagingResult {
   const { location, rollResult, searchType } = attempt;
-  const { native, nonNative } = getIngredientsInLocation(location);
+  const { native, nonNative } = getIngredientsInLocation(location, searchType);
   
   // Create weighted pools based on rarity and location
   const commonNative = native.filter(i => i.rarity === 'Common');
@@ -86,38 +101,67 @@ export function performRandomForaging(attempt: ForagingAttempt): ForagingResult 
   const commonNonNative = nonNative.filter(i => i.rarity === 'Common');
   const uncommonNonNative = nonNative.filter(i => i.rarity === 'Uncommon');
 
-  // Try to find ingredients based on roll, starting with easiest
+  // Collect all possible finds with their calculated DCs
+  const possibleFinds: { ingredient: Ingredient; dc: number; tier: number }[] = [];
+
+  // Add Common Native ingredients (DC 10-15, tier 1)
+  commonNative.forEach(ingredient => {
+    const dc = calculateDC(ingredient, location);
+    if (rollResult >= dc) {
+      possibleFinds.push({ ingredient, dc, tier: 1 });
+    }
+  });
+
+  // Add Uncommon Native and Common Non-Native (DC 16-20, tier 2)
+  [...uncommonNative, ...commonNonNative].forEach(ingredient => {
+    const dc = calculateDC(ingredient, location);
+    if (rollResult >= dc) {
+      possibleFinds.push({ ingredient, dc, tier: 2 });
+    }
+  });
+
+  // Add Uncommon Non-Native (DC 21-25, tier 3)
+  uncommonNonNative.forEach(ingredient => {
+    const dc = calculateDC(ingredient, location);
+    if (rollResult >= dc) {
+      possibleFinds.push({ ingredient, dc, tier: 3 });
+    }
+  });
+
   let foundIngredient: Ingredient | undefined;
   let dcRequired = 0;
 
-  // Check Common Native (DC 10-15)
-  if (!foundIngredient && commonNative.length > 0 && rollResult >= 10) {
-    const candidate = commonNative[Math.floor(Math.random() * commonNative.length)];
-    dcRequired = calculateDC(candidate, location);
-    if (rollResult >= dcRequired) {
-      foundIngredient = candidate;
-    }
-  }
+  if (possibleFinds.length > 0) {
+    // Sort by tier (higher is better), then by DC (higher DC = rarer)
+    possibleFinds.sort((a, b) => {
+      if (a.tier !== b.tier) return b.tier - a.tier; // Higher tier first
+      return b.dc - a.dc; // Higher DC first within same tier
+    });
 
-  // Check Uncommon Native or Common Non-Native (DC 16-20)
-  if (!foundIngredient && rollResult >= 16) {
-    const candidates = [...uncommonNative, ...commonNonNative];
-    if (candidates.length > 0) {
-      const candidate = candidates[Math.floor(Math.random() * candidates.length)];
-      dcRequired = calculateDC(candidate, location);
-      if (rollResult >= dcRequired) {
-        foundIngredient = candidate;
-      }
+    // With high rolls, prefer rarer ingredients
+    // Use weighted selection favoring higher tiers
+    let selectedFind;
+    if (rollResult >= 25) {
+      // Very high roll: 70% chance for highest tier available
+      const highestTier = possibleFinds[0].tier;
+      const highestTierFinds = possibleFinds.filter(f => f.tier === highestTier);
+      selectedFind = Math.random() < 0.7 
+        ? highestTierFinds[Math.floor(Math.random() * highestTierFinds.length)]
+        : possibleFinds[Math.floor(Math.random() * possibleFinds.length)];
+    } else if (rollResult >= 20) {
+      // High roll: 50% chance for highest tier available
+      const highestTier = possibleFinds[0].tier;
+      const highestTierFinds = possibleFinds.filter(f => f.tier === highestTier);
+      selectedFind = Math.random() < 0.5 
+        ? highestTierFinds[Math.floor(Math.random() * highestTierFinds.length)]
+        : possibleFinds[Math.floor(Math.random() * possibleFinds.length)];
+    } else {
+      // Lower roll: random selection from all possibilities
+      selectedFind = possibleFinds[Math.floor(Math.random() * possibleFinds.length)];
     }
-  }
 
-  // Check Uncommon Non-Native (DC 21-25)
-  if (!foundIngredient && rollResult >= 21 && uncommonNonNative.length > 0) {
-    const candidate = uncommonNonNative[Math.floor(Math.random() * uncommonNonNative.length)];
-    dcRequired = calculateDC(candidate, location);
-    if (rollResult >= dcRequired) {
-      foundIngredient = candidate;
-    }
+    foundIngredient = selectedFind.ingredient;
+    dcRequired = selectedFind.dc;
   }
 
   // If no specific ingredient was found, set a reasonable DC for the failure
@@ -172,6 +216,29 @@ export function performSpecificSearch(attempt: ForagingAttempt): ForagingResult 
       location,
       targetIngredient,
       message: `Unknown ingredient: ${targetIngredient}`
+    };
+  }
+
+  // Check if the ingredient type matches the search type
+  const isValidType = searchType === 'salvage' 
+    ? (ingredient.type === 'Other' || ingredient.type === 'Salvage')
+    : (ingredient.type !== 'Other' && ingredient.type !== 'Salvage');
+
+  if (!isValidType) {
+    const searchMethodText = searchType === 'salvage' ? 'salvaging' : 'survival foraging';
+    const typeText = searchType === 'salvage' 
+      ? 'can only find Other or Salvage type ingredients'
+      : 'cannot find Other or Salvage type ingredients';
+    
+    return {
+      success: false,
+      ingredient,
+      dcMet: rollResult,
+      dcRequired: 0,
+      searchType,
+      location,
+      targetIngredient,
+      message: `${ingredient.name} is a ${ingredient.type} type ingredient. ${searchMethodText.charAt(0).toUpperCase() + searchMethodText.slice(1)} ${typeText}.`
     };
   }
 

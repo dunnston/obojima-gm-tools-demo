@@ -15,33 +15,106 @@ import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import ObojimaCalendar from '@/components/ObojimaCalendar';
+import { syncService } from '@/services/sync';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
   
   // Add Obojima calendar state here - this will be passed to both calendar and downtime tracker
   const [currentObojimaDate, setCurrentObojimaDate] = useState({ year: 1, season: 'Spring', phase: 'New Moon', day: 1, cycle: 1 });
+  const [calendarSyncStatus, setCalendarSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
-  // Load saved date from localStorage after component mounts
+  // Load saved date from settings with sync after component mounts
   useEffect(() => {
-    const saved = localStorage.getItem('obojima-current-date');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure cycle property exists for backward compatibility
-        if (!parsed.cycle) {
-          parsed.cycle = 1;
-        }
-        setCurrentObojimaDate(parsed);
-      } catch {
-        // Keep default value
-      }
-    }
+    loadCalendarDate();
+    
+    // Set up automatic sync every 30 minutes (1800000 ms)
+    const syncInterval = setInterval(() => {
+      loadCalendarDate();
+    }, 30 * 60 * 1000); // 30 minutes
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(syncInterval);
   }, []);
 
-  // Save Obojima date to localStorage when it changes
-  const handleObojimaDateChange = (newDate: any) => {
+  const loadCalendarDate = async () => {
+    setCalendarSyncStatus('syncing');
+    try {
+      const result = await syncService.getSettings();
+      if (result.success && result.data && result.data.currentObojimaDate) {
+        const savedDate = result.data.currentObojimaDate;
+        // Ensure all properties exist for backward compatibility
+        const dateWithDefaults = {
+          year: savedDate.year || 1,
+          season: savedDate.season || 'Spring',
+          phase: savedDate.phase || 'New Moon',
+          day: savedDate.day || 1,
+          cycle: savedDate.cycle || 1
+        };
+        setCurrentObojimaDate(dateWithDefaults);
+        setCalendarSyncStatus('idle');
+      } else {
+        // Fall back to localStorage for migration
+        const saved = localStorage.getItem('obojima-current-date');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            // Ensure cycle property exists for backward compatibility
+            if (!parsed.cycle) {
+              parsed.cycle = 1;
+            }
+            setCurrentObojimaDate(parsed);
+            // Migrate to sync
+            await syncService.saveSetting('currentObojimaDate', parsed);
+            setCalendarSyncStatus('idle');
+          } catch {
+            // Keep default value
+            setCalendarSyncStatus('error');
+          }
+        } else {
+          setCalendarSyncStatus('idle');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading calendar date:', error);
+      setCalendarSyncStatus('error');
+      // Fall back to localStorage
+      const saved = localStorage.getItem('obojima-current-date');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (!parsed.cycle) {
+            parsed.cycle = 1;
+          }
+          setCurrentObojimaDate(parsed);
+        } catch {
+          // Keep default value
+        }
+      }
+    }
+  };
+
+  // Save Obojima date to settings with sync when it changes
+  const handleObojimaDateChange = async (newDate: any) => {
     setCurrentObojimaDate(newDate);
+    
+    try {
+      const result = await syncService.saveSetting('currentObojimaDate', {
+        year: newDate.year,
+        season: newDate.season,
+        phase: newDate.phase,
+        day: newDate.day,
+        cycle: newDate.cycle
+      });
+      
+      if (!result.success) {
+        console.warn('Calendar date saved locally but sync failed');
+      }
+    } catch (error) {
+      console.error('Error syncing calendar date:', error);
+    }
+    
+    // Always save to localStorage as backup
     localStorage.setItem('obojima-current-date', JSON.stringify(newDate));
   };
 
@@ -54,7 +127,7 @@ export default function Home() {
       case 'characters':
         return <CharacterManager />;
       case 'notes':
-        return <SessionPlanner onPageChange={setCurrentPage} />;
+        return <SessionPlanner onPageChange={setCurrentPage} currentGameDate={currentObojimaDate} onGameDateChange={handleObojimaDateChange} />;
       case 'quests':
         return <QuestLog />;
       case 'encounters':
@@ -66,7 +139,7 @@ export default function Home() {
       case 'initiative':
         return <InitiativeTracker />;
       case 'calendar':
-        return <ObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} />;
+        return <ObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} onRefresh={loadCalendarDate} syncStatus={calendarSyncStatus} />;
       case 'downtime':
         return <DowntimeTracker currentObojimaDate={currentObojimaDate} />;
       case 'settings':

@@ -3,6 +3,7 @@ export interface PlayerCharacter {
   characterName: string;
   playerName: string;
   class: string;
+  level: number;
   armorClass: number;
   hitPoints: number;
   maxHitPoints: number;
@@ -25,6 +26,7 @@ export interface CharacterFormData {
   characterName: string;
   playerName: string;
   class: string;
+  level: number | string;
   armorClass: number | string;
   hitPoints: number | string;
   maxHitPoints: number | string;
@@ -46,6 +48,7 @@ export const createEmptyCharacter = (): CharacterFormData => ({
   characterName: '',
   playerName: '',
   class: '',
+  level: 1,
   armorClass: '',
   hitPoints: '',
   maxHitPoints: '',
@@ -66,6 +69,7 @@ export const formDataToCharacter = (formData: CharacterFormData): Omit<PlayerCha
   characterName: formData.characterName,
   playerName: formData.playerName,
   class: formData.class,
+  level: typeof formData.level === 'string' ? parseInt(formData.level) || 1 : formData.level,
   armorClass: typeof formData.armorClass === 'string' ? parseInt(formData.armorClass) || 0 : formData.armorClass,
   hitPoints: typeof formData.hitPoints === 'string' ? parseInt(formData.hitPoints) || 0 : formData.hitPoints,
   maxHitPoints: typeof formData.maxHitPoints === 'string' ? parseInt(formData.maxHitPoints) || 0 : formData.maxHitPoints,
@@ -86,6 +90,7 @@ export const characterToFormData = (character: PlayerCharacter): CharacterFormDa
   characterName: character.characterName,
   playerName: character.playerName,
   class: character.class,
+  level: character.level || 1,
   armorClass: character.armorClass,
   hitPoints: character.hitPoints,
   maxHitPoints: character.maxHitPoints,

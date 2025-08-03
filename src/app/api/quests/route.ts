@@ -7,6 +7,7 @@ export async function GET() {
     const quests = stmt.all();
     
     const parsedQuests = quests.map((quest: any) => ({
+      id: quest.id,
       ...JSON.parse(quest.data),
       _lastUpdated: quest.updated_at
     }));

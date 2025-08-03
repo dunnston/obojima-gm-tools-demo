@@ -114,11 +114,37 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
     // Users can manually refresh using the refresh button
   }, []);
 
-  // Save activities with sync
+  // Save individual activity with sync
+  const saveActivity = async (activity: SpecificDowntimeActivity) => {
+    try {
+      await syncService.saveDowntimeActivity(activity);
+      
+      // Update local state
+      const updatedActivities = activities.map(a => a.id === activity.id ? activity : a);
+      const finalActivities = updatedActivities.some(a => a.id === activity.id) 
+        ? updatedActivities 
+        : [...activities, activity];
+      
+      setActivities(finalActivities);
+      
+      // Update localStorage as backup
+      localStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
+    } catch (error) {
+      console.error('Error saving downtime activity:', error);
+      alert('Error saving downtime data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  // Save activities with sync (for bulk operations)
   const saveActivities = async (updatedActivities: SpecificDowntimeActivity[]) => {
     try {
-      await syncService.saveWithFallback('downtime', 'obojima-downtime-activities', updatedActivities);
+      // Save each activity individually to ensure proper sync
+      for (const activity of updatedActivities) {
+        await syncService.saveDowntimeActivity(activity);
+      }
+      
       setActivities(updatedActivities);
+      localStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
     } catch (error) {
       console.error('Error saving downtime activities:', error);
       alert('Error saving downtime data. Data saved locally but may not sync to other devices.');
@@ -132,31 +158,42 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
     const newActivity = createEmptyDowntimeActivity(type, characterId, character.characterName);
     // Override the start date with current game date
     newActivity.startDate = currentGameDate;
-    const updatedActivities = [...activities, newActivity];
-    await saveActivities(updatedActivities);
+    await saveActivity(newActivity);
     setSelectedActivity(newActivity);
     setShowNewActivityForm(false);
   };
 
   const handleUpdateActivity = async (activityId: string, updates: Partial<SpecificDowntimeActivity>) => {
-    const updatedActivities = activities.map(activity => 
-      activity.id === activityId 
-        ? { ...activity, ...updates, updated_at: new Date() } as SpecificDowntimeActivity
-        : activity
-    );
-    await saveActivities(updatedActivities);
+    const activity = activities.find(a => a.id === activityId);
+    if (!activity) return;
+
+    const updatedActivity = { ...activity, ...updates, updated_at: new Date() } as SpecificDowntimeActivity;
+    await saveActivity(updatedActivity);
 
     // Also update selectedActivity if it's the one being updated
     if (selectedActivity && selectedActivity.id === activityId) {
-      setSelectedActivity(prev => prev ? { ...prev, ...updates, updated_at: new Date() } as SpecificDowntimeActivity : null);
+      setSelectedActivity(updatedActivity);
     }
   };
 
   const handleDeleteActivity = async (activityId: string) => {
     if (confirm('Are you sure you want to delete this downtime activity?')) {
-      const updatedActivities = activities.filter(activity => activity.id !== activityId);
-      await saveActivities(updatedActivities);
-      setSelectedActivity(null);
+      try {
+        // Delete from server
+        await syncService.deleteDowntimeActivity(activityId);
+        
+        // Update local state
+        const updatedActivities = activities.filter(activity => activity.id !== activityId);
+        setActivities(updatedActivities);
+        
+        // Update localStorage as backup
+        localStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
+        
+        setSelectedActivity(null);
+      } catch (error) {
+        console.error('Error deleting downtime activity:', error);
+        alert('Error deleting activity. Changes may not sync to other devices.');
+      }
     }
   };
 

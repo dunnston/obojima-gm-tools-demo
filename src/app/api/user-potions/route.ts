@@ -7,6 +7,7 @@ export async function GET() {
     const potions = stmt.all();
     
     const parsedPotions = potions.map((potion: any) => ({
+      id: potion.id,
       ...JSON.parse(potion.data),
       _lastUpdated: potion.updated_at
     }));

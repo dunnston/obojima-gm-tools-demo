@@ -4,6 +4,7 @@ export interface Ingredient {
   utility: number;
   whimsy: number;
   rarity: 'Common' | 'Uncommon' | 'Rare';
+  type?: 'Plant' | 'Food' | 'Fish' | 'Bug' | 'Monster' | 'Water' | 'Other' | 'Salvage';
   imageUrl?: string;
   locations: string[];
   price: number; // Price in gold pieces
@@ -16,6 +17,7 @@ export const ingredients: Ingredient[] = [
     utility: 5,
     whimsy: 4,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1DcYYoRwdg7nabC3WBhu5UzyGvMrmTz2U",
     locations: ["Land of Hot Water", "Mount Arbora"],
     price: 4.75
@@ -26,6 +28,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 1,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=15H8rAYLy9gwGgvutT_PghAOR3WasJmig",
     locations: ["Gale Fields", "Gift of Shuritashi"],
     price: 1.25
@@ -36,6 +39,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 3,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1al1WISoIZ0V4lPcubTXgjFe-wLsVLpWL",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Land of Hot Water"],
     price: 2.5
@@ -46,6 +50,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 0,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=19ieAj7-4N09_E1hlXBqedEp03tvUdRcr",
     locations: ["Gift of Shuritashi", "Land of Hot Water"],
     price: 4.75
@@ -66,6 +71,7 @@ export const ingredients: Ingredient[] = [
     utility: 14,
     whimsy: 15,
     rarity: "Uncommon",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1aOXwtS9r9RVcm4CWU2wJCHbbnUMSt8CV",
     locations: ["Shallows"],
     price: 10.75
@@ -86,6 +92,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 7,
     rarity: "Common",
+    type: "Fish",
     imageUrl: "https://drive.google.com/uc?export=view&id=1W3Fq7y-vKHqX4ff_89VxlgSbNYT5uexM",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora", "Shallows"],
     price: 3.75
@@ -96,6 +103,7 @@ export const ingredients: Ingredient[] = [
     utility: 6,
     whimsy: 1,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=16E-V3rahF8JTwSDfLySaqP0rIoPD-vGs",
     locations: ["Coastal Highlands", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora"],
     price: 3.75
@@ -106,6 +114,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 3,
     rarity: "Common",
+    type: "Bug",
     imageUrl: "https://drive.google.com/uc?export=view&id=1kQfPmTAONVayg05ziybnjMZ-ku3_8nR3",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Mount Arbora"],
     price: 4
@@ -116,6 +125,7 @@ export const ingredients: Ingredient[] = [
     utility: 13,
     whimsy: 16,
     rarity: "Uncommon",
+    type: "Salvage",
     imageUrl: "https://drive.google.com/uc?export=view&id=1dUyQpTAmLulRt2Omovx4RnhXZghk8Edu",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora", "Shallows"],
     price: 3.75
@@ -136,6 +146,7 @@ export const ingredients: Ingredient[] = [
     utility: 10,
     whimsy: 6,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1HtbN8X2OI3SQjywc42xlTRAoqQBA-18k",
     locations: ["Brackwater Wetlands", "Land of Hot Water", "Shallows"],
     price: 4.5
@@ -156,6 +167,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=133AeoqAqYeFkrksLFASwn1hendVf_c6v",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora"],
     price: 1.25
@@ -166,6 +178,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 8,
     rarity: "Common",
+    type: "Bug",
     imageUrl: "https://drive.google.com/uc?export=view&id=14PZ9BBaSRDNamjsXrbdWCNEDxdHXqkMU",
     locations: ["Brackwater Wetlands", "Gale Fields", "Gift of Shuritashi"],
     price: 4.75
@@ -176,6 +189,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 2,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1xdG8uGbmQCfiQQAzd8bBOntBzvtm-JZW",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water"],
     price: 4.75
@@ -186,6 +200,7 @@ export const ingredients: Ingredient[] = [
     utility: 7,
     whimsy: 5,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1P7HDAoXaMDht2cpWPfWR9gbn6eay8XeH",
     locations: ["Land of Hot Water"],
     price: 3.75
@@ -196,6 +211,7 @@ export const ingredients: Ingredient[] = [
     utility: 6,
     whimsy: 5,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1_Ipb5NPUPR8fxB2MXo_rPM-T7NVn0EYL",
     locations: ["Brackwater Wetlands", "Gale Fields", "Land of Hot Water", "Mount Arbora"],
     price: 5
@@ -206,6 +222,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 0,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1PYwAXH7OP0-VubxGwLNv6LTcRTTbxW1Q",
     locations: ["Gale Fields", "Gift of Shuritashi"],
     price: 0.5
@@ -226,6 +243,7 @@ export const ingredients: Ingredient[] = [
     utility: 11,
     whimsy: 14,
     rarity: "Uncommon",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1U6kxQwzr35woJUCSLyQ82tnD-jy5Cv3Z",
     locations: ["Brackwater Wetlands"],
     price: 10.75
@@ -246,6 +264,7 @@ export const ingredients: Ingredient[] = [
     utility: 10,
     whimsy: 6,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1hJVKqgHPzwWGNS4-IOK5ZfXB0urGWbhr",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gift of Shuritashi"],
     price: 5
@@ -256,6 +275,7 @@ export const ingredients: Ingredient[] = [
     utility: 18,
     whimsy: 19,
     rarity: "Rare",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1wg2eqZQH7LlKYHeSg95PSRGvZBtUHe-9",
     locations: [],
     price: 14.25
@@ -276,6 +296,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 4,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1B00BD7opiNS54C4WUYpcWwZP9zGoC3RJ",
     locations: [],
     price: 5
@@ -286,6 +307,7 @@ export const ingredients: Ingredient[] = [
     utility: 18,
     whimsy: 19,
     rarity: "Rare",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=149ZCTaMoH-ypWjG1sMlj0V5FIO6fQJ87",
     locations: [],
     price: 14.5
@@ -306,6 +328,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 4,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1vowhcad9oc_DZGOZvXO77xt3iiLtceva",
     locations: [],
     price: 2
@@ -316,6 +339,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 0,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Ca1sBXMWM3jNZ_yBBbJaM6a-5CQAlfDi",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora"],
     price: 0.25
@@ -336,6 +360,7 @@ export const ingredients: Ingredient[] = [
     utility: 12,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1mMoAm3zrybMRXkVcO3QP77hP8xXqf78c",
     locations: [],
     price: 10
@@ -346,6 +371,7 @@ export const ingredients: Ingredient[] = [
     utility: 18,
     whimsy: 20,
     rarity: "Rare",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=10W8L8eAhYMwfkXJtQ-Iiz7w9KaRMeLHf",
     locations: [],
     price: 14.25
@@ -366,6 +392,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 3,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Xz693qCWY_hjboEFPiFl2U3u78ZqFryu",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Land of Hot Water", "Shallows"],
     price: 4.25
@@ -376,6 +403,7 @@ export const ingredients: Ingredient[] = [
     utility: 5,
     whimsy: 4,
     rarity: "Common",
+    type: "Fish",
     imageUrl: "https://drive.google.com/uc?export=view&id=1roXHjfz3HP7sP9qeoz_vxqdlzsNRkCeC",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora", "Shallows"],
     price: 3.5
@@ -396,6 +424,7 @@ export const ingredients: Ingredient[] = [
     utility: 9,
     whimsy: 1,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1ckvpYZ-4cZVR0a1PZprTqSqarqj5_qeQ",
     locations: ["Coastal Highlands", "Gift of Shuritashi", "Land of Hot Water"],
     price: 4.25
@@ -406,6 +435,7 @@ export const ingredients: Ingredient[] = [
     utility: 14,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1iuhO9OnMhFiiN-fyvgcqllhbZyUMFHDi",
     locations: ["Mount Arbora"],
     price: 10.25
@@ -416,6 +446,7 @@ export const ingredients: Ingredient[] = [
     utility: 16,
     whimsy: 13,
     rarity: "Uncommon",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1GU97ZXtFu-cL1yaIdje822w1owp034s3",
     locations: ["Land of Hot Water", "Mount Arbora"],
     price: 11.25
@@ -426,6 +457,7 @@ export const ingredients: Ingredient[] = [
     utility: 20,
     whimsy: 18,
     rarity: "Rare",
+    type: "Fish",
     imageUrl: "https://drive.google.com/uc?export=view&id=1_TYKaIPK4FiJxoOmlDum800qLRy5-Sop",
     locations: [],
     price: 14.25
@@ -446,6 +478,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 3,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=15inJS7fudZhvffz0RSjYvAu0Qk4bUOAv",
     locations: ["Brackwater Wetlands", "Land of Hot Water"],
     price: 2.25
@@ -466,6 +499,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 9,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1JVrGCdea8c5GhGCeO3lkuyAzuevkonG7",
     locations: ["Gale Fields", "Gift of Shuritashi", "Mount Arbora"],
     price: 4
@@ -486,6 +520,7 @@ export const ingredients: Ingredient[] = [
     utility: 18,
     whimsy: 19,
     rarity: "Rare",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1r1Wx_gPQY_FErE9RVSlCN2PKgJUlSdRt",
     locations: [],
     price: 14
@@ -506,6 +541,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 8,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Iu1fNKsJ_kaLaZRXaeEnFymGu-HIsWyG",
     locations: ["Gale Fields"],
     price: 5.25
@@ -516,6 +552,7 @@ export const ingredients: Ingredient[] = [
     utility: 5,
     whimsy: 4,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1VDqESOUpVNEgz1vhUau1ea1U1e40AR25",
     locations: ["Brackwater Wetlands", "Gale Fields", "Mount Arbora"],
     price: 5
@@ -536,6 +573,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 0,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1t6APPtlKycji7_f9MbSIP2hpBV6IFBEj",
     locations: ["Gale Fields"],
     price: 0.5
@@ -556,6 +594,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 10,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1crqA1RgsICA0Go5qyJo3b5a9TSy2ztjL",
     locations: ["Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water"],
     price: 5.25
@@ -566,6 +605,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 1,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1NAhLqVHv2KyenNdB7C4IlWt3abQSus_4",
     locations: ["Brackwater Wetlands"],
     price: 1
@@ -576,6 +616,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 1,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1iWD08H2uPK_uQOsI3SJDiOnDuAfFJ7K6",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Shallows"],
     price: 1
@@ -586,6 +627,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1aDUoEv-XM4DWkiyJNs5LI1FLFKDjfHTf",
     locations: ["Coastal Highlands"],
     price: 3
@@ -596,6 +638,7 @@ export const ingredients: Ingredient[] = [
     utility: 14,
     whimsy: 14,
     rarity: "Uncommon",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1yiSruG5ux7vY1qhSE9EX1yackX17PkzK",
     locations: ["Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water"],
     price: 10.75
@@ -606,6 +649,7 @@ export const ingredients: Ingredient[] = [
     utility: 16,
     whimsy: 16,
     rarity: "Uncommon",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=11pjxKeJK0VXNMgPe-YolZMG84_30lv1H",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi"],
     price: 11
@@ -626,6 +670,7 @@ export const ingredients: Ingredient[] = [
     utility: 13,
     whimsy: 16,
     rarity: "Uncommon",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1rkSuN4_Ac-za1eSscI3bXgQDF6l7BrhW",
     locations: ["Coastal Highlands"],
     price: 11.75
@@ -646,6 +691,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1CdROlEZomJcv9qYpQawUnWrYpZ3kc1NE",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi"],
     price: 0.75
@@ -666,6 +712,7 @@ export const ingredients: Ingredient[] = [
     utility: 5,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1KR5lBnfwJcQt1y4UyW1QztM7HQuQMzIS",
     locations: ["Mount Arbora"],
     price: 4
@@ -676,6 +723,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 7,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1AkNQ7H_TpCYmYceQt2b8fyH1uk2_cvze",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi"],
     price: 5
@@ -696,6 +744,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 1,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1QkAeXJd11pb_SKi-4YJg_GUNB4cP38YD",
     locations: ["Gale Fields"],
     price: 1
@@ -706,6 +755,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 8,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1r7VodCzDYsZfpwRCKqIyGiMchk41gvNY",
     locations: ["Coastal Highlands"],
     price: 5.5
@@ -716,6 +766,7 @@ export const ingredients: Ingredient[] = [
     utility: 15,
     whimsy: 12,
     rarity: "Uncommon",
+    type: "Bug",
     imageUrl: "https://drive.google.com/uc?export=view&id=1l_c57FzZjL2wT1tzF4h7BLo85-prehWb",
     locations: ["Mount Arbora"],
     price: 10.5
@@ -736,6 +787,7 @@ export const ingredients: Ingredient[] = [
     utility: 6,
     whimsy: 5,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1r3fOPoAzPsaTBeZc7WZuNwpU7ZgDmhXw",
     locations: ["Coastal Highlands"],
     price: 4
@@ -746,6 +798,7 @@ export const ingredients: Ingredient[] = [
     utility: 11,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1N0Q0BLCEgcNf9DPkxtr9yXUUFykdRhNR",
     locations: ["Gift of Shuritashi"],
     price: 10
@@ -766,6 +819,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 0,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1tp3BwZpR59xK3le727A-mbM7qF7jeoKh",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi"],
     price: 0.25
@@ -786,6 +840,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1ODyq86IiPi7gikRQ0373nOgE61ZgRutO",
     locations: ["Gale Fields", "Gift of Shuritashi", "Mount Arbora"],
     price: 1.75
@@ -816,6 +871,7 @@ export const ingredients: Ingredient[] = [
     utility: 10,
     whimsy: 0,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=12IB3Qe-VBkekc1NylsNBB2Zl0wBPQazW",
     locations: ["Land of Hot Water", "Mount Arbora", "Shallows"],
     price: 3
@@ -836,6 +892,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 10,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1V_fJ3V8CU0dw9FuShMuhZUEAY084l5px",
     locations: ["Land of Hot Water"],
     price: 4.25
@@ -856,6 +913,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 1,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=12jz66kLw3mCKhC8gLTCKrb1lsmOC4Rde",
     locations: ["Mount Arbora"],
     price: 0.5
@@ -876,6 +934,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 0,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1jTOFrf0EfmqXal523YY8mnmfX2wMZsn0",
     locations: ["Coastal Highlands", "Gift of Shuritashi", "Land of Hot Water"],
     price: 1.25
@@ -896,6 +955,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 0,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1WR17tSlBj-fp6W4lZXzbm4kMz6_nIGxk",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Land of Hot Water", "Mount Arbora"],
     price: 4.5
@@ -916,6 +976,7 @@ export const ingredients: Ingredient[] = [
     utility: 7,
     whimsy: 5,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=19-1BGVvO-zIRoB3fZ4bAGaG6Nits8_tM",
     locations: ["Shallows"],
     price: 4.5
@@ -926,6 +987,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1m6Wj4EZatMLBr_4kGBzN0bjYoi4GYImU",
     locations: ["Gale Fields"],
     price: 1.75
@@ -936,6 +998,7 @@ export const ingredients: Ingredient[] = [
     utility: 5,
     whimsy: 3,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1nQxo9xbY3DnNzzWOYdXdfVZycmBmn6M1",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Mount Arbora"],
     price: 4
@@ -956,6 +1019,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 7,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1elnfxSDIK_nF5MkS2jcBcsRMP-8SejcJ",
     locations: ["Gale Fields"],
     price: 6.5
@@ -966,6 +1030,7 @@ export const ingredients: Ingredient[] = [
     utility: 3,
     whimsy: 9,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=137d1ydRcfayJdcurDbQxv0ZzBQwZjql8",
     locations: ["Brackwater Wetlands"],
     price: 4.5
@@ -976,6 +1041,7 @@ export const ingredients: Ingredient[] = [
     utility: 19,
     whimsy: 18,
     rarity: "Rare",
+    type: "Salvage",
     imageUrl: "https://drive.google.com/uc?export=view&id=1LLYxyjcRud1XfQKn16d8L7rHftT8oeuK",
     locations: [],
     price: 9.5
@@ -996,6 +1062,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 2,
     rarity: "Common",
+    type: "Fish",
     imageUrl: "https://drive.google.com/uc?export=view&id=1D3xubPGdMHL--6coaVIL4ACigAeg4F79",
     locations: ["Shallows"],
     price: 3.75
@@ -1016,6 +1083,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 2,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1yLuVERMW7cPwgea7_RQsKdYxU0N297mF",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi"],
     price: 2.25
@@ -1026,6 +1094,7 @@ export const ingredients: Ingredient[] = [
     utility: 12,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=10uG82vWIVAvKOu0CvzlvnzcAW3q55sgz",
     locations: ["Brackwater Wetlands"],
     price: 8.75
@@ -1046,6 +1115,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 1,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1jYFVkRqbJzQyJ77QZHkpK1IQU4cHH-9B",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Land of Hot Water", "Shallows"],
     price: 0.5
@@ -1066,6 +1136,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 7,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1JLRK2iTPB6AX7237NlXkR3YsSWMWoeSm",
     locations: ["Coastal Highlands", "Gale Fields"],
     price: 6.5
@@ -1076,6 +1147,7 @@ export const ingredients: Ingredient[] = [
     utility: 13,
     whimsy: 13,
     rarity: "Uncommon",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1CgabzDTc0E-6tOcBlq329onLziRo2iFS",
     locations: [],
     price: 10
@@ -1126,6 +1198,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 0,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1WDrG7odxXYh-TUcDr3LXQQtUOe4POeed",
     locations: ["Coastal Highlands"],
     price: 0.75
@@ -1136,6 +1209,7 @@ export const ingredients: Ingredient[] = [
     utility: 17,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Salvage",
     imageUrl: "https://drive.google.com/uc?export=view&id=1qPHb2z0q4002reFAWZqHaGcfFfvWUng7",
     locations: ["Brackwater Wetlands", "Coastal Highlands", "Gale Fields", "Gift of Shuritashi", "Land of Hot Water", "Mount Arbora"],
     price: 10
@@ -1156,6 +1230,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 9,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1_acDanY2aoDXNSy_TdgSzo9QtQUR2ckg",
     locations: ["Mount Arbora"],
     price: 4
@@ -1166,6 +1241,7 @@ export const ingredients: Ingredient[] = [
     utility: 11,
     whimsy: 17,
     rarity: "Uncommon",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1TtPT_EoVuABIUxv3HZFa_gmsKywpNW98",
     locations: ["Land of Hot Water"],
     price: 10
@@ -1186,6 +1262,7 @@ export const ingredients: Ingredient[] = [
     utility: 9,
     whimsy: 7,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1ff-ad_HrzFWbsZVXK9XLEmCbAfmlFXxJ",
     locations: ["Shallows"],
     price: 5.25
@@ -1196,6 +1273,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 19,
     rarity: "Rare",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=193QBdopEdgrnXFKLqj8LHRcWEeXcuy45",
     locations: [],
     price: 9.5
@@ -1216,6 +1294,7 @@ export const ingredients: Ingredient[] = [
     utility: 8,
     whimsy: 4,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1HmOU--UXLHNWAaI3gz1xiGIsO0rXhmlm",
     locations: ["Shallows"],
     price: 5.25
@@ -1226,6 +1305,7 @@ export const ingredients: Ingredient[] = [
     utility: 18,
     whimsy: 18,
     rarity: "Rare",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Au3TsZ5hul1zeek1eFTE-9sUz2ZUvSc4",
     locations: [],
     price: 13.75
@@ -1246,6 +1326,7 @@ export const ingredients: Ingredient[] = [
     utility: 6,
     whimsy: 5,
     rarity: "Common",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=138ntI_5HJWNP39dzSVZnPh2aEqyomGA_",
     locations: ["Gale Fields"],
     price: 3.5
@@ -1256,6 +1337,7 @@ export const ingredients: Ingredient[] = [
     utility: 1,
     whimsy: 0,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=12q7HU8XM1HZ989nUoH4WgPFO9kFz_7hm",
     locations: ["Brackwater Wetlands", "Gift of Shuritashi", "Land of Hot Water"],
     price: 0.5
@@ -1266,6 +1348,7 @@ export const ingredients: Ingredient[] = [
     utility: 2,
     whimsy: 8,
     rarity: "Common",
+    type: "Monster",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Yid7-R_9rpao_h-zEcK1e82wBQ6wlA9o",
     locations: ["Coastal Highlands"],
     price: 5
@@ -1286,6 +1369,7 @@ export const ingredients: Ingredient[] = [
     utility: 7,
     whimsy: 0,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=14S-I7ZfHvg97HCW3UDigt2RK4rC520_w",
     locations: ["Gale Fields", "Land of Hot Water", "Mount Arbora"],
     price: 3.5
@@ -1296,6 +1380,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 5,
     rarity: "Common",
+    type: "Plant",
     imageUrl: "https://drive.google.com/uc?export=view&id=1bQ6RMzERALvpyQ9jKA0K_HnXu3echtjK",
     locations: ["Gale Fields"],
     price: 2.25
@@ -1306,6 +1391,7 @@ export const ingredients: Ingredient[] = [
     utility: 0,
     whimsy: 10,
     rarity: "Common",
+    type: "Water",
     imageUrl: "https://drive.google.com/uc?export=view&id=1wlLHLmmAufsxkAvq5LK3td2Fu_HLXQuR",
     locations: ["Shallows"],
     price: 3
@@ -1316,6 +1402,7 @@ export const ingredients: Ingredient[] = [
     utility: 17,
     whimsy: 11,
     rarity: "Uncommon",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1Ex6bLnriIaOD7F780pSeSJBPz5CY4wTE",
     locations: ["Brackwater Wetlands", "Gale Fields", "Mount Arbora"],
     price: 10
@@ -1326,6 +1413,7 @@ export const ingredients: Ingredient[] = [
     utility: 19,
     whimsy: 19,
     rarity: "Rare",
+    type: "Food",
     imageUrl: "https://drive.google.com/uc?export=view&id=1WZMgYzp64diSZZ-7H58T4uh-_IrvJ-4e",
     locations: [],
     price: 14.5
@@ -1346,6 +1434,7 @@ export const ingredients: Ingredient[] = [
     utility: 4,
     whimsy: 2,
     rarity: "Common",
+    type: "Other",
     imageUrl: "https://drive.google.com/uc?export=view&id=1waAOlfTpLwmP5hMAYE89Ixlj3sa6B24S",
     locations: ["Gale Fields", "Gift of Shuritashi", "Mount Arbora"],
     price: 1.75

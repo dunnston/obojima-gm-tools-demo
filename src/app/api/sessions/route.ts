@@ -7,6 +7,7 @@ export async function GET() {
     const sessions = stmt.all();
     
     const parsedSessions = sessions.map((session: any) => ({
+      id: session.id,
       ...JSON.parse(session.data),
       _lastUpdated: session.updated_at
     }));

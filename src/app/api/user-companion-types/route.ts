@@ -7,6 +7,7 @@ export async function GET() {
     const companionTypes = stmt.all();
     
     const parsedCompanionTypes = companionTypes.map((type: any) => ({
+      id: type.id,
       ...JSON.parse(type.data),
       _lastUpdated: type.updated_at
     }));

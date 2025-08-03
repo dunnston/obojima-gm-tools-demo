@@ -18,11 +18,19 @@ export interface SessionTreasure {
   itemName: string;
   quantity?: number;
   notes?: string;
+  // Custom overrides for session-specific treasure properties
+  customEffect?: string;
+  customFlavorText?: string;
+  customCharges?: string;
+  customActivation?: string;
+  customRequiresAttunement?: boolean;
+  customPrice?: number;
 }
 
 export interface SessionNPC {
   id: string;
   name: string;
+  npcId?: string; // Reference to database NPC ID
   description?: string;
   role?: string; // "ally", "enemy", "neutral", "merchant", etc.
   location?: string;
@@ -54,16 +62,26 @@ export interface SessionSecretClue {
 
 export interface SessionCreature {
   id: string;
-  creatureName: string; // Reference to creature name from database
+  type: 'creature' | 'companion'; // Type of entity
+  creatureName?: string; // Reference to creature name from database (for creatures)
+  companionId?: string; // Reference to companion ID from database (for companions)
+  name: string; // Display name (creature name or companion name)
   notes?: string;
-  quantity?: number;
+  quantity?: number; // Only relevant for creatures
   context?: string; // e.g., "potential boss", "patrol guard", "random encounter"
 }
 
 export interface GameSession {
   id: string;
   name: string;
-  date: Date;
+  realWorldDate: Date; // When you actually play the session
+  gameDate?: {
+    year: number;
+    season: string;
+    phase: string;
+    day: number;
+    cycle: number;
+  }; // When the session takes place in the game world (optional)
   playerCharacters: string[]; // References to PlayerCharacter IDs
   
   // Session sections
@@ -87,14 +105,22 @@ export interface GameSession {
 
 export interface SessionFormData {
   name: string;
-  date: string;
+  realWorldDate: string;
+  gameDate?: {
+    year: number;
+    season: string;
+    phase: string;
+    day: number;
+    cycle: number;
+  };
   playerCharacters: string[];
 }
 
 // Helper functions
 export const createEmptySession = (): Omit<GameSession, 'id' | 'createdAt' | 'updatedAt'> => ({
   name: '',
-  date: new Date(),
+  realWorldDate: new Date(),
+  gameDate: undefined, // Optional - can be set later
   playerCharacters: [],
   music: [],
   strongStart: '',

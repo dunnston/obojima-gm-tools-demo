@@ -345,7 +345,7 @@ export default function DatabaseView() {
     setEditingType(type);
   };
 
-  const handleDelete = (item: any, type: string) => {
+  const handleDelete = async (item: any, type: string) => {
     if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
       return;
     }
@@ -380,6 +380,13 @@ export default function DatabaseView() {
     } else if (type === 'npc') {
       // All NPCs are custom (user-created)
       setModifiedNPCs(prev => prev.filter(n => n.id !== item.id));
+      
+      // Sync deletion to server
+      try {
+        await syncService.deleteNpc(item.id);
+      } catch (error) {
+        console.error('Error syncing NPC deletion:', error);
+      }
     } else if (type === 'companionType') {
       // Only allow deleting custom companion types (not in original data)
       const isCustomItem = !companionTypes.find(original => original.id === item.id);
@@ -389,6 +396,13 @@ export default function DatabaseView() {
     } else if (type === 'companion') {
       // All companions are custom (user-created)
       setModifiedCompanions(prev => prev.filter(c => c.id !== item.id));
+      
+      // Sync deletion to server
+      try {
+        await syncService.deleteCompanion(item.id);
+      } catch (error) {
+        console.error('Error syncing companion deletion:', error);
+      }
     }
   };
 
@@ -415,7 +429,7 @@ export default function DatabaseView() {
     return false;
   };
 
-  const handleSave = (updatedItem: any) => {
+  const handleSave = async (updatedItem: any) => {
     // Update the appropriate state based on type
     if (editingType === 'ingredient') {
       setModifiedIngredients(prev => {
@@ -476,22 +490,31 @@ export default function DatabaseView() {
         }
       });
     } else if (editingType === 'magicItem') {
-      setModifiedMagicItems(prev => {
+      const updatedItems = (() => {
         // Check if this is a new item (original editing item had empty name)
         const isNewItem = editingItem?.name === '';
         
         if (isNewItem) {
           // For new items, just add to the list if name is provided
           if (updatedItem.name && updatedItem.name.trim()) {
-            return [...prev, updatedItem];
+            return [...modifiedMagicItems, updatedItem];
           }
-          return prev;
+          return modifiedMagicItems;
         } else {
           // For existing items, replace the existing one
-          const filtered = prev.filter(item => item.name !== updatedItem.name);
+          const filtered = modifiedMagicItems.filter(item => item.name !== updatedItem.name);
           return [...filtered, updatedItem];
         }
-      });
+      })();
+      
+      setModifiedMagicItems(updatedItems);
+      
+      // Sync to server
+      try {
+        await saveUserMagicItems(updatedItems);
+      } catch (error) {
+        console.error('Error syncing magic item:', error);
+      }
     } else if (editingType === 'npc') {
       setModifiedNPCs(prev => {
         // Check if this is a new item (original editing item had empty id)
@@ -514,6 +537,13 @@ export default function DatabaseView() {
           return [...filtered, updatedItem];
         }
       });
+      
+      // Sync to server
+      try {
+        await syncService.saveNpc(updatedItem);
+      } catch (error) {
+        console.error('Error syncing NPC:', error);
+      }
     } else if (editingType === 'companionType') {
       setModifiedCompanionTypes(prev => {
         // Check if this is a new item (original editing item had empty id)
@@ -558,6 +588,13 @@ export default function DatabaseView() {
           return [...filtered, updatedItem];
         }
       });
+      
+      // Sync to server
+      try {
+        await syncService.saveCompanion(updatedItem);
+      } catch (error) {
+        console.error('Error syncing companion:', error);
+      }
     }
     
     setEditingItem(null);
@@ -758,9 +795,28 @@ export default function DatabaseView() {
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-3">
-          <BeakerIcon className="h-8 w-8 text-emerald-400" />
-          <h1 className="text-3xl font-bold text-white">Database Explorer</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex-1"></div>
+          <div className="flex items-center gap-3">
+            <BeakerIcon className="h-8 w-8 text-emerald-400" />
+            <h1 className="text-3xl font-bold text-white">Database Explorer</h1>
+            {/* Sync status indicator */}
+            {syncStatus === 'syncing' && (
+              <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
+            )}
+            {syncStatus === 'error' && (
+              <span className="text-xs text-amber-400">Offline</span>
+            )}
+          </div>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={loadAllUserData}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Refresh Data"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         <p className="text-slate-400">Browse, filter, and edit your game data</p>
       </div>
@@ -1049,16 +1105,18 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
 function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: { ingredients: any[], onEdit: (item: any, type: string) => void, onAdd: () => void, onDelete: (item: any, type: string) => void, isCustomItem: (item: any, type: string) => boolean }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRarity, setFilterRarity] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [filterLocation, setFilterLocation] = useState('all');
   const [sortBy, setSortBy] = useState('name');
 
   const filteredIngredients = ingredients.filter(ingredient => {
     const matchesSearch = ingredient.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRarity = filterRarity === 'all' || ingredient.rarity === filterRarity;
+    const matchesType = filterType === 'all' || ingredient.type === filterType;
     const matchesLocation = filterLocation === 'all' || ingredient.locations.some((loc: string) => 
       loc.toLowerCase().includes(filterLocation.toLowerCase())
     );
-    return matchesSearch && matchesRarity && matchesLocation;
+    return matchesSearch && matchesRarity && matchesType && matchesLocation;
   }).sort((a, b) => {
     switch (sortBy) {
       case 'name': return a.name.localeCompare(b.name);
@@ -1071,6 +1129,7 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
   });
 
   const rarities = [...new Set(ingredients.map(i => i.rarity))];
+  const types = [...new Set(ingredients.map(i => i.type).filter(Boolean))].sort();
   const allLocations = [...new Set(ingredients.flatMap(i => i.locations))];
 
   return (
@@ -1099,6 +1158,17 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
             <option value="all">All Rarities</option>
             {rarities.map(rarity => (
               <option key={rarity} value={rarity}>{rarity}</option>
+            ))}
+          </select>
+
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+          >
+            <option value="all">All Types</option>
+            {types.map(type => (
+              <option key={type} value={type}>{type}</option>
             ))}
           </select>
 
@@ -1165,6 +1235,11 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
                     }`}>
                       {ingredient.rarity}
                     </span>
+                    {ingredient.type && (
+                      <span className="px-2 py-1 bg-slate-600/50 text-slate-300 rounded-full text-xs">
+                        {ingredient.type}
+                      </span>
+                    )}
                     <span className="text-yellow-400 font-bold">💰{ingredient.price || 0}g</span>
                   </div>
                 </div>

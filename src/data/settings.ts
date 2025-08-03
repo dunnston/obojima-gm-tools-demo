@@ -57,6 +57,13 @@ export const defaultVendingMachineSettings: VendingMachineSettings = {
 
 export interface AppSettings {
   vendingMachine: VendingMachineSettings;
+  currentObojimaDate?: {
+    year: number;
+    season: string;
+    phase: string;
+    day: number;
+    cycle: number;
+  };
   // Future settings can be added here
   // ui: UISettings;
   // gameplay: GameplaySettings;

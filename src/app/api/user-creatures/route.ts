@@ -7,6 +7,7 @@ export async function GET() {
     const creatures = stmt.all();
     
     const parsedCreatures = creatures.map((creature: any) => ({
+      id: creature.id,
       ...JSON.parse(creature.data),
       _lastUpdated: creature.updated_at
     }));

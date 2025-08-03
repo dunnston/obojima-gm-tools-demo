@@ -7,6 +7,7 @@ export async function GET() {
     const companions = stmt.all();
     
     const parsedCompanions = companions.map((companion: any) => ({
+      id: companion.id,
       ...JSON.parse(companion.data),
       _lastUpdated: companion.updated_at
     }));

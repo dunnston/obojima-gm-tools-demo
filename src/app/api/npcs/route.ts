@@ -7,6 +7,7 @@ export async function GET() {
     const npcs = stmt.all();
     
     const parsedNpcs = npcs.map((npc: any) => ({
+      id: npc.id,
       ...JSON.parse(npc.data),
       _lastUpdated: npc.updated_at
     }));

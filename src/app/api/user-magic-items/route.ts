@@ -7,6 +7,7 @@ export async function GET() {
     const magicItems = stmt.all();
     
     const parsedMagicItems = magicItems.map((item: any) => ({
+      id: item.id,
       ...JSON.parse(item.data),
       _lastUpdated: item.updated_at
     }));

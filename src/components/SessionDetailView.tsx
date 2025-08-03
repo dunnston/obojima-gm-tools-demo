@@ -15,6 +15,7 @@ import {
 } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures } from '@/data/creatures';
+import { syncService } from '@/services/sync';
 import { Encounter } from '@/data/creatures';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
@@ -68,7 +69,10 @@ export default function SessionDetailView({
   const [currentMusic, setCurrentMusic] = useState<SessionMusic | null>(null);
   const [showEncounterModal, setShowEncounterModal] = useState(false);
   const [showCreatureSelector, setShowCreatureSelector] = useState(false);
+  const [showNPCSelector, setShowNPCSelector] = useState(false);
   const [viewingCreature, setViewingCreature] = useState<string | null>(null);
+  const [viewingNPC, setViewingNPC] = useState<{ npc: any; sessionNotes?: string } | null>(null);
+  const [viewingCompanion, setViewingCompanion] = useState<{ companion: any; sessionNotes?: string } | null>(null);
   const [showRandomEncounterGenerator, setShowRandomEncounterGenerator] = useState(false);
 
   const toggleSection = (section: string) => {
@@ -129,15 +133,7 @@ export default function SessionDetailView({
   };
 
   const handleAddNPC = () => {
-    const newNPC: SessionNPC = {
-      id: `npc-${Date.now()}-${Math.random()}`,
-      ...createEmptyNPC(),
-      name: 'New NPC'
-    };
-    
-    onUpdateSession(session.id, {
-      npcs: [...session.npcs, newNPC]
-    });
+    setShowNPCSelector(true);
   };
 
   const handleAddCreature = () => {
@@ -197,12 +193,26 @@ export default function SessionDetailView({
       }
       
       audioRef.current = new Audio(music.url || '');
-      audioRef.current.play();
-      setCurrentMusic(music);
+      
+      // Add error handling for audio loading
+      audioRef.current.onerror = () => {
+        console.error('Failed to load audio file:', music.url);
+        setCurrentMusic(null);
+        alert(`Failed to play audio file: ${music.name}. The file may have been moved or deleted.`);
+      };
       
       audioRef.current.onended = () => {
         setCurrentMusic(null);
       };
+      
+      // Play the audio
+      audioRef.current.play().catch((error) => {
+        console.error('Failed to play audio:', error);
+        setCurrentMusic(null);
+        alert(`Failed to play audio file: ${music.name}. ${error.message || 'Unknown error'}`);
+      });
+      
+      setCurrentMusic(music);
     }
   };
 
@@ -432,6 +442,19 @@ export default function SessionDetailView({
                   onUpdateSession(session.id, { npcs: updatedNPCs });
                 }
               }}
+              onView={async () => {
+                if (npc.npcId) {
+                  try {
+                    const result = await syncService.getNpcs();
+                    const fullNPC = result.data?.find(n => n.id === npc.npcId);
+                    if (fullNPC) {
+                      setViewingNPC({ npc: fullNPC, sessionNotes: npc.notes });
+                    }
+                  } catch (error) {
+                    console.error('Error loading NPC details:', error);
+                  }
+                }
+              }}
             />
           ))}
         </div>
@@ -451,7 +474,21 @@ export default function SessionDetailView({
             <CreatureCard 
               key={creature.id}
               creature={creature}
-              onView={() => setViewingCreature(creature.creatureName)}
+              onView={async () => {
+                if (creature.type === 'creature') {
+                  setViewingCreature(creature.creatureName || creature.name);
+                } else if (creature.type === 'companion' && creature.companionId) {
+                  try {
+                    const result = await syncService.getCompanions();
+                    const fullCompanion = result.data?.find(c => c.id === creature.companionId);
+                    if (fullCompanion) {
+                      setViewingCompanion({ companion: fullCompanion, sessionNotes: creature.notes });
+                    }
+                  } catch (error) {
+                    console.error('Error loading companion details:', error);
+                  }
+                }
+              }}
               onUpdate={(updates) => {
                 const updatedCreatures = (session.creatures || []).map(c => 
                   c.id === creature.id ? { ...c, ...updates } : c
@@ -581,11 +618,14 @@ export default function SessionDetailView({
       {/* Creature Selection Modal */}
       {showCreatureSelector && (
         <CreatureSelectionModal
-          onAdd={(creatureName, quantity, context, notes) => {
+          onAdd={(type, entityName, entityId, quantity, context, notes) => {
             const newCreature: SessionCreature = {
-              id: `creature-${Date.now()}-${Math.random()}`,
-              creatureName,
-              quantity,
+              id: `${type}-${Date.now()}-${Math.random()}`,
+              type,
+              name: entityName,
+              creatureName: type === 'creature' ? entityName : undefined,
+              companionId: type === 'companion' ? entityId : undefined,
+              quantity: type === 'creature' ? quantity : 1,
               context,
               notes
             };
@@ -606,10 +646,60 @@ export default function SessionDetailView({
         />
       )}
 
+      {/* NPC Selection Modal */}
+      {showNPCSelector && (
+        <NPCSelectionModal
+          onAdd={async (npcId, notes) => {
+            try {
+              // Get the NPC details from the database
+              const result = await syncService.getNpcs();
+              const selectedNPC = result.data?.find(npc => npc.id === npcId);
+              
+              const newSessionNPC: SessionNPC = {
+                id: `session-npc-${Date.now()}-${Math.random()}`,
+                name: selectedNPC?.name || 'Unknown NPC',
+                npcId: npcId,
+                description: selectedNPC?.details,
+                location: selectedNPC?.location,
+                notes: notes || '',
+                imageUrl: selectedNPC?.portrait
+              };
+              
+              onUpdateSession(session.id, {
+                npcs: [...session.npcs, newSessionNPC]
+              });
+              setShowNPCSelector(false);
+            } catch (error) {
+              console.error('Error adding NPC to session:', error);
+              alert('Error adding NPC to session. Please try again.');
+            }
+          }}
+          onClose={() => setShowNPCSelector(false)}
+        />
+      )}
+
+      {/* NPC Details Modal */}
+      {viewingNPC && (
+        <NPCDetailsModal
+          npc={viewingNPC.npc}
+          sessionNotes={viewingNPC.sessionNotes}
+          onClose={() => setViewingNPC(null)}
+        />
+      )}
+
       {/* Random Encounter Generator Modal */}
       {showRandomEncounterGenerator && (
         <EncounterGenerator
           onClose={() => setShowRandomEncounterGenerator(false)}
+        />
+      )}
+
+      {/* Companion Details Modal */}
+      {viewingCompanion && (
+        <CompanionDetailsModal
+          companion={viewingCompanion.companion}
+          sessionNotes={viewingCompanion.sessionNotes}
+          onClose={() => setViewingCompanion(null)}
         />
       )}
     </div>
@@ -730,33 +820,51 @@ function CreatureCard({
   onUpdate: (updates: Partial<SessionCreature>) => void;
   onDelete: () => void;
 }) {
-  const creatureData = creatures.find(c => c.name === creature.creatureName);
+  const creatureData = creature.type === 'creature' && creature.creatureName 
+    ? creatures.find(c => c.name === creature.creatureName) 
+    : null;
+  
+  const isCreature = creature.type === 'creature';
+  const isCompanion = creature.type === 'companion';
   
   return (
     <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
       <div className="flex items-start gap-3 mb-3">
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
-          <img 
-            src={getCreatureImagePath(creature.creatureName)} 
-            alt={creature.creatureName}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = '/images/creatures/default-creature.svg';
-            }}
-          />
+          {isCreature ? (
+            <img 
+              src={getCreatureImagePath(creature.creatureName || creature.name)} 
+              alt={creature.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = '/images/creatures/default-creature.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-400">
+              <UserGroupIcon className="h-10 w-10" />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-white">{creature.creatureName}</h3>
-                {creature.quantity && creature.quantity > 1 && (
+                <h3 className="font-semibold text-white">{creature.name}</h3>
+                {isCreature && creature.quantity && creature.quantity > 1 && (
                   <span className="px-2 py-1 bg-slate-600 text-xs rounded text-slate-300">
                     ×{creature.quantity}
                   </span>
                 )}
+                <span className={`px-2 py-1 text-xs rounded ${
+                  isCreature 
+                    ? 'bg-red-500/20 text-red-300' 
+                    : 'bg-blue-500/20 text-blue-300'
+                }`}>
+                  {isCreature ? 'Creature' : 'Companion'}
+                </span>
               </div>
-              {creatureData && (
+              {isCreature && creatureData && (
                 <p className="text-sm text-slate-400">
                   {creatureData.type} • CR {creatureData.challenge_rating}
                 </p>
@@ -794,7 +902,7 @@ function CreatureCard({
       
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-4 text-slate-400">
-          {creatureData && (
+          {isCreature && creatureData && (
             <>
               <span>AC {creatureData.armor_class}</span>
               <span>HP {creatureData.hit_points}</span>
@@ -803,16 +911,29 @@ function CreatureCard({
         </div>
         <button
           onClick={() => {
-            const newQuantity = prompt('Quantity:', creature.quantity?.toString() || '1');
-            const newNotes = prompt('Notes:', creature.notes || '');
-            const newContext = prompt('Context:', creature.context || '');
-            
-            if (newQuantity !== null) {
-              onUpdate({
-                quantity: parseInt(newQuantity) || 1,
-                notes: newNotes || undefined,
-                context: newContext || undefined
-              });
+            if (isCreature) {
+              const newQuantity = prompt('Quantity:', creature.quantity?.toString() || '1');
+              const newNotes = prompt('Notes:', creature.notes || '');
+              const newContext = prompt('Context:', creature.context || '');
+              
+              if (newQuantity !== null) {
+                onUpdate({
+                  quantity: parseInt(newQuantity) || 1,
+                  notes: newNotes || undefined,
+                  context: newContext || undefined
+                });
+              }
+            } else {
+              // For companions, only allow editing notes and context
+              const newNotes = prompt('Notes:', creature.notes || '');
+              const newContext = prompt('Context:', creature.context || '');
+              
+              if (newNotes !== null) {
+                onUpdate({
+                  notes: newNotes || undefined,
+                  context: newContext || undefined
+                });
+              }
             }
           }}
           className="px-2 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded transition-colors"
@@ -826,3 +947,6 @@ function CreatureCard({
 
 import { SceneCard, SecretClueCard, EncounterCard, NPCCard, MusicManager, TreasureManager } from './SessionComponents';
 import { SceneEditModal, SceneViewModal, PlayerDetailModal, EncounterSelectionModal, CreatureSelectionModal, CreatureDetailsModal } from './SessionModals';
+import { NPCSelectionModal } from './NPCSelectionModal';
+import { NPCDetailsModal } from './NPCDetailsModal';
+import { CompanionDetailsModal } from './CompanionDetailsModal';

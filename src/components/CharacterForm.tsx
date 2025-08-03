@@ -20,6 +20,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
         characterName: character.characterName,
         playerName: character.playerName,
         class: character.class,
+        level: character.level || 1,
         armorClass: character.armorClass,
         hitPoints: character.hitPoints || 0,
         maxHitPoints: character.maxHitPoints || 0,
@@ -175,7 +176,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           </div>
 
           {/* Class and Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Class
@@ -190,6 +191,21 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                   <option key={cls} value={cls}>{cls}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Level
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={formData.level}
+                onChange={(e) => handleInputChange('level', e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="Level"
+              />
             </div>
 
             <div>

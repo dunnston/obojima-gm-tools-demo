@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   SessionScene, 
   SessionNPC, 
@@ -10,6 +10,9 @@ import {
 } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { Encounter, creatures } from '@/data/creatures';
+import { NPC } from '@/data/npcs';
+import { Companion } from '@/data/companions';
+import { syncService } from '@/services/sync';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
@@ -552,8 +555,16 @@ export function PlayerDetailModal({
                 <div className="text-lg text-white font-semibold">{character.class}</div>
               </div>
               <div>
+                <div className="text-sm text-slate-400">Level</div>
+                <div className="text-lg text-white font-semibold">{character.level}</div>
+              </div>
+              <div>
                 <div className="text-sm text-slate-400">Armor Class</div>
                 <div className="text-lg text-white font-semibold">{character.armorClass}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-400">Hit Points</div>
+                <div className="text-lg text-white font-semibold">{character.hitPoints} / {character.maxHitPoints}</div>
               </div>
               <div>
                 <div className="text-sm text-slate-400">Passive Perception</div>
@@ -562,6 +573,10 @@ export function PlayerDetailModal({
               <div>
                 <div className="text-sm text-slate-400">Passive Insight</div>
                 <div className="text-lg text-white font-semibold">{character.passiveInsight}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-400">Passive Investigation</div>
+                <div className="text-lg text-white font-semibold">{character.passiveInvestigation}</div>
               </div>
             </div>
           </div>
@@ -753,30 +768,72 @@ export function EncounterSelectionModal({
   );
 }
 
-// Creature Selection Modal
+// Enhanced Creature/Companion Selection Modal
 export function CreatureSelectionModal({
   onAdd,
   onClose
 }: {
-  onAdd: (creatureName: string, quantity?: number, context?: string, notes?: string) => void;
+  onAdd: (type: 'creature' | 'companion', entityName: string, entityId?: string, quantity?: number, context?: string, notes?: string) => void;
   onClose: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<'creatures' | 'companions'>('creatures');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCreature, setSelectedCreature] = useState<typeof creatures[0] | null>(null);
+  const [selectedCompanion, setSelectedCompanion] = useState<Companion | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [context, setContext] = useState('');
   const [notes, setNotes] = useState('');
+  const [companions, setCompanions] = useState<Companion[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load companions from database
+  useEffect(() => {
+    const loadCompanions = async () => {
+      if (activeTab === 'companions') {
+        setLoading(true);
+        try {
+          const result = await syncService.getCompanions();
+          if (result.success && result.data) {
+            setCompanions(result.data);
+          }
+        } catch (error) {
+          console.error('Error loading companions:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    loadCompanions();
+  }, [activeTab]);
 
   const filteredCreatures = creatures.filter(creature =>
     creature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     creature.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredCompanions = companions.filter(companion =>
+    companion.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    companion.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    companion.desire.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    companion.disposition.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleAdd = () => {
-    if (selectedCreature) {
+    if (activeTab === 'creatures' && selectedCreature) {
       onAdd(
+        'creature',
         selectedCreature.name,
+        undefined, // No ID for built-in creatures
         quantity || 1,
+        context || undefined,
+        notes || undefined
+      );
+    } else if (activeTab === 'companions' && selectedCompanion) {
+      onAdd(
+        'companion',
+        selectedCompanion.name,
+        selectedCompanion.id,
+        1, // Companions are typically unique, so quantity is 1
         context || undefined,
         notes || undefined
       );
@@ -789,7 +846,7 @@ export function CreatureSelectionModal({
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <FireIcon className="h-6 w-6 text-red-400" />
-            <h2 className="text-2xl font-bold text-white">Add Creatures</h2>
+            <h2 className="text-2xl font-bold text-white">Add Creatures & Companions</h2>
           </div>
           <button
             onClick={onClose}
@@ -799,8 +856,48 @@ export function CreatureSelectionModal({
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-slate-700 bg-slate-800/50">
+          <button
+            onClick={() => {
+              setActiveTab('creatures');
+              setSelectedCreature(null);
+              setSelectedCompanion(null);
+              setSearchTerm('');
+            }}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'creatures'
+                ? 'text-white bg-slate-700/50 border-b-2 border-red-400'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <FireIcon className="h-4 w-4" />
+              Creatures
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('companions');
+              setSelectedCreature(null);
+              setSelectedCompanion(null);
+              setSearchTerm('');
+            }}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'companions'
+                ? 'text-white bg-slate-700/50 border-b-2 border-blue-400'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <UserGroupIcon className="h-4 w-4" />
+              Companions
+            </div>
+          </button>
+        </div>
+
         <div className="flex h-[70vh]">
-          {/* Creature List */}
+          {/* Entity List */}
           <div className="w-1/2 border-r border-slate-700">
             <div className="p-4 border-b border-slate-700">
               <div className="relative">
@@ -810,57 +907,115 @@ export function CreatureSelectionModal({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                  placeholder="Search creatures..."
+                  placeholder={`Search ${activeTab}...`}
                 />
               </div>
             </div>
             
             <div className="overflow-y-auto h-full p-4">
-              <div className="space-y-2">
-                {filteredCreatures.map((creature) => (
-                  <button
-                    key={creature.name}
-                    onClick={() => setSelectedCreature(creature)}
-                    className={`w-full p-3 text-left rounded-lg transition-colors border ${
-                      selectedCreature?.name === creature.name 
-                        ? 'bg-emerald-600/20 border-emerald-400 text-white' 
-                        : 'bg-slate-700/30 border-slate-600 text-slate-200 hover:bg-slate-700/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
-                        <img 
-                          src={getCreatureImagePath(creature.name)} 
-                          alt={creature.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/images/creatures/default-creature.svg';
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium truncate">{creature.name}</div>
-                            <div className="text-sm text-slate-400">
-                              {creature.type} • CR {creature.challenge_rating}
+              {loading ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-white">Loading {activeTab}...</div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {activeTab === 'creatures' ? (
+                    filteredCreatures.length > 0 ? (
+                      filteredCreatures.map((creature) => (
+                        <button
+                          key={creature.name}
+                          onClick={() => setSelectedCreature(creature)}
+                          className={`w-full p-3 text-left rounded-lg transition-colors border ${
+                            selectedCreature?.name === creature.name 
+                              ? 'bg-emerald-600/20 border-emerald-400 text-white' 
+                              : 'bg-slate-700/30 border-slate-600 text-slate-200 hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+                              <img 
+                                src={getCreatureImagePath(creature.name)} 
+                                alt={creature.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/images/creatures/default-creature.svg';
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium truncate">{creature.name}</div>
+                                  <div className="text-sm text-slate-400">
+                                    {creature.type} • CR {creature.challenge_rating}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-slate-400 ml-2">
+                                  AC {creature.armor_class}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-xs text-slate-400 ml-2">
-                            AC {creature.armor_class}
-                          </div>
-                        </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-slate-400">
+                        No creatures found matching your search.
                       </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    )
+                  ) : (
+                    filteredCompanions.length > 0 ? (
+                      filteredCompanions.map((companion) => (
+                        <button
+                          key={companion.id}
+                          onClick={() => setSelectedCompanion(companion)}
+                          className={`w-full p-3 text-left rounded-lg transition-colors border ${
+                            selectedCompanion?.id === companion.id 
+                              ? 'bg-emerald-600/20 border-emerald-400 text-white' 
+                              : 'bg-slate-700/30 border-slate-600 text-slate-200 hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+                              {companion.image ? (
+                                <img 
+                                  src={companion.image} 
+                                  alt={companion.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/images/companions/default-companion.svg';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                  <UserGroupIcon className="h-8 w-8" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{companion.name}</div>
+                              <div className="text-sm text-slate-400 truncate">{companion.disposition}</div>
+                              <div className="text-xs text-slate-500 truncate">{companion.goal}</div>
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <UserGroupIcon className="h-16 w-16 text-slate-400 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-xl font-semibold text-white mb-2">No Companions Found</h3>
+                        <p className="text-slate-400">Create companions in the Database tab first</p>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Details Panel */}
           <div className="w-1/2 p-6">
-            {selectedCreature ? (
+            {activeTab === 'creatures' && selectedCreature ? (
               <div className="space-y-4">
                 <div>
                   <div className="flex items-start gap-4 mb-4">
@@ -944,11 +1099,100 @@ export function CreatureSelectionModal({
                   </button>
                 </div>
               </div>
+            ) : activeTab === 'companions' && selectedCompanion ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+                      {selectedCompanion.image ? (
+                        <img 
+                          src={selectedCompanion.image} 
+                          alt={selectedCompanion.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/images/companions/default-companion.svg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <UserGroupIcon className="h-12 w-12" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">{selectedCompanion.name}</h3>
+                      <p className="text-emerald-400 mb-1">{selectedCompanion.disposition}</p>
+                      <p className="text-slate-400 text-sm mb-2">{selectedCompanion.goal}</p>
+                      <p className="text-slate-500 text-xs">{selectedCompanion.desire}</p>
+                    </div>
+                  </div>
+                  
+                  {selectedCompanion.quirk && (
+                    <div className="bg-slate-700/30 rounded-lg p-3 mb-4">
+                      <h4 className="text-sm font-medium text-slate-300 mb-1">Quirk</h4>
+                      <p className="text-slate-300 text-sm">{selectedCompanion.quirk}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Context
+                    </label>
+                    <input
+                      type="text"
+                      value={context}
+                      onChange={(e) => setContext(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                      placeholder="e.g., helpful ally, potential recruit..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Session Notes
+                    </label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
+                      placeholder="Session-specific notes about this companion..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAdd}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                  >
+                    Add Companion
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="text-center py-12">
-                <FireIcon className="h-16 w-16 text-slate-400 mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Creature</h3>
-                <p className="text-slate-400">Choose a creature from the list to add to your session</p>
+                {activeTab === 'creatures' ? (
+                  <>
+                    <FireIcon className="h-16 w-16 text-slate-400 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold text-white mb-2">Select a Creature</h3>
+                    <p className="text-slate-400">Choose a creature from the list to add to your session</p>
+                  </>
+                ) : (
+                  <>
+                    <UserGroupIcon className="h-16 w-16 text-slate-400 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold text-white mb-2">Select a Companion</h3>
+                    <p className="text-slate-400">Choose a companion from the list to add to your session</p>
+                  </>
+                )}
               </div>
             )}
           </div>

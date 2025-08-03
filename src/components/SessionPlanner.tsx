@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
+import { formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
 import { syncService } from '@/services/sync';
 import { 
   PlusIcon, 
@@ -23,10 +24,11 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
-export default function SessionPlanner({ onPageChange }: { onPageChange?: (page: string) => void }) {
+export default function SessionPlanner({ onPageChange, currentGameDate, onGameDateChange }: { onPageChange?: (page: string) => void; currentGameDate?: any; onGameDateChange?: (newDate: any) => void }) {
   const [sessions, setSessions] = useState<GameSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditingSession, setIsEditingSession] = useState(false);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [encounters, setEncounters] = useState<Encounter[]>([]);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
@@ -34,7 +36,9 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
   // Validator for session data
   const validateSession = (session: any): GameSession => ({
     ...session,
-    date: new Date(session.date),
+    // Handle backward compatibility - if old 'date' field exists, use it as realWorldDate
+    realWorldDate: new Date(session.realWorldDate || session.date),
+    gameDate: session.gameDate || undefined,
     createdAt: new Date(session.createdAt),
     updatedAt: new Date(session.updatedAt),
     // Ensure all arrays exist with defaults
@@ -83,34 +87,90 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
     }
   };
 
-  // Load data on mount
+  // Load data on mount and cleanup on unmount
   useEffect(() => {
     loadAllData();
     
     // Note: Auto-sync disabled to prevent conflicts with other components
     // Users can manually refresh using the refresh button
+    
+    // Cleanup debounce timeouts on unmount
+    return () => {
+      saveTimeouts.forEach(timeout => clearTimeout(timeout));
+    };
   }, []);
 
+  // Check and align world date with latest session whenever sessions or current date changes
+  useEffect(() => {
+    if (sessions.length > 0 && currentGameDate && onGameDateChange) {
+      const sessionsWithGameDates = sessions.filter(s => s.gameDate);
+      if (sessionsWithGameDates.length > 0) {
+        // Find the latest session date (where the world should be)
+        const latestSessionDate = sessionsWithGameDates.reduce((latest, session) => {
+          const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
+          const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+          return sessionDays > latestDays ? session : latest;
+        }).gameDate;
+
+        const daysDifference = daysBetweenObojimaDate(currentGameDate, latestSessionDate);
+        if (daysDifference !== 0) {
+          // Silently align the world date to the latest session date
+          console.log(`Auto-aligning world date from ${formatObojimaDate(currentGameDate)} to latest session ${formatObojimaDate(latestSessionDate)}`);
+          onGameDateChange(latestSessionDate);
+        }
+      }
+    }
+  }, [sessions, currentGameDate]);
+
+  // Save individual session to avoid performance issues
+  const saveSession = async (session: GameSession) => {
+    try {
+      await syncService.saveSession(session);
+      // Update local state
+      setSessions(prev => {
+        const filtered = prev.filter(s => s.id !== session.id);
+        return [...filtered, session];
+      });
+      // Update localStorage as backup
+      const allSessions = sessions.map(s => s.id === session.id ? session : s);
+      localStorage.setItem('obojima-sessions', JSON.stringify(allSessions));
+    } catch (error) {
+      console.error('Error saving session:', error);
+      alert('Error saving session data. Data saved locally but may not sync to other devices.');
+    }
+  };
+
+  // Save all sessions (only used for bulk operations like initial creation)
   const saveSessions = async (updatedSessions: GameSession[]) => {
     try {
-      await syncService.saveWithFallback('sessions', 'obojima-sessions', updatedSessions);
+      // Save each session individually
+      for (const session of updatedSessions) {
+        await syncService.saveSession(session);
+      }
       setSessions(updatedSessions);
+      localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
     } catch (error) {
       console.error('Error saving sessions:', error);
       alert('Error saving session data. Data saved locally but may not sync to other devices.');
     }
   };
 
-  const createSession = async (name: string, date: Date, playerCharacters: string[]) => {
+  const createSession = async (name: string, realWorldDate: Date, gameDate: { year: number; season: string; phase: string; day: number; cycle: number; } | undefined, playerCharacters: string[]) => {
     const newSession: GameSession = {
       id: `session-${Date.now()}-${Math.random()}`,
       ...createEmptySession(),
       name,
-      date,
+      realWorldDate,
+      gameDate,
       playerCharacters,
       createdAt: new Date(),
       updatedAt: new Date()
     };
+
+    // Check if we need to align the world date with campaign anchor
+    if (gameDate) {
+      await checkAndAlignWorldDate(gameDate);
+    }
 
     const updatedSessions = [...sessions, newSession];
     await saveSessions(updatedSessions);
@@ -118,26 +178,173 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
     setIsCreating(false);
   };
 
+  // Debounced save map to prevent excessive API calls
+  const [saveTimeouts, setSaveTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Function to determine the campaign anchor date (earliest session with game date)
+  const getCampaignAnchorDate = () => {
+    const sessionsWithGameDates = sessions.filter(s => s.gameDate);
+    if (sessionsWithGameDates.length === 0) return null;
+    
+    // Find the earliest session date
+    return sessionsWithGameDates.reduce((earliest, session) => {
+      const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
+      const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!);
+      return sessionDays < earliestDays ? session : earliest;
+    }).gameDate;
+  };
+
+  // Function to check and align world date with campaign progression
+  const checkAndAlignWorldDate = async (newSessionGameDate: any) => {
+    if (!newSessionGameDate || !currentGameDate || !onGameDateChange) {
+      return;
+    }
+
+    try {
+      // Calculate what the dates will be after adding this session
+      const tempSessions = [...sessions, { gameDate: newSessionGameDate }];
+      const sessionsWithGameDates = tempSessions.filter(s => s.gameDate);
+      
+      if (sessionsWithGameDates.length === 0) return;
+      
+      // Find the earliest (anchor) date and the latest (current) date
+      const anchorDate = sessionsWithGameDates.reduce((earliest, session) => {
+        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
+        const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!);
+        return sessionDays < earliestDays ? session : earliest;
+      }).gameDate;
+
+      const latestSessionDate = sessionsWithGameDates.reduce((latest, session) => {
+        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
+        const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+        return sessionDays > latestDays ? session : latest;
+      }).gameDate;
+
+      // The world date should be the latest session date, but never before the anchor
+      const targetWorldDate = latestSessionDate;
+      const daysDifference = daysBetweenObojimaDate(currentGameDate, targetWorldDate);
+      
+      if (daysDifference !== 0) {
+        const isFirstSession = sessions.filter(s => s.gameDate).length === 0;
+        const isNewAnchor = daysBetweenObojimaDate(currentGameDate, anchorDate) < 0; // Current date is after new anchor
+        
+        let message = '';
+        if (isFirstSession) {
+          message = `This is your first session with a game date. The campaign will begin on ${formatObojimaDate(targetWorldDate)}.\n\nThe world calendar will be set to this date.`;
+        } else if (isNewAnchor) {
+          message = `This session date (${formatObojimaDate(newSessionGameDate)}) creates a new campaign starting point (${formatObojimaDate(anchorDate)}).\n\nThe world calendar will be set to the latest session date: ${formatObojimaDate(targetWorldDate)}.\n\nAll existing sessions and activities will be adjusted accordingly.`;
+        } else {
+          message = `The world date will advance from ${formatObojimaDate(currentGameDate)} to ${formatObojimaDate(targetWorldDate)} to match your latest session.\n\nThis represents ${Math.abs(daysDifference)} days passing in the game world.`;
+        }
+
+        console.log(`Advancing world date from ${formatObojimaDate(currentGameDate)} to ${formatObojimaDate(targetWorldDate)}`);
+        
+        // Update the world date to the latest session date
+        await onGameDateChange(targetWorldDate);
+        
+        // Show notification to user
+        if (confirm(message + '\n\nWould you like to go to the Downtime Tracker to review activities?')) {
+          onPageChange?.('downtime');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking/aligning world date:', error);
+    }
+  };
+
   const updateSession = async (sessionId: string, updates: Partial<GameSession>) => {
-    const updatedSessions = sessions.map(session => 
-      session.id === sessionId 
-        ? { ...session, ...updates, updatedAt: new Date() }
-        : session
-    );
-    await saveSessions(updatedSessions);
+    // Update local state immediately for responsive UI
+    const updatedSession = sessions.find(s => s.id === sessionId);
+    if (!updatedSession) return;
+
+    const newSession = { ...updatedSession, ...updates, updatedAt: new Date() };
+    
+    // Update local state immediately
+    setSessions(prev => prev.map(session => 
+      session.id === sessionId ? newSession : session
+    ));
     
     if (selectedSession && selectedSession.id === sessionId) {
-      setSelectedSession({ ...selectedSession, ...updates, updatedAt: new Date() });
+      setSelectedSession(newSession);
     }
+
+    // Debounce the actual save to server (wait 1 second after last change)
+    const existingTimeout = saveTimeouts.get(sessionId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const newTimeout = setTimeout(async () => {
+      await saveSession(newSession);
+      setSaveTimeouts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(sessionId);
+        return newMap;
+      });
+    }, 1000); // 1 second debounce
+
+    setSaveTimeouts(prev => {
+      const newMap = new Map(prev);
+      newMap.set(sessionId, newTimeout);
+      return newMap;
+    });
   };
 
   const deleteSession = async (sessionId: string) => {
     if (confirm('Are you sure you want to delete this session?')) {
-      const updatedSessions = sessions.filter(session => session.id !== sessionId);
-      await saveSessions(updatedSessions);
-      
-      if (selectedSession && selectedSession.id === sessionId) {
-        setSelectedSession(null);
+      try {
+        // Cancel any pending saves for this session
+        const existingTimeout = saveTimeouts.get(sessionId);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+          setSaveTimeouts(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(sessionId);
+            return newMap;
+          });
+        }
+
+        // Delete from API
+        await syncService.deleteSession(sessionId);
+        
+        // Update local state
+        const updatedSessions = sessions.filter(session => session.id !== sessionId);
+        setSessions(updatedSessions);
+        localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+        
+        if (selectedSession && selectedSession.id === sessionId) {
+          setSelectedSession(null);
+        }
+
+        // Check if we need to recalculate the campaign anchor after deletion
+        const deletedSession = sessions.find(s => s.id === sessionId);
+        if (deletedSession?.gameDate) {
+          // Wait a bit for state to update, then check if anchor changed
+          setTimeout(async () => {
+            const remainingSessions = sessions.filter(s => s.id !== sessionId);
+            const remainingWithDates = remainingSessions.filter(s => s.gameDate);
+            
+            if (remainingWithDates.length > 0) {
+              // Find the latest remaining session date (where world should be)
+              const newLatestDate = remainingWithDates.reduce((latest, session) => {
+                const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
+                const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+                return sessionDays > latestDays ? session : latest;
+              }).gameDate;
+              
+              const daysDifference = daysBetweenObojimaDate(currentGameDate, newLatestDate);
+              if (daysDifference !== 0) {
+                const message = `After deleting that session, the world date is now ${formatObojimaDate(newLatestDate)} (matching your latest remaining session).\n\nThe world calendar will be adjusted to match.`;
+                console.log(`Realigning world date to latest remaining session: ${formatObojimaDate(newLatestDate)}`);
+                await onGameDateChange?.(newLatestDate);
+                alert(message);
+              }
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Error deleting session:', error);
+        alert('Error deleting session. Changes may not sync to other devices.');
       }
     }
   };
@@ -220,8 +427,14 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
               <div className="space-y-2 text-sm text-slate-400">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {session.date.toLocaleDateString()}
+                  {session.realWorldDate.toLocaleDateString()}
                 </div>
+                {session.gameDate && (
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <SparklesIcon className="h-4 w-4" />
+                    {formatObojimaDate(session.gameDate as any)}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <UserGroupIcon className="h-4 w-4" />
                   {session.playerCharacters?.length || 0} players
@@ -265,6 +478,7 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
         {isCreating && (
           <CreateSessionModal
             characters={characters}
+            currentGameDate={currentGameDate}
             onCreate={createSession}
             onClose={() => setIsCreating(false)}
           />
@@ -288,7 +502,12 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
           <div>
             <h1 className="text-3xl font-bold text-white">{selectedSession.name}</h1>
             <div className="flex items-center gap-4 text-slate-400 mt-1">
-              <span>{selectedSession.date.toLocaleDateString()}</span>
+              <span>{selectedSession.realWorldDate.toLocaleDateString()}</span>
+              {selectedSession.gameDate && (
+                <span className="text-emerald-400">
+                  Game: {formatObojimaDate(selectedSession.gameDate as any)}
+                </span>
+              )}
               <span>{selectedSession.playerCharacters?.length || 0} players</span>
               <span className={`px-2 py-1 rounded-full text-xs ${
                 selectedSession.status === 'completed' ? 'bg-green-500/20 text-green-300' :
@@ -302,6 +521,13 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
         </div>
         
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsEditingSession(true)}
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
+            title="Edit Session Details"
+          >
+            <PencilIcon className="h-5 w-5" />
+          </button>
           <button
             onClick={() => updateSession(selectedSession.id, { 
               status: selectedSession.status === 'in-progress' ? 'planned' : 'in-progress' 
@@ -335,6 +561,35 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
         onUpdateSession={updateSession}
         onNavigateToInitiative={() => onPageChange?.('initiative')}
       />
+
+      {/* Edit Session Modal */}
+      {isEditingSession && (
+        <EditSessionModal
+          session={selectedSession}
+          characters={characters}
+          currentGameDate={currentGameDate}
+          onSave={async (name, realWorldDate, gameDate, playerCharacters) => {
+            // Update the session first
+            updateSession(selectedSession.id, {
+              name,
+              realWorldDate,
+              gameDate,
+              playerCharacters
+            });
+            
+            // Then check if we need to align the world date with new campaign anchor
+            if (gameDate) {
+              // Wait a bit for state to update, then recalculate anchor
+              setTimeout(async () => {
+                await checkAndAlignWorldDate(gameDate);
+              }, 100);
+            }
+            
+            setIsEditingSession(false);
+          }}
+          onClose={() => setIsEditingSession(false)}
+        />
+      )}
     </div>
   );
 }
@@ -342,22 +597,46 @@ export default function SessionPlanner({ onPageChange }: { onPageChange?: (page:
 // Create Session Modal Component
 function CreateSessionModal({ 
   characters, 
+  currentGameDate,
   onCreate, 
   onClose 
 }: { 
   characters: PlayerCharacter[];
-  onCreate: (name: string, date: Date, playerCharacters: string[]) => void;
+  currentGameDate?: any;
+  onCreate: (name: string, realWorldDate: Date, gameDate: { year: number; season: string; phase: string; day: number; cycle: number; } | undefined, playerCharacters: string[]) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [realWorldDate, setRealWorldDate] = useState(new Date().toISOString().split('T')[0]);
+  const [useGameDate, setUseGameDate] = useState(false);
+  const [gameDate, setGameDate] = useState(
+    currentGameDate || {
+      year: 1,
+      season: 'Spring',
+      phase: 'New Moon',
+      day: 1,
+      cycle: 1
+    }
+  );
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate(name.trim(), new Date(date), selectedCharacters);
+      onCreate(
+        name.trim(), 
+        new Date(realWorldDate), 
+        useGameDate ? gameDate : undefined,
+        selectedCharacters
+      );
     }
+  };
+
+  const handleGameDateChange = (field: string, value: string | number) => {
+    setGameDate(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const toggleCharacter = (characterId: string) => {
@@ -387,14 +666,101 @@ function CreateSessionModal({
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1">Date</label>
+            <label className="block text-sm text-slate-400 mb-1">Real World Date</label>
             <input
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={realWorldDate}
+              onChange={(e) => setRealWorldDate(e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
               required
             />
+            <p className="text-xs text-slate-500 mt-1">When you actually play this session</p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+              <input
+                type="checkbox"
+                checked={useGameDate}
+                onChange={(e) => setUseGameDate(e.target.checked)}
+                className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
+              />
+              Set Game World Date
+            </label>
+            
+            {useGameDate && (
+              <div className="bg-slate-700/50 rounded-lg p-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Year</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={gameDate.year}
+                      onChange={(e) => handleGameDateChange('year', parseInt(e.target.value) || 1)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Season</label>
+                    <select
+                      value={gameDate.season}
+                      onChange={(e) => handleGameDateChange('season', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      {SEASONS.map((season) => (
+                        <option key={season.name} value={season.name}>{season.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Phase</label>
+                    <select
+                      value={gameDate.phase}
+                      onChange={(e) => handleGameDateChange('phase', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      {MOON_PHASES.map((phase) => (
+                        <option key={phase.name} value={phase.name}>{phase.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Cycle</label>
+                    <select
+                      value={gameDate.cycle}
+                      onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      <option value={1}>1st</option>
+                      <option value={2}>2nd</option>
+                      <option value={3}>3rd</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Day in Phase</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={gameDate.phase === 'New Moon' || gameDate.phase === 'Full Moon' ? 8 : 7}
+                    value={gameDate.day}
+                    onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
+                    className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                  />
+                </div>
+                <div className="pt-2 border-t border-slate-600">
+                  <p className="text-xs text-emerald-400">
+                    Game Date: {formatObojimaDate(gameDate as any)}
+                  </p>
+                  {!useGameDate && currentGameDate && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Current: {formatObojimaDate(currentGameDate)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -451,3 +817,227 @@ function CreateSessionModal({
 }
 
 import SessionDetailView from './SessionDetailView';
+
+// Edit Session Modal Component
+function EditSessionModal({ 
+  session,
+  characters, 
+  currentGameDate,
+  onSave, 
+  onClose 
+}: { 
+  session: GameSession;
+  characters: PlayerCharacter[];
+  currentGameDate?: any;
+  onSave: (name: string, realWorldDate: Date, gameDate: { year: number; season: string; phase: string; day: number; cycle: number; } | undefined, playerCharacters: string[]) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(session.name);
+  const [realWorldDate, setRealWorldDate] = useState(session.realWorldDate.toISOString().split('T')[0]);
+  const [useGameDate, setUseGameDate] = useState(!!session.gameDate);
+  const [gameDate, setGameDate] = useState(
+    session.gameDate || {
+      year: 1,
+      season: 'Spring',
+      phase: 'New Moon',
+      day: 1,
+      cycle: 1
+    }
+  );
+  const [selectedCharacters, setSelectedCharacters] = useState<string[]>(session.playerCharacters);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSave(
+        name.trim(), 
+        new Date(realWorldDate), 
+        useGameDate ? gameDate : undefined,
+        selectedCharacters
+      );
+    }
+  };
+
+  const handleGameDateChange = (field: string, value: string | number) => {
+    setGameDate(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const toggleCharacter = (characterId: string) => {
+    setSelectedCharacters(prev => 
+      prev.includes(characterId)
+        ? prev.filter(id => id !== characterId)
+        : [...prev, characterId]
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <h3 className="text-xl font-bold text-white mb-4">Edit Session</h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Session Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              placeholder="Session 1: The Adventure Begins"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Real World Date</label>
+            <input
+              type="date"
+              value={realWorldDate}
+              onChange={(e) => setRealWorldDate(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              required
+            />
+            <p className="text-xs text-slate-500 mt-1">When you actually play this session</p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+              <input
+                type="checkbox"
+                checked={useGameDate}
+                onChange={(e) => setUseGameDate(e.target.checked)}
+                className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
+              />
+              Set Game World Date
+            </label>
+            
+            {useGameDate && (
+              <div className="bg-slate-700/50 rounded-lg p-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Year</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={gameDate.year}
+                      onChange={(e) => handleGameDateChange('year', parseInt(e.target.value) || 1)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Season</label>
+                    <select
+                      value={gameDate.season}
+                      onChange={(e) => handleGameDateChange('season', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      {SEASONS.map((season) => (
+                        <option key={season.name} value={season.name}>{season.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Phase</label>
+                    <select
+                      value={gameDate.phase}
+                      onChange={(e) => handleGameDateChange('phase', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      {MOON_PHASES.map((phase) => (
+                        <option key={phase.name} value={phase.name}>{phase.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Cycle</label>
+                    <select
+                      value={gameDate.cycle}
+                      onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
+                      className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                    >
+                      <option value={1}>1st</option>
+                      <option value={2}>2nd</option>
+                      <option value={3}>3rd</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Day in Phase</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={gameDate.phase === 'New Moon' || gameDate.phase === 'Full Moon' ? 8 : 7}
+                    value={gameDate.day}
+                    onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
+                    className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                  />
+                </div>
+                <div className="pt-2 border-t border-slate-600">
+                  <p className="text-xs text-emerald-400">
+                    Game Date: {formatObojimaDate(gameDate as any)}
+                  </p>
+                  {!useGameDate && currentGameDate && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Current: {formatObojimaDate(currentGameDate)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Player Characters</label>
+            <div className="max-h-40 overflow-y-auto border border-slate-600 rounded-lg">
+              {characters.length > 0 ? (
+                characters.map((character) => (
+                  <label
+                    key={character.id}
+                    className="flex items-center gap-3 p-3 hover:bg-slate-700 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCharacters.includes(character.id)}
+                      onChange={() => toggleCharacter(character.id)}
+                      className="rounded border-slate-600 bg-slate-700 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <div className="text-white font-medium">{character.characterName}</div>
+                      <div className="text-slate-400 text-sm">{character.playerName} • {character.class}</div>
+                    </div>
+                  </label>
+                ))
+              ) : (
+                <div className="p-4 text-center text-slate-400">
+                  <UserGroupIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <div>No characters found</div>
+                  <div className="text-xs mt-1">Create characters in the Player Characters tab first</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

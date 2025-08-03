@@ -25,15 +25,18 @@ import {
   CloudIcon as SnowflakeIcon,
   PlusIcon,
   MinusIcon,
-  ForwardIcon
+  ForwardIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 interface ObojimaCalendarProps {
   currentDate: ObojimaDate;
   onDateChange: (date: ObojimaDate) => void;
+  onRefresh?: () => void;
+  syncStatus?: 'idle' | 'syncing' | 'error';
 }
 
-export default function ObojimaCalendar({ currentDate, onDateChange }: ObojimaCalendarProps) {
+export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, syncStatus = 'idle' }: ObojimaCalendarProps) {
   const [showTimeAdvancement, setShowTimeAdvancement] = useState(false);
   const [daysToAdvance, setDaysToAdvance] = useState(1);
 
@@ -142,14 +145,37 @@ export default function ObojimaCalendar({ currentDate, onDateChange }: ObojimaCa
     <div className="max-w-4xl space-y-6">
       {/* Current Date Display */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={`p-3 rounded-lg ${getSeasonColor(currentDate.season).replace('text-', 'bg-').replace('-400', '-500/20')}`}>
-            <SeasonIcon className={`h-8 w-8 ${getSeasonColor(currentDate.season)}`} />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-lg ${getSeasonColor(currentDate.season).replace('text-', 'bg-').replace('-400', '-500/20')}`}>
+              <SeasonIcon className={`h-8 w-8 ${getSeasonColor(currentDate.season)}`} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-white">Obojima Calendar</h2>
+                {/* Sync status indicator */}
+                {syncStatus === 'syncing' && (
+                  <ArrowPathIcon className="h-4 w-4 text-blue-400 animate-spin" />
+                )}
+                {syncStatus === 'error' && (
+                  <span className="text-xs text-amber-400">Offline</span>
+                )}
+              </div>
+              <p className="text-slate-400">
+                Current Date{syncStatus === 'syncing' ? ' (syncing...)' : ''}
+                <span className="text-xs text-slate-500 ml-2">• Auto-sync every 30min</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">Obojima Calendar</h2>
-            <p className="text-slate-400">Current Date</p>
-          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Refresh Calendar Data"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <div className="text-center space-y-2">

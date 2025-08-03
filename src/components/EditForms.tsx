@@ -301,6 +301,7 @@ export function IngredientEditForm({ ingredient, onSave, onCancel }: IngredientE
     utility: ingredient.utility || 0,
     whimsy: ingredient.whimsy || 0,
     rarity: ingredient.rarity || 'Common',
+    type: ingredient.type || 'Plant',
     price: ingredient.price || 0,
     locations: ingredient.locations || [],
     imageUrl: ingredient.imageUrl || ''
@@ -473,20 +474,42 @@ export function IngredientEditForm({ ingredient, onSave, onCancel }: IngredientE
             </div>
           </div>
 
-          {/* Rarity */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Rarity
-            </label>
-            <select
-              value={formData.rarity}
-              onChange={(e) => setFormData(prev => ({ ...prev, rarity: e.target.value }))}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-            >
-              {rarities.map(rarity => (
-                <option key={rarity} value={rarity}>{rarity}</option>
-              ))}
-            </select>
+          {/* Rarity and Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Rarity
+              </label>
+              <select
+                value={formData.rarity}
+                onChange={(e) => setFormData(prev => ({ ...prev, rarity: e.target.value }))}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+              >
+                {rarities.map(rarity => (
+                  <option key={rarity} value={rarity}>{rarity}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Type
+              </label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+              >
+                <option value="Plant">Plant</option>
+                <option value="Food">Food</option>
+                <option value="Fish">Fish</option>
+                <option value="Bug">Bug</option>
+                <option value="Monster">Monster</option>
+                <option value="Water">Water</option>
+                <option value="Other">Other</option>
+                <option value="Salvage">Salvage</option>
+              </select>
+            </div>
           </div>
 
           {/* Locations */}

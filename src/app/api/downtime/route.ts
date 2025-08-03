@@ -7,6 +7,7 @@ export async function GET() {
     const activities = stmt.all();
     
     const parsedActivities = activities.map((activity: any) => ({
+      id: activity.id,
       ...JSON.parse(activity.data),
       _lastUpdated: activity.updated_at
     }));

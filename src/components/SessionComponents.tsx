@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   SessionScene, 
   SessionNPC, 
@@ -13,6 +13,7 @@ import { Encounter } from '@/data/creatures';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
+import { syncService } from '@/services/sync';
 import { 
   PlusIcon,
   TrashIcon,
@@ -29,7 +30,8 @@ import {
   CheckIcon,
   EyeSlashIcon,
   SparklesIcon,
-  BoltIcon
+  BoltIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 // Scene Card Component
@@ -315,108 +317,126 @@ export function EncounterCard({
   );
 }
 
-// NPC Card Component
+// NPC Card Component  
 export function NPCCard({ 
   npc, 
   onUpdate, 
-  onDelete 
+  onDelete,
+  onView
 }: {
   npc: SessionNPC;
   onUpdate: (updates: Partial<SessionNPC>) => void;
   onDelete: () => void;
+  onView?: () => void;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: npc.name,
-    role: npc.role || '',
-    location: npc.location || '',
-    description: npc.description || '',
-    notes: npc.notes || ''
-  });
+  const [showNotesEditor, setShowNotesEditor] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState(npc.notes || '');
 
-  const handleSave = () => {
-    onUpdate(formData);
-    setIsEditing(false);
+  const handleSaveNotes = () => {
+    onUpdate({ notes: sessionNotes });
+    setShowNotesEditor(false);
   };
-
-  if (isEditing) {
-    return (
-      <div className="bg-slate-700/50 rounded-lg p-4">
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white mb-2"
-          placeholder="NPC name..."
-        />
-        <input
-          type="text"
-          value={formData.role}
-          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-          className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm mb-2"
-          placeholder="Role (e.g., merchant, guard, noble)"
-        />
-        <input
-          type="text"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm mb-2"
-          placeholder="Location"
-        />
-        <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm h-16 resize-none mb-2"
-          placeholder="Description..."
-        />
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => setIsEditing(false)}
-            className="px-3 py-1 bg-slate-600 hover:bg-slate-700 text-white rounded text-sm transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm transition-colors"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-slate-700/50 rounded-lg p-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h4 className="font-semibold text-white">{npc.name}</h4>
-          {npc.role && (
-            <p className="text-emerald-400 text-sm">{npc.role}</p>
-          )}
-          {npc.location && (
-            <p className="text-slate-400 text-sm">📍 {npc.location}</p>
-          )}
-          {npc.description && (
-            <p className="text-slate-300 text-sm mt-2">{npc.description}</p>
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
+          {npc.imageUrl ? (
+            <img 
+              src={npc.imageUrl} 
+              alt={npc.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = '/images/npcs/default-npc.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-400">
+              <UserGroupIcon className="h-8 w-8" />
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-1 ml-2">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-1 text-slate-400 hover:text-emerald-400 transition-colors"
-          >
-            <PencilIcon className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1 text-slate-400 hover:text-red-400 transition-colors"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <h4 className="font-semibold text-white">{npc.name}</h4>
+              {npc.location && (
+                <p className="text-slate-400 text-sm">📍 {npc.location}</p>
+              )}
+              {npc.description && (
+                <p className="text-slate-300 text-sm mt-1 line-clamp-2">{npc.description}</p>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1 ml-2">
+              {onView && (
+                <button
+                  onClick={onView}
+                  className="p-1 text-slate-400 hover:text-blue-400 transition-colors"
+                  title="View NPC Details"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </button>
+              )}
+              <button
+                onClick={() => setShowNotesEditor(!showNotesEditor)}
+                className="p-1 text-slate-400 hover:text-emerald-400 transition-colors"
+                title="Edit Session Notes"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                title="Remove from Session"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* Session Notes Editor */}
+      {showNotesEditor && (
+        <div className="mt-3 p-3 bg-slate-800/50 rounded-lg">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Session Notes
+          </label>
+          <textarea
+            value={sessionNotes}
+            onChange={(e) => setSessionNotes(e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400 resize-none text-sm"
+            placeholder="Notes specific to this session..."
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <button
+              onClick={() => {
+                setSessionNotes(npc.notes || '');
+                setShowNotesEditor(false);
+              }}
+              className="px-3 py-1 bg-slate-600 hover:bg-slate-700 text-white rounded text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveNotes}
+              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm transition-colors"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Existing Session Notes Display */}
+      {npc.notes && !showNotesEditor && (
+        <div className="mt-3 p-3 bg-slate-800/50 rounded-lg">
+          <div className="text-xs text-slate-400 mb-1">Session Notes:</div>
+          <div className="text-sm text-slate-300">{npc.notes}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -436,23 +456,59 @@ export function MusicManager({
   onDelete: (musicId: string) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Create a URL for the audio file
-    const url = URL.createObjectURL(file);
-    
-    const newMusic: SessionMusic = {
-      id: `music-${Date.now()}-${Math.random()}`,
-      name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
-      filename: file.name,
-      url: url,
-      tags: []
-    };
+    setIsUploading(true);
 
-    onAdd(newMusic);
+    try {
+      // Generate a unique filename
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const fileExtension = file.name.split('.').pop();
+      const uniqueFilename = `${file.name.replace(/\.[^/.]+$/, '')}-${timestamp}-${randomId}.${fileExtension}`;
+
+      // Upload the file to the server
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', uniqueFilename);
+
+      const response = await fetch('/api/upload-audio', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Upload failed: ${response.statusText}${errorData.details ? ` - ${errorData.details}` : ''}`);
+      }
+
+      const result = await response.json();
+      
+      const newMusic: SessionMusic = {
+        id: `music-${Date.now()}-${Math.random()}`,
+        name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
+        filename: uniqueFilename,
+        url: result.path, // Use the server path instead of blob URL
+        tags: []
+      };
+
+      onAdd(newMusic);
+      console.log('Audio file uploaded successfully:', result);
+      
+    } catch (error) {
+      console.error('Error uploading audio file:', error);
+      alert('Error uploading audio file. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -468,10 +524,11 @@ export function MusicManager({
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+          disabled={isUploading}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
         >
           <ArrowUpTrayIcon className="h-4 w-4" />
-          Upload Music
+          {isUploading ? 'Uploading...' : 'Upload Music'}
         </button>
       </div>
 
@@ -532,6 +589,30 @@ export function TreasureManager({
   onDelete: (treasureId: string) => void;
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [modifiedMagicItems, setModifiedMagicItems] = useState<any[]>([]);
+  const [modifiedPotions, setModifiedPotions] = useState<any[]>([]);
+  const [modifiedIngredients, setModifiedIngredients] = useState<any[]>([]);
+
+  // Load modified items from database on mount
+  useEffect(() => {
+    const loadModifiedItems = async () => {
+      try {
+        const [magicItemData, potionData, ingredientData] = await Promise.all([
+          syncService.getData('user-magic-items'),
+          syncService.getData('user-potions'),
+          syncService.getData('user-ingredients')
+        ]);
+        
+        setModifiedMagicItems(magicItemData.data || []);
+        setModifiedPotions(potionData.data || []);
+        setModifiedIngredients(ingredientData.data || []);
+      } catch (error) {
+        console.error('Error loading modified items:', error);
+      }
+    };
+    
+    loadModifiedItems();
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -548,6 +629,9 @@ export function TreasureManager({
           <TreasureCard 
             key={item.id}
             treasure={item}
+            modifiedMagicItems={modifiedMagicItems}
+            modifiedPotions={modifiedPotions}
+            modifiedIngredients={modifiedIngredients}
             onUpdate={(updates) => onUpdate(item.id, updates)}
             onDelete={() => onDelete(item.id)}
           />
@@ -567,10 +651,16 @@ export function TreasureManager({
 // Treasure Card Component
 function TreasureCard({ 
   treasure, 
+  modifiedMagicItems,
+  modifiedPotions,
+  modifiedIngredients,
   onUpdate, 
   onDelete 
 }: {
   treasure: SessionTreasure;
+  modifiedMagicItems: any[];
+  modifiedPotions: any[];
+  modifiedIngredients: any[];
   onUpdate: (updates: Partial<SessionTreasure>) => void;
   onDelete: () => void;
 }) {
@@ -579,11 +669,23 @@ function TreasureCard({
   const getItemDetails = () => {
     switch (treasure.type) {
       case 'potion':
+        // First check modified potions, then static data
+        const modifiedPotion = modifiedPotions.find(p => `${p.category}-${p.number}` === treasure.itemId);
+        if (modifiedPotion) return modifiedPotion;
+        
         const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
         return allPotions.find(p => `${p.category}-${p.number}` === treasure.itemId);
       case 'ingredient':
+        // First check modified ingredients, then static data
+        const modifiedIngredient = modifiedIngredients.find(i => i.name === treasure.itemId);
+        if (modifiedIngredient) return modifiedIngredient;
+        
         return ingredients.find(i => i.name === treasure.itemId);
       case 'magicItem':
+        // First check modified magic items, then static data
+        const modifiedMagicItem = modifiedMagicItems.find(m => m.name === treasure.itemId);
+        if (modifiedMagicItem) return modifiedMagicItem;
+        
         return magicItems.find(m => m.name === treasure.itemId);
       default:
         return null;
@@ -647,6 +749,14 @@ function AddTreasureModal({
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
+  
+  // Custom property fields
+  const [customEffect, setCustomEffect] = useState('');
+  const [customFlavorText, setCustomFlavorText] = useState('');
+  const [customCharges, setCustomCharges] = useState('');
+  const [customActivation, setCustomActivation] = useState('');
+  const [customRequiresAttunement, setCustomRequiresAttunement] = useState<boolean | undefined>(undefined);
+  const [customPrice, setCustomPrice] = useState<number | undefined>(undefined);
 
   const getItems = () => {
     switch (type) {
@@ -674,7 +784,14 @@ function AddTreasureModal({
       itemId,
       itemName: selectedItem.name,
       quantity,
-      notes
+      notes,
+      // Add custom properties only if they have values
+      ...(customEffect && { customEffect }),
+      ...(customFlavorText && { customFlavorText }),
+      ...(customCharges && { customCharges }),
+      ...(customActivation && { customActivation }),
+      ...(customRequiresAttunement !== undefined && { customRequiresAttunement }),
+      ...(customPrice !== undefined && { customPrice })
     };
 
     onAdd(newTreasure);
@@ -768,6 +885,92 @@ function AddTreasureModal({
               />
             </div>
 
+            {/* Custom Properties Section */}
+            <div className="border-t border-slate-600 pt-4">
+              <h4 className="text-sm font-medium text-slate-300 mb-3">Custom Properties (Optional)</h4>
+              
+              {/* Custom Effect */}
+              <div className="mb-3">
+                <label className="block text-sm text-slate-400 mb-1">Effect</label>
+                <textarea
+                  value={customEffect}
+                  onChange={(e) => setCustomEffect(e.target.value)}
+                  placeholder="Describe the item's magical effect..."
+                  className="w-full h-16 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none text-sm"
+                />
+              </div>
+
+              {/* Custom Flavor Text */}
+              <div className="mb-3">
+                <label className="block text-sm text-slate-400 mb-1">Flavor Text</label>
+                <textarea
+                  value={customFlavorText}
+                  onChange={(e) => setCustomFlavorText(e.target.value)}
+                  placeholder="Descriptive text about the item's appearance or lore..."
+                  className="w-full h-16 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none text-sm"
+                />
+              </div>
+
+              {/* Custom Charges and Activation in a row */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Charges</label>
+                  <input
+                    type="text"
+                    value={customCharges}
+                    onChange={(e) => setCustomCharges(e.target.value)}
+                    placeholder="e.g., 3 charges"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Activation</label>
+                  <input
+                    type="text"
+                    value={customActivation}
+                    onChange={(e) => setCustomActivation(e.target.value)}
+                    placeholder="e.g., Action"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Custom Attunement and Price in a row */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Requires Attunement</label>
+                  <select
+                    value={customRequiresAttunement === undefined ? 'default' : customRequiresAttunement.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCustomRequiresAttunement(
+                        value === 'default' ? undefined : value === 'true'
+                      );
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                  >
+                    <option value="default">Use Default</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Price (gp)</label>
+                  <input
+                    type="number"
+                    value={customPrice || ''}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setCustomPrice(isNaN(value) ? undefined : value);
+                    }}
+                    placeholder="Custom price"
+                    min="0"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Notes */}
             <div>
               <label className="block text-sm text-slate-400 mb-1">Notes (Optional)</label>
@@ -811,42 +1014,86 @@ function TreasureDetailModal({
   itemDetails: any;
   onClose: () => void;
 }) {
+  const getTypeIcon = () => {
+    switch (treasure.type) {
+      case 'potion': return '🧪';
+      case 'ingredient': return '🌿';
+      case 'magicItem': return '✨';
+      default: return '📦';
+    }
+  };
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity?.toLowerCase()) {
+      case 'common': return 'text-gray-400';
+      case 'uncommon': return 'text-green-400';
+      case 'rare': return 'text-blue-400';
+      case 'very rare': return 'text-purple-400';
+      case 'legendary': return 'text-orange-400';
+      case 'artifact': return 'text-red-400';
+      default: return 'text-slate-400';
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 rounded-lg w-full max-w-md">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-white">{treasure.itemName}</h3>
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              ✕
-            </button>
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{getTypeIcon()}</span>
+            <div>
+              <h3 className="text-xl font-bold text-white">{treasure.itemName}</h3>
+              <p className="text-slate-400 text-sm capitalize">{treasure.type}</p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
 
+        {/* Content */}
+        <div className="p-6 overflow-y-auto">
           <div className="space-y-4">
             {/* Item-specific details */}
             {treasure.type === 'potion' && itemDetails && (
               <>
-                <div>
-                  <div className="text-sm text-slate-400">Category</div>
-                  <div className="text-white">{itemDetails.category}</div>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium text-slate-300 mb-1">Category</div>
+                      <div className="text-white">{itemDetails.category}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-slate-300 mb-1">Rarity</div>
+                      <div className={`font-medium ${getRarityColor(itemDetails.rarity)}`}>
+                        {itemDetails.rarity}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm text-slate-400">Rarity</div>
-                  <div className="text-white">{itemDetails.rarity}</div>
-                </div>
-                {itemDetails.description && (
-                  <div>
-                    <div className="text-sm text-slate-400">Description</div>
-                    <div className="text-white">{itemDetails.description}</div>
+                
+                {itemDetails.effect && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Effect</div>
+                    <div className="text-white text-sm leading-relaxed">{itemDetails.effect}</div>
                   </div>
                 )}
+                
+                {itemDetails.flavorText && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Description</div>
+                    <div className="text-white text-sm leading-relaxed italic">{itemDetails.flavorText}</div>
+                  </div>
+                )}
+                
                 {itemDetails.price && (
-                  <div>
-                    <div className="text-sm text-slate-400">Value</div>
-                    <div className="text-white">{itemDetails.price} gp</div>
+                  <div className="bg-amber-900/20 border border-amber-400/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-amber-400 mb-1">Value</div>
+                    <div className="text-white font-bold">{itemDetails.price} gp</div>
                   </div>
                 )}
               </>
@@ -854,64 +1101,220 @@ function TreasureDetailModal({
 
             {treasure.type === 'ingredient' && itemDetails && (
               <>
-                <div>
-                  <div className="text-sm text-slate-400">Rarity</div>
-                  <div className="text-white">{itemDetails.rarity}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-400">Properties</div>
-                  <div className="text-white">
-                    Combat: {itemDetails.combat} • Utility: {itemDetails.utility} • Whimsy: {itemDetails.whimsy}
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="text-sm font-medium text-slate-300 mb-2">Rarity</div>
+                  <div className={`font-medium ${getRarityColor(itemDetails.rarity)}`}>
+                    {itemDetails.rarity}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-slate-400">Value</div>
-                  <div className="text-white">{itemDetails.price} gp</div>
+                
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="text-sm font-medium text-slate-300 mb-2">Magical Properties</div>
+                  <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div className="text-center">
+                      <div className="text-red-400 font-medium">⚔️ Combat</div>
+                      <div className="text-white">{itemDetails.combat}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-blue-400 font-medium">🔧 Utility</div>
+                      <div className="text-white">{itemDetails.utility}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-purple-400 font-medium">✨ Whimsy</div>
+                      <div className="text-white">{itemDetails.whimsy}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {itemDetails.locations && itemDetails.locations.length > 0 && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Found At</div>
+                    <div className="text-white text-sm">
+                      {itemDetails.locations.join(', ')}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-amber-900/20 border border-amber-400/30 rounded-lg p-4">
+                  <div className="text-sm font-medium text-amber-400 mb-1">Value</div>
+                  <div className="text-white font-bold">{itemDetails.price} gp</div>
                 </div>
               </>
             )}
 
             {treasure.type === 'magicItem' && itemDetails && (
               <>
-                <div>
-                  <div className="text-sm text-slate-400">Type</div>
-                  <div className="text-white">{itemDetails.type}</div>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium text-slate-300 mb-1">Type</div>
+                      <div className="text-white">{itemDetails.type}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-slate-300 mb-1">Rarity</div>
+                      <div className={`font-medium ${getRarityColor(itemDetails.rarity)}`}>
+                        {itemDetails.rarity}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm text-slate-400">Rarity</div>
-                  <div className="text-white">{itemDetails.rarity}</div>
-                </div>
-                {itemDetails.requiresAttunement && (
-                  <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-3">
-                    <div className="text-yellow-400 font-medium">Requires Attunement</div>
+                
+                {itemDetails.requiresAttunement === true && (
+                  <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-4">
+                    <div className="text-yellow-400 font-medium flex items-center gap-2">
+                      <span>🔗</span>
+                      Requires Attunement
+                    </div>
                   </div>
                 )}
+                
+                {itemDetails.requiresAttunement === false && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-slate-300 text-sm flex items-center gap-2">
+                      <span>🔓</span>
+                      No Attunement Required
+                    </div>
+                  </div>
+                )}
+                
                 {itemDetails.effect && (
-                  <div>
-                    <div className="text-sm text-slate-400">Effect</div>
-                    <div className="text-white">{itemDetails.effect}</div>
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Effect</div>
+                    <div className="text-white text-sm leading-relaxed">{itemDetails.effect}</div>
                   </div>
                 )}
+                
+                {itemDetails.flavorText && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Description</div>
+                    <div className="text-white text-sm leading-relaxed italic">{itemDetails.flavorText}</div>
+                  </div>
+                )}
+                
+                {itemDetails.locationFound && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-slate-300 mb-2">Location Found</div>
+                    <div className="text-white text-sm">{itemDetails.locationFound}</div>
+                  </div>
+                )}
+                
+                {(itemDetails.charges || itemDetails.activation) && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {itemDetails.charges && (
+                        <div>
+                          <div className="text-sm font-medium text-slate-300 mb-1">Charges</div>
+                          <div className="text-white text-sm">{itemDetails.charges}</div>
+                        </div>
+                      )}
+                      {itemDetails.activation && (
+                        <div>
+                          <div className="text-sm font-medium text-slate-300 mb-1">Activation</div>
+                          <div className="text-white text-sm">{itemDetails.activation}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show message when magic item has minimal information */}
+                {!itemDetails.effect && !itemDetails.flavorText && !itemDetails.charges && !itemDetails.activation && !itemDetails.locationFound && (
+                  <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-4">
+                    <div className="text-blue-400 text-sm flex items-center gap-2">
+                      <span>ℹ️</span>
+                      This magic item's detailed effects and properties are not yet documented in the database.
+                    </div>
+                  </div>
+                )}
+                
                 {itemDetails.price && (
-                  <div>
-                    <div className="text-sm text-slate-400">Value</div>
-                    <div className="text-white">{itemDetails.price} gp</div>
+                  <div className="bg-amber-900/20 border border-amber-400/30 rounded-lg p-4">
+                    <div className="text-sm font-medium text-amber-400 mb-1">Value</div>
+                    <div className="text-white font-bold">{itemDetails.price} gp</div>
                   </div>
                 )}
               </>
             )}
 
+            {/* Custom Properties Display */}
+            {(treasure.customEffect || treasure.customFlavorText || treasure.customCharges || treasure.customActivation || treasure.customRequiresAttunement !== undefined || treasure.customPrice) && (
+              <div className="border-t border-slate-600 pt-4">
+                <div className="text-sm font-medium text-emerald-400 mb-3 flex items-center gap-2">
+                  <span>⭐</span>
+                  Custom Properties
+                </div>
+                
+                {treasure.customEffect && (
+                  <div className="bg-emerald-900/20 border border-emerald-400/30 rounded-lg p-4 mb-3">
+                    <div className="text-sm font-medium text-emerald-400 mb-2">Custom Effect</div>
+                    <div className="text-white text-sm leading-relaxed">{treasure.customEffect}</div>
+                  </div>
+                )}
+                
+                {treasure.customFlavorText && (
+                  <div className="bg-emerald-900/20 border border-emerald-400/30 rounded-lg p-4 mb-3">
+                    <div className="text-sm font-medium text-emerald-400 mb-2">Custom Description</div>
+                    <div className="text-white text-sm leading-relaxed italic">{treasure.customFlavorText}</div>
+                  </div>
+                )}
+                
+                {(treasure.customCharges || treasure.customActivation) && (
+                  <div className="bg-emerald-900/20 border border-emerald-400/30 rounded-lg p-4 mb-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      {treasure.customCharges && (
+                        <div>
+                          <div className="text-sm font-medium text-emerald-400 mb-1">Custom Charges</div>
+                          <div className="text-white text-sm">{treasure.customCharges}</div>
+                        </div>
+                      )}
+                      {treasure.customActivation && (
+                        <div>
+                          <div className="text-sm font-medium text-emerald-400 mb-1">Custom Activation</div>
+                          <div className="text-white text-sm">{treasure.customActivation}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {treasure.customRequiresAttunement !== undefined && (
+                  <div className={`rounded-lg p-4 mb-3 ${
+                    treasure.customRequiresAttunement 
+                      ? 'bg-yellow-500/10 border border-yellow-400/30' 
+                      : 'bg-emerald-900/20 border border-emerald-400/30'
+                  }`}>
+                    <div className={`font-medium flex items-center gap-2 ${
+                      treasure.customRequiresAttunement ? 'text-yellow-400' : 'text-emerald-400'
+                    }`}>
+                      <span>{treasure.customRequiresAttunement ? '🔗' : '🔓'}</span>
+                      {treasure.customRequiresAttunement ? 'Custom: Requires Attunement' : 'Custom: No Attunement Required'}
+                    </div>
+                  </div>
+                )}
+                
+                {treasure.customPrice !== undefined && (
+                  <div className="bg-amber-900/20 border border-amber-400/30 rounded-lg p-4 mb-3">
+                    <div className="text-sm font-medium text-amber-400 mb-1">Custom Value</div>
+                    <div className="text-white font-bold">{treasure.customPrice} gp</div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {treasure.quantity && treasure.quantity > 1 && (
-              <div>
-                <div className="text-sm text-slate-400">Quantity</div>
-                <div className="text-white">{treasure.quantity}</div>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="text-sm font-medium text-slate-300 mb-1">Quantity</div>
+                <div className="text-white font-bold">×{treasure.quantity}</div>
               </div>
             )}
 
             {treasure.notes && (
-              <div>
-                <div className="text-sm text-slate-400">Notes</div>
-                <div className="text-white">{treasure.notes}</div>
+              <div className="bg-emerald-900/20 border border-emerald-400/30 rounded-lg p-4">
+                <div className="text-sm font-medium text-emerald-400 mb-2 flex items-center gap-2">
+                  <span>📝</span>
+                  Session Notes
+                </div>
+                <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">{treasure.notes}</div>
               </div>
             )}
           </div>

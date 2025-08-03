@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { GameSession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
-import { XMarkIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { formatObojimaDate, ObojimaDate, SEASONS, MOON_PHASES } from '@/data/obojimaCalendar';
+import { XMarkIcon, CalendarIcon, UserGroupIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 interface SessionFormProps {
   session?: GameSession;
   characters: PlayerCharacter[];
-  onSave: (session: Omit<GameSession, 'id' | 'createdAt' | 'updatedAt' | 'chapters'>) => void;
+  onSave: (name: string, realWorldDate: Date, gameDate: ObojimaDate | undefined, playerCharacters: string[]) => void;
   onCancel: () => void;
   isEditing?: boolean;
 }
@@ -16,20 +17,38 @@ interface SessionFormProps {
 export default function SessionForm({ session, characters, onSave, onCancel, isEditing = false }: SessionFormProps) {
   const [formData, setFormData] = useState({
     name: session?.name || '',
-    date: session?.date ? session.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    characters: session?.characters || []
+    realWorldDate: session?.realWorldDate ? session.realWorldDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    gameDate: session?.gameDate || {
+      year: 1,
+      season: 'Spring',
+      phase: 'New Moon',
+      day: 1,
+      cycle: 1
+    },
+    useGameDate: !!session?.gameDate,
+    playerCharacters: session?.playerCharacters || []
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleGameDateChange = (field: keyof ObojimaDate, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      gameDate: {
+        ...prev.gameDate,
+        [field]: value
+      }
+    }));
   };
 
   const handleCharacterToggle = (characterId: string) => {
     setFormData(prev => ({
       ...prev,
-      characters: prev.characters.includes(characterId)
-        ? prev.characters.filter(id => id !== characterId)
-        : [...prev.characters, characterId]
+      playerCharacters: prev.playerCharacters.includes(characterId)
+        ? prev.playerCharacters.filter(id => id !== characterId)
+        : [...prev.playerCharacters, characterId]
     }));
   };
 
@@ -41,11 +60,12 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
       return;
     }
 
-    onSave({
-      name: formData.name,
-      date: new Date(formData.date),
-      characters: formData.characters
-    });
+    onSave(
+      formData.name,
+      new Date(formData.realWorldDate),
+      formData.useGameDate ? formData.gameDate : undefined,
+      formData.playerCharacters
+    );
   };
 
   return (
@@ -81,17 +101,118 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
               />
             </div>
 
+            {/* Real World Date */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 <CalendarIcon className="h-4 w-4 inline mr-1" />
-                Session Date
+                Real World Date *
               </label>
               <input
                 type="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
+                value={formData.realWorldDate}
+                onChange={(e) => handleInputChange('realWorldDate', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-400"
+                required
               />
+              <p className="text-xs text-slate-400 mt-1">When you actually play this session</p>
+            </div>
+
+            {/* Game Date Toggle */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-3">
+                <input
+                  type="checkbox"
+                  checked={formData.useGameDate}
+                  onChange={(e) => handleInputChange('useGameDate', e.target.checked)}
+                  className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
+                />
+                <SparklesIcon className="h-4 w-4" />
+                Set Game World Date
+              </label>
+              
+              {formData.useGameDate && (
+                <div className="bg-slate-700/30 rounded-lg p-4 space-y-4">
+                  <p className="text-xs text-slate-400 mb-3">When this session takes place in the game world</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Year</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.gameDate.year}
+                        onChange={(e) => handleGameDateChange('year', parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Season</label>
+                      <select
+                        value={formData.gameDate.season}
+                        onChange={(e) => handleGameDateChange('season', e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                      >
+                        {SEASONS.map((season) => (
+                          <option key={season.name} value={season.name}>
+                            {season.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Moon Phase</label>
+                      <select
+                        value={formData.gameDate.phase}
+                        onChange={(e) => handleGameDateChange('phase', e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                      >
+                        {MOON_PHASES.map((phase) => (
+                          <option key={phase.name} value={phase.name}>
+                            {phase.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Cycle</label>
+                      <select
+                        value={formData.gameDate.cycle}
+                        onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
+                        className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                      >
+                        <option value={1}>1st Cycle</option>
+                        <option value={2}>2nd Cycle</option>
+                        <option value={3}>3rd Cycle</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Day in Phase</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={formData.gameDate.phase === 'New Moon' || formData.gameDate.phase === 'Full Moon' ? 8 : 7}
+                      value={formData.gameDate.day}
+                      onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
+                      className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      Max: {formData.gameDate.phase === 'New Moon' || formData.gameDate.phase === 'Full Moon' ? 8 : 7} days
+                    </p>
+                  </div>
+
+                  {/* Game Date Preview */}
+                  <div className="pt-2 border-t border-slate-600">
+                    <p className="text-sm text-emerald-400 font-medium">
+                      Game Date: {formatObojimaDate(formData.gameDate as ObojimaDate)}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -99,7 +220,7 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-3">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
-              Party Characters ({formData.characters.length} selected)
+              Party Characters ({formData.playerCharacters.length} selected)
             </label>
             
             {characters.length === 0 ? (
@@ -114,14 +235,14 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
                   <label
                     key={character.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                      formData.characters.includes(character.id)
+                      formData.playerCharacters.includes(character.id)
                         ? 'border-blue-400 bg-blue-400/10'
                         : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                     }`}
                   >
                     <input
                       type="checkbox"
-                      checked={formData.characters.includes(character.id)}
+                      checked={formData.playerCharacters.includes(character.id)}
                       onChange={() => handleCharacterToggle(character.id)}
                       className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
                     />

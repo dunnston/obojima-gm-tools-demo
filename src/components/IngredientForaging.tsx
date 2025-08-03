@@ -11,8 +11,9 @@ import {
   performSpecificSearch,
   getLocationInfo
 } from '@/utils/ingredientForaging';
+import { ingredients } from '@/data/ingredients';
 import { getIngredientImagePath } from '@/utils/imageUtils';
-import { MagnifyingGlassIcon, MapPinIcon, BeakerIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, MapPinIcon, BeakerIcon, Cog6ToothIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 export default function IngredientForaging() {
   const [selectedLocation, setSelectedLocation] = useState<Location>('Gale Fields');
@@ -22,8 +23,36 @@ export default function IngredientForaging() {
   const [isSpecificSearch, setIsSpecificSearch] = useState<boolean>(false);
   const [foragingResult, setForagingResult] = useState<ForagingResult | null>(null);
   const [searchHistory, setSearchHistory] = useState<ForagingResult[]>([]);
+  const [ingredientDropdownOpen, setIngredientDropdownOpen] = useState<boolean>(false);
+  const [ingredientSearchTerm, setIngredientSearchTerm] = useState<string>('');
 
   const locationInfo = getLocationInfo(selectedLocation);
+
+  // Filter ingredients based on search type and search term
+  const getFilteredIngredients = () => {
+    const typeFilter = (ingredient: any) => {
+      if (searchType === 'salvage') {
+        return ingredient.type === 'Other' || ingredient.type === 'Salvage';
+      } else {
+        return ingredient.type !== 'Other' && ingredient.type !== 'Salvage';
+      }
+    };
+
+    return ingredients
+      .filter(typeFilter)
+      .filter(ingredient => 
+        ingredient.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const filteredIngredients = getFilteredIngredients();
+
+  const handleIngredientSelect = (ingredientName: string) => {
+    setTargetIngredient(ingredientName);
+    setIngredientDropdownOpen(false);
+    setIngredientSearchTerm('');
+  };
 
   const performSearch = () => {
     const attempt: ForagingAttempt = {
@@ -134,19 +163,71 @@ export default function IngredientForaging() {
                 </label>
               </div>
 
-              {/* Specific Ingredient Input */}
+              {/* Specific Ingredient Dropdown */}
               {isSpecificSearch && (
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Target Ingredient
                   </label>
-                  <input
-                    type="text"
-                    value={targetIngredient}
-                    onChange={(e) => setTargetIngredient(e.target.value)}
-                    placeholder="Enter ingredient name..."
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                  />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIngredientDropdownOpen(!ingredientDropdownOpen)}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400 text-left flex items-center justify-between"
+                    >
+                      <span className={targetIngredient ? 'text-white' : 'text-slate-400'}>
+                        {targetIngredient || 'Select ingredient...'}
+                      </span>
+                      <ChevronDownIcon className={`h-5 w-5 text-slate-400 transition-transform ${ingredientDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {ingredientDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-64 overflow-hidden">
+                        <div className="p-3 border-b border-slate-600">
+                          <input
+                            type="text"
+                            value={ingredientSearchTerm}
+                            onChange={(e) => setIngredientSearchTerm(e.target.value)}
+                            placeholder="Search ingredients..."
+                            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-400"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {filteredIngredients.length > 0 ? (
+                            filteredIngredients.map((ingredient) => (
+                              <button
+                                key={ingredient.name}
+                                onClick={() => handleIngredientSelect(ingredient.name)}
+                                className="w-full px-4 py-2 text-left hover:bg-slate-700/50 text-white text-sm flex items-center justify-between transition-colors"
+                              >
+                                <div>
+                                  <div className="font-medium">{ingredient.name}</div>
+                                  <div className="text-xs text-slate-400">{ingredient.rarity} • {ingredient.type}</div>
+                                </div>
+                                <div className="flex gap-1 text-xs">
+                                  <span className="text-red-400">⚔️{ingredient.combat}</span>
+                                  <span className="text-blue-400">🔧{ingredient.utility}</span>
+                                  <span className="text-purple-400">✨{ingredient.whimsy}</span>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-slate-400 text-sm text-center">
+                              No ingredients found matching your search
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Close dropdown when clicking outside */}
+                  {ingredientDropdownOpen && (
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIngredientDropdownOpen(false)}
+                    />
+                  )}
                 </div>
               )}
 

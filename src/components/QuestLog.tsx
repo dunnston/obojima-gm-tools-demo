@@ -42,8 +42,15 @@ export default function QuestLog() {
   // Delete quest with sync
   const deleteQuest = async (questId: string) => {
     try {
+      // Delete from API
       await syncService.deleteQuest(questId);
-      // Reload all quests to get fresh data
+      
+      // Also update local state and localStorage immediately
+      const updatedQuests = quests.filter(q => q.id !== questId);
+      setQuests(updatedQuests);
+      localStorage.setItem('obojima-quests', JSON.stringify(updatedQuests));
+      
+      // Then reload to ensure sync
       await loadQuests();
     } catch (error) {
       console.error('Error deleting quest:', error);

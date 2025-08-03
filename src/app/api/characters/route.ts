@@ -8,6 +8,7 @@ export async function GET() {
     
     // Parse JSON data for each character
     const parsedCharacters = characters.map((char: any) => ({
+      id: char.id,
       ...JSON.parse(char.data),
       _lastUpdated: char.updated_at
     }));

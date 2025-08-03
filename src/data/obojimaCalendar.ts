@@ -274,7 +274,11 @@ export const obojimaDateToAbsoluteDays = (date: ObojimaDate): number => {
   const seasonIndex = SEASONS.findIndex(s => s.name === date.season);
   totalDays += seasonIndex * DAYS_PER_SEASON;
   
-  // Add complete phases in current season
+  // Add complete cycles in current season (each cycle = 4 phases = 30 days)
+  const completeCycles = (date.cycle || 1) - 1;
+  totalDays += completeCycles * 30; // Each cycle is exactly 30 days (8+7+8+7)
+  
+  // Add complete phases in current cycle
   const phaseIndex = MOON_PHASES.findIndex(p => p.name === date.phase);
   for (let i = 0; i < phaseIndex; i++) {
     totalDays += MOON_PHASES[i].days;
@@ -297,7 +301,11 @@ export const absoluteDaysToObojimaDate = (absoluteDays: number): ObojimaDate => 
   const seasonIndex = Math.floor(remainingDays / DAYS_PER_SEASON);
   remainingDays = remainingDays % DAYS_PER_SEASON;
   
-  // Calculate phase and day
+  // Calculate cycle within season (each cycle = 30 days)
+  const cycle = Math.floor(remainingDays / 30) + 1;
+  remainingDays = remainingDays % 30;
+  
+  // Calculate phase and day within cycle
   let phaseIndex = 0;
   while (phaseIndex < MOON_PHASES.length && remainingDays >= MOON_PHASES[phaseIndex].days) {
     remainingDays -= MOON_PHASES[phaseIndex].days;
@@ -308,7 +316,8 @@ export const absoluteDaysToObojimaDate = (absoluteDays: number): ObojimaDate => 
     year,
     season: SEASONS[seasonIndex].name,
     phase: MOON_PHASES[phaseIndex].name,
-    day: remainingDays + 1
+    day: remainingDays + 1,
+    cycle
   };
 };
 
@@ -316,6 +325,7 @@ export const isValidObojimaDate = (date: ObojimaDate): boolean => {
   if (date.year < 1) return false;
   if (!SEASONS.some(s => s.name === date.season)) return false;
   if (!MOON_PHASES.some(p => p.name === date.phase)) return false;
+  if (date.cycle && (date.cycle < 1 || date.cycle > 3)) return false;
   
   const phase = MOON_PHASES.find(p => p.name === date.phase);
   if (!phase) return false;

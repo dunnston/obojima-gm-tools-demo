@@ -7,6 +7,7 @@ export async function GET() {
     const ingredients = stmt.all();
     
     const parsedIngredients = ingredients.map((ingredient: any) => ({
+      id: ingredient.id,
       ...JSON.parse(ingredient.data),
       _lastUpdated: ingredient.updated_at
     }));
