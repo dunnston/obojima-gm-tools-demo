@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { getStorageAdapter } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const stmt = db.prepare('SELECT * FROM settings ORDER BY updated_at DESC');
-    const settings = stmt.all();
+    const storage = getStorageAdapter();
+    const settings = await storage.getAll('settings');
     
+    // Convert array of settings to key-value object
     const parsedSettings: { [key: string]: any } = {};
-    settings.forEach((setting: any) => {
-      try {
-        parsedSettings[setting.key] = JSON.parse(setting.value);
-      } catch {
-        parsedSettings[setting.key] = setting.value;
-      }
-    });
+    
+    // For localStorage adapter, settings might already be in the right format
+    if (Array.isArray(settings)) {
+      settings.forEach((setting: any) => {
+        if (setting.key && setting.value !== undefined) {
+          parsedSettings[setting.key] = setting.value;
+        } else if (setting.id) {
+          // Handle case where settings are stored with id as key
+          parsedSettings[setting.id] = setting.value || setting;
+        }
+      });
+    } else {
+      // If it's already an object, use it directly
+      Object.assign(parsedSettings, settings);
+    }
     
     return NextResponse.json({ settings: parsedSettings });
   } catch (error) {
@@ -31,13 +40,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Setting key required' }, { status: 400 });
     }
     
-    const stmt = db.prepare(`
-      INSERT OR REPLACE INTO settings (key, value, updated_at) 
-      VALUES (?, ?, CURRENT_TIMESTAMP)
-    `);
-    
-    const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
-    stmt.run(key, valueStr);
+    const storage = getStorageAdapter();
+    await storage.setSetting(key, value);
     
     return NextResponse.json({ success: true, key });
   } catch (error) {
@@ -55,8 +59,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Setting key required' }, { status: 400 });
     }
     
-    const stmt = db.prepare('DELETE FROM settings WHERE key = ?');
-    stmt.run(key);
+    // Settings don't have a standard delete in our adapter
+    // We'll set it to null or undefined
+    const storage = getStorageAdapter();
+    await storage.setSetting(key, null);
     
     return NextResponse.json({ success: true });
   } catch (error) {

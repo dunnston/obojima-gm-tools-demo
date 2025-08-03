@@ -1,58 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { createRouteHandler } from '@/lib/api/routeHandler';
 
-export async function GET() {
-  try {
-    const stmt = db.prepare('SELECT * FROM user_magic_items ORDER BY updated_at DESC');
-    const magicItems = stmt.all();
-    
-    const parsedMagicItems = magicItems.map((item: any) => ({
-      id: item.id,
-      ...JSON.parse(item.data),
-      _lastUpdated: item.updated_at
-    }));
-    
-    return NextResponse.json({ userMagicItems: parsedMagicItems });
-  } catch (error) {
-    console.error('Error fetching user magic items:', error);
-    return NextResponse.json({ error: 'Failed to fetch user magic items' }, { status: 500 });
-  }
-}
+const handler = createRouteHandler('user_magic_items', 'magicItems');
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { id, ...itemData } = body;
-    
-    const stmt = db.prepare(`
-      INSERT OR REPLACE INTO user_magic_items (id, data, updated_at) 
-      VALUES (?, ?, CURRENT_TIMESTAMP)
-    `);
-    
-    stmt.run(id, JSON.stringify(itemData));
-    
-    return NextResponse.json({ success: true, id });
-  } catch (error) {
-    console.error('Error saving user magic item:', error);
-    return NextResponse.json({ error: 'Failed to save user magic item' }, { status: 500 });
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    if (!id) {
-      return NextResponse.json({ error: 'Magic item ID required' }, { status: 400 });
-    }
-    
-    const stmt = db.prepare('DELETE FROM user_magic_items WHERE id = ?');
-    stmt.run(id);
-    
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting user magic item:', error);
-    return NextResponse.json({ error: 'Failed to delete user magic item' }, { status: 500 });
-  }
-}
+export const GET = handler.GET;
+export const POST = handler.POST;
+export const DELETE = handler.DELETE;
