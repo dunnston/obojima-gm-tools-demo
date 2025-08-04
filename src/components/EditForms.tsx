@@ -83,20 +83,19 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
     let updatedPotion = { 
       ...potion, 
       ...formData,
-      imageUrl: potion.imageUrl // Ensure original image is preserved
+      imageUrl: potion.imageUrl, // Preserve existing image URL (tied to ID, not name)
+      id: potion.id || `potion-${formData.category || potion.category}-${formData.number || potion.number}` // Include category in ID
     };
 
     if (selectedFile) {
       try {
         const fileExtension = selectedFile.name.split('.').pop();
-        const filename = `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
+        // Use potion ID for filename to ensure persistence when name changes
+        const filename = `${updatedPotion.id}.${fileExtension}`;
         const imagePath = `/images/potions/${filename}`;
         updatedPotion.imageUrl = imagePath;
         
         await copyFileToPublicDirectory(selectedFile, filename, 'potions');
-        
-        // Register the file with the image mapping system
-        addLocalPotionFile(formData.name, fileExtension || 'jpg');
         
         console.log('Potion image saved as:', filename);
         

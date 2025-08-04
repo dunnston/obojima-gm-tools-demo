@@ -177,8 +177,14 @@ export default function DatabaseView() {
   // Sync-enabled save functions
   const saveUserPotions = async (potions: any[]) => {
     try {
-      await syncService.saveWithFallback('user-potions', 'modifiedPotions', potions);
-      setModifiedPotions(potions);
+      // Ensure all potions have proper IDs based on category AND number
+      const potionsWithIds = potions.map(potion => ({
+        ...potion,
+        id: potion.id || `potion-${potion.category}-${potion.number}`
+      }));
+      
+      await syncService.saveWithFallback('user-potions', 'modifiedPotions', potionsWithIds);
+      setModifiedPotions(potionsWithIds);
     } catch (error) {
       console.error('Error saving user potions:', error);
     }
@@ -283,16 +289,50 @@ export default function DatabaseView() {
 
   // Combine all potion arrays and apply modifications
   // Apply modifications to potions and add new ones
-  const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
+  const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions].map(p => ({
+    ...p,
+    id: `potion-${p.category}-${p.number}`, // Include category to make IDs unique
+    imageUrl: `/images/potions/${p.name}.webp` // Use local image path based on name
+  }));
+  
+  // Create a map to track which potions we've already processed
+  const processedIds = new Set<string>();
+  
   const potions = [
     ...originalPotions.map(potion => {
-      // Find modifications by number (stable identifier) not name (which can change)
-      const modified = modifiedPotions.find(p => p.number === potion.number);
-      return modified || potion;
+      // Find modifications by BOTH category and number to ensure uniqueness
+      const modified = modifiedPotions.find(p => 
+        p.number === potion.number && p.category === potion.category
+      );
+      if (modified) {
+        const uniqueId = `${potion.category}-${potion.number}`;
+        processedIds.add(uniqueId);
+        // Ensure the modified potion has an ID
+        return { ...modified, id: modified.id || potion.id };
+      }
+      return potion;
     }),
     // Add completely new potions that don't exist in original data
-    ...modifiedPotions.filter(modified => !originalPotions.find(original => original.number === modified.number))
+    ...modifiedPotions.filter(modified => {
+      const uniqueId = `${modified.category}-${modified.number}`;
+      // Only add if we haven't already processed this potion
+      if (processedIds.has(uniqueId)) {
+        return false;
+      }
+      return !originalPotions.find(original => 
+        original.number === modified.number && original.category === modified.category
+      );
+    })
   ];
+  
+  // Debug: Check for duplicates
+  const potionNumbers = potions.map(p => p.number);
+  const duplicateNumbers = potionNumbers.filter((num, index) => potionNumbers.indexOf(num) !== index);
+  if (duplicateNumbers.length > 0) {
+    console.warn('Duplicate potion numbers found:', duplicateNumbers);
+    console.log('All potions:', potions);
+    console.log('Modified potions:', modifiedPotions);
+  }
 
   // Apply modifications to ingredients and add new ones
   const currentIngredients = [
@@ -1053,7 +1093,7 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
             {/* Potion Image */}
             <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-slate-800">
               <img 
-                src={getPotionImagePath(potion.name, potion.number)} 
+                src={potion.imageUrl || '/images/potions/default-potion.svg'} 
                 alt={potion.name}
                 className="w-full h-full object-cover"
               />

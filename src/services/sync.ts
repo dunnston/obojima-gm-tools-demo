@@ -304,7 +304,15 @@ class SyncService {
       const result = await this.getData(dataType);
       
       if (result.success && result.data) {
-        const validatedData = validator ? result.data.map(validator) : result.data;
+        let validatedData = validator ? result.data.map(validator) : result.data;
+        
+        // Special handling for potions to ensure they have IDs
+        if (dataType === 'user-potions') {
+          validatedData = validatedData.map(potion => ({
+            ...potion,
+            id: potion.id || `potion-${potion.category}-${potion.number}`
+          }));
+        }
         
         // Update localStorage as backup
         localStorage.setItem(localStorageKey, JSON.stringify(validatedData));
@@ -337,9 +345,37 @@ class SyncService {
       // Save to localStorage immediately for offline support
       localStorage.setItem(localStorageKey, JSON.stringify(items));
       
-      // Save each item to API
-      for (const item of items) {
-        await this.saveData(dataType, item);
+      // For user-potions, we need special handling to avoid duplicates
+      if (dataType === 'user-potions') {
+        // First, get all existing potions from the server
+        const existingResult = await this.getData(dataType);
+        const existingPotions = existingResult.data || [];
+        
+        // Create a map of existing potions by ID
+        const existingMap = new Map(existingPotions.map(p => [p.id, true]));
+        
+        // Delete potions that are no longer in the items array
+        for (const existing of existingPotions) {
+          if (!items.find(item => item.id === existing.id)) {
+            await this.deleteData(dataType, existing.id);
+          }
+        }
+        
+        // Save each item (create or update based on whether it exists)
+        for (const item of items) {
+          if (item.id && existingMap.has(item.id)) {
+            // Update existing
+            await this.saveData(dataType, item);
+          } else {
+            // Create new
+            await this.saveData(dataType, item);
+          }
+        }
+      } else {
+        // Original behavior for other data types
+        for (const item of items) {
+          await this.saveData(dataType, item);
+        }
       }
     } catch (error) {
       console.error(`Error saving ${dataType}:`, error);
