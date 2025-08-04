@@ -450,7 +450,7 @@ export default function DatabaseView() {
         }
       });
     } else if (editingType === 'potion') {
-      setModifiedPotions(prev => {
+      const updatedPotions = (() => {
         // Check if this is a new item (original editing item had empty name)
         const isNewItem = editingItem?.name === '';
         
@@ -458,21 +458,30 @@ export default function DatabaseView() {
           // Assign new unique number for new potions
           const maxNumber = Math.max(
             ...potions.map(p => p.number || 0),
-            ...prev.map(p => p.number || 0),
+            ...modifiedPotions.map(p => p.number || 0),
             0
           );
           updatedItem.number = maxNumber + 1;
           
           if (updatedItem.name && updatedItem.name.trim()) {
-            return [...prev, updatedItem];
+            return [...modifiedPotions, updatedItem];
           }
-          return prev;
+          return modifiedPotions;
         } else {
-          // For existing items, replace the existing one using the original values
-          const filtered = prev.filter(item => !(item.name === editingItem.name && item.number === editingItem.number));
+          // For existing items, replace the existing one using the original number
+          const filtered = modifiedPotions.filter(item => item.number !== editingItem.number);
           return [...filtered, updatedItem];
         }
-      });
+      })();
+      
+      setModifiedPotions(updatedPotions);
+      
+      // Sync to server
+      try {
+        await saveUserPotions(updatedPotions);
+      } catch (error) {
+        console.error('Error syncing potion:', error);
+      }
     } else if (editingType === 'creature') {
       setModifiedCreatures(prev => {
         // Check if this is a new item (original editing item had empty name)
