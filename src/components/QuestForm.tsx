@@ -48,16 +48,29 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
         const response = await fetch('/api/calendar-events');
         if (response.ok) {
           const events: CalendarEvent[] = await response.json();
-          setCalendarEvents(events);
-          
-          // Find events linked to this quest
-          if (quest) {
-            const questLinkedEvents = events.filter(event => event.questId === quest.id);
-            setLinkedEvents(questLinkedEvents);
+          // Ensure events is an array
+          if (Array.isArray(events)) {
+            setCalendarEvents(events);
+            
+            // Find events linked to this quest
+            if (quest) {
+              const questLinkedEvents = events.filter(event => event.questId === quest.id);
+              setLinkedEvents(questLinkedEvents);
+            }
+          } else {
+            console.warn('Calendar events data is not an array:', events);
+            setCalendarEvents([]);
+            setLinkedEvents([]);
           }
+        } else {
+          console.error('Failed to fetch calendar events:', response.status, response.statusText);
+          setCalendarEvents([]);
+          setLinkedEvents([]);
         }
       } catch (error) {
         console.error('Error loading calendar events:', error);
+        setCalendarEvents([]);
+        setLinkedEvents([]);
       }
     };
 
@@ -436,7 +449,7 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
 
                 {/* Event Search Results */}
                 <div className="max-h-40 bg-slate-800 border border-slate-600 rounded-lg overflow-y-auto">
-                  {calendarEvents
+                  {Array.isArray(calendarEvents) ? calendarEvents
                     .filter(event => 
                       !event.questId && // Only show unlinked events
                       (event.title.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
@@ -461,9 +474,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
                           </div>
                         </div>
                       </button>
-                    ))}
+                    )) : []}
                   
-                  {calendarEvents.filter(event => 
+                  {Array.isArray(calendarEvents) && calendarEvents.filter(event => 
                     !event.questId &&
                     (event.title.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
                      event.description.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||

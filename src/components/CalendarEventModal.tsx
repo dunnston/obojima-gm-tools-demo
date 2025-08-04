@@ -63,10 +63,20 @@ export default function CalendarEventModal({
         const response = await fetch('/api/quests');
         if (response.ok) {
           const questData = await response.json();
-          setQuests(questData);
+          // Ensure questData is an array
+          if (Array.isArray(questData)) {
+            setQuests(questData);
+          } else {
+            console.warn('Quest data is not an array:', questData);
+            setQuests([]);
+          }
+        } else {
+          console.error('Failed to fetch quests:', response.status, response.statusText);
+          setQuests([]);
         }
       } catch (error) {
         console.error('Error loading quests:', error);
+        setQuests([]);
       }
     };
 
@@ -122,10 +132,10 @@ export default function CalendarEventModal({
     }
   };
 
-  const filteredQuests = quests.filter(quest =>
+  const filteredQuests = Array.isArray(quests) ? quests.filter(quest =>
     quest.title.toLowerCase().includes(questSearchTerm.toLowerCase()) ||
     quest.description.toLowerCase().includes(questSearchTerm.toLowerCase())
-  );
+  ) : [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
