@@ -192,8 +192,14 @@ export default function DatabaseView() {
 
   const saveUserIngredients = async (ingredients: any[]) => {
     try {
-      await syncService.saveWithFallback('user-ingredients', 'modifiedIngredients', ingredients);
-      setModifiedIngredients(ingredients);
+      // Ensure all ingredients have proper IDs
+      const ingredientsWithIds = ingredients.map(ingredient => ({
+        ...ingredient,
+        id: ingredient.id || `ingredient-${ingredient.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+      }));
+      
+      await syncService.saveWithFallback('user-ingredients', 'modifiedIngredients', ingredientsWithIds);
+      setModifiedIngredients(ingredientsWithIds);
     } catch (error) {
       console.error('Error saving user ingredients:', error);
     }
@@ -334,14 +340,51 @@ export default function DatabaseView() {
     console.log('Modified potions:', modifiedPotions);
   }
 
+  // Function to find ingredient image path
+  const getIngredientImagePath = (ingredientName: string) => {
+    // Special cases for known filename mismatches
+    const specialCases: { [key: string]: string } = {
+      'Apper Carrot': 'apper-carrot.webp',
+      // Add more special cases here if needed
+    };
+    
+    if (specialCases[ingredientName]) {
+      return `/images/ingredients/${specialCases[ingredientName]}`;
+    }
+    
+    // Default: try original name format (works for most ingredients)
+    return `/images/ingredients/${ingredientName}.webp`;
+  };
+
   // Apply modifications to ingredients and add new ones
+  const originalIngredients = ingredients.map(ingredient => ({
+    ...ingredient,
+    id: `ingredient-${ingredient.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`, // Create unique ID based on name
+    imageUrl: getIngredientImagePath(ingredient.name) // Use improved image path matching
+  }));
+
+  // Create a map to track which ingredients we've already processed
+  const processedIngredientIds = new Set<string>();
+
   const currentIngredients = [
-    ...ingredients.map(ingredient => {
-      const modified = modifiedIngredients.find(i => i.name === ingredient.name);
-      return modified || ingredient;
+    ...originalIngredients.map(ingredient => {
+      // Find modifications by ID (generated from original name)
+      const modified = modifiedIngredients.find(i => i.id === ingredient.id);
+      if (modified) {
+        processedIngredientIds.add(ingredient.id);
+        // Ensure the modified ingredient has an ID
+        return { ...modified, id: modified.id || ingredient.id };
+      }
+      return ingredient;
     }),
     // Add completely new ingredients that don't exist in original data
-    ...modifiedIngredients.filter(modified => !ingredients.find(original => original.name === modified.name))
+    ...modifiedIngredients.filter(modified => {
+      // Only add if we haven't already processed this ingredient
+      if (processedIngredientIds.has(modified.id)) {
+        return false;
+      }
+      return !originalIngredients.find(original => original.id === modified.id);
+    })
   ];
 
   // Combine original creatures with imported creatures
@@ -362,13 +405,32 @@ export default function DatabaseView() {
   ];
 
   // Apply modifications to magic items and add new ones
+  const originalMagicItems = magicItems.map(magicItem => ({
+    ...magicItem,
+    id: `magic-item-${magicItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` // Generate ID from name
+  }));
+  
+  // Create a map to track which magic items we've already processed
+  const processedMagicItemIds = new Set<string>();
+  
   const currentMagicItems = [
-    ...magicItems.map(magicItem => {
-      const modified = modifiedMagicItems.find(m => m.name === magicItem.name);
-      return modified || magicItem;
+    ...originalMagicItems.map(magicItem => {
+      const modified = modifiedMagicItems.find(m => m.id === magicItem.id);
+      if (modified) {
+        processedMagicItemIds.add(magicItem.id);
+        // Ensure the modified magic item has an ID
+        return { ...modified, id: modified.id || magicItem.id };
+      }
+      return magicItem;
     }),
     // Add completely new magic items that don't exist in original data
-    ...modifiedMagicItems.filter(modified => !magicItems.find(original => original.name === modified.name))
+    ...modifiedMagicItems.filter(modified => {
+      // Only add if we haven't already processed this magic item
+      if (processedMagicItemIds.has(modified.id)) {
+        return false;
+      }
+      return !magicItems.find(original => original.name === modified.name);
+    })
   ];
 
   // Apply modifications to companion types and add new ones
@@ -393,9 +455,9 @@ export default function DatabaseView() {
 
     if (type === 'ingredient') {
       // Only allow deleting custom ingredients (not in original data)
-      const isCustomItem = !ingredients.find(original => original.name === item.name);
+      const isCustomItem = !ingredients.find(original => `ingredient-${original.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` === item.id);
       if (isCustomItem) {
-        setModifiedIngredients(prev => prev.filter(i => i.name !== item.name));
+        setModifiedIngredients(prev => prev.filter(i => i.id !== item.id));
       }
     } else if (type === 'potion') {
       // Only allow deleting custom potions (not in original data)
@@ -450,7 +512,7 @@ export default function DatabaseView() {
   // Helper function to check if an item is custom (created by user)
   const isCustomItem = (item: any, type: string): boolean => {
     if (type === 'ingredient') {
-      return !ingredients.find(original => original.name === item.name);
+      return !ingredients.find(original => `ingredient-${original.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` === item.id);
     } else if (type === 'potion') {
       const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
       return !originalPotions.find(original => original.number === item.number);
@@ -478,17 +540,30 @@ export default function DatabaseView() {
         const isNewItem = editingItem?.name === '';
         
         if (isNewItem) {
-          // For new items, just add to the list if name is provided
+          // Generate unique ID for new ingredient
+          updatedItem.id = `ingredient-${updatedItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+          
           if (updatedItem.name && updatedItem.name.trim()) {
             return [...prev, updatedItem];
           }
           return prev;
         } else {
-          // For existing items, replace the existing one using the original name
-          const filtered = prev.filter(item => item.name !== editingItem.name);
+          // For existing items, replace the existing one using the original ID
+          updatedItem.id = editingItem.id; // Preserve the original ID
+          const filtered = prev.filter(item => item.id !== editingItem.id);
           return [...filtered, updatedItem];
         }
       });
+      
+      // Sync to server
+      try {
+        const updatedIngredients = modifiedIngredients.filter(i => i.id === updatedItem.id).length > 0 
+          ? modifiedIngredients.map(i => i.id === updatedItem.id ? updatedItem : i)
+          : [...modifiedIngredients, updatedItem];
+        await saveUserIngredients(updatedIngredients);
+      } catch (error) {
+        console.error('Error syncing ingredient:', error);
+      }
     } else if (editingType === 'potion') {
       const updatedPotions = (() => {
         // Check if this is a new item (original editing item had empty name)
@@ -545,14 +620,16 @@ export default function DatabaseView() {
         const isNewItem = editingItem?.name === '';
         
         if (isNewItem) {
-          // For new items, just add to the list if name is provided
+          // For new items, generate ID and add to the list if name is provided
           if (updatedItem.name && updatedItem.name.trim()) {
+            updatedItem.id = `magic-item-${updatedItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
             return [...modifiedMagicItems, updatedItem];
           }
           return modifiedMagicItems;
         } else {
-          // For existing items, replace the existing one using the original name
-          const filtered = modifiedMagicItems.filter(item => item.name !== editingItem.name);
+          // For existing items, replace the existing one using the original ID
+          updatedItem.id = editingItem.id; // Preserve the original ID
+          const filtered = modifiedMagicItems.filter(item => item.id !== editingItem.id);
           return [...filtered, updatedItem];
         }
       })();
@@ -1269,7 +1346,7 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0">
                   <img 
-                    src={getIngredientImagePath(ingredient.name)} 
+                    src={ingredient.imageUrl || '/images/ingredients/default-ingredient.svg'} 
                     alt={ingredient.name}
                     className="w-full h-full object-cover"
                   />

@@ -345,17 +345,17 @@ class SyncService {
       // Save to localStorage immediately for offline support
       localStorage.setItem(localStorageKey, JSON.stringify(items));
       
-      // For user-potions, we need special handling to avoid duplicates
-      if (dataType === 'user-potions') {
-        // First, get all existing potions from the server
+      // For user-potions and user-magic-items, we need special handling to avoid duplicates
+      if (dataType === 'user-potions' || dataType === 'user-magic-items') {
+        // First, get all existing items from the server
         const existingResult = await this.getData(dataType);
-        const existingPotions = existingResult.data || [];
+        const existingItems = existingResult.data || [];
         
-        // Create a map of existing potions by ID
-        const existingMap = new Map(existingPotions.map(p => [p.id, true]));
+        // Create a map of existing items by ID
+        const existingMap = new Map(existingItems.map(item => [item.id, true]));
         
-        // Delete potions that are no longer in the items array
-        for (const existing of existingPotions) {
+        // Delete items that are no longer in the items array
+        for (const existing of existingItems) {
           if (!items.find(item => item.id === existing.id)) {
             await this.deleteData(dataType, existing.id);
           }

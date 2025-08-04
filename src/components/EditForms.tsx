@@ -346,25 +346,24 @@ export function IngredientEditForm({ ingredient, onSave, onCancel }: IngredientE
       return;
     }
 
-    let updatedIngredient = { ...ingredient, ...formData };
+    let updatedIngredient = { 
+      ...ingredient, 
+      ...formData,
+      imageUrl: ingredient.imageUrl, // Preserve existing image URL (tied to ID, not name)
+      id: ingredient.id || `ingredient-${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` // Ensure ingredient has an ID
+    };
 
     if (selectedFile) {
       try {
-        // Create a filename based on the ingredient name
         const fileExtension = selectedFile.name.split('.').pop();
-        const filename = `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
-        
-        // Create the image path for the database
+        // Use ingredient ID for filename to ensure persistence when name changes
+        const filename = `${updatedIngredient.id}.${fileExtension}`;
         const imagePath = `/images/ingredients/${filename}`;
         updatedIngredient.imageUrl = imagePath;
         
-        // Copy the file to the public directory using File System Access API or fallback
         await copyFileToPublicDirectory(selectedFile, filename, 'ingredients');
         
-        // Register the file with the image mapping system
-        addLocalIngredientFile(formData.name, fileExtension || 'jpg');
-        
-        console.log('Image saved as:', filename);
+        console.log('Ingredient image saved as:', filename);
         
       } catch (error) {
         console.error('Error handling file upload:', error);
@@ -1098,7 +1097,11 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
       return;
     }
 
-    let updatedMagicItem = { ...magicItem, ...formData };
+    let updatedMagicItem = { 
+      ...magicItem, 
+      ...formData,
+      id: magicItem.id || `magic-item-${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` // Preserve original ID, only generate if missing
+    };
 
     if (selectedFile) {
       try {
