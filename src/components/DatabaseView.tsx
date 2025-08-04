@@ -286,11 +286,12 @@ export default function DatabaseView() {
   const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
   const potions = [
     ...originalPotions.map(potion => {
-      const modified = modifiedPotions.find(p => p.name === potion.name && p.number === potion.number);
+      // Find modifications by number (stable identifier) not name (which can change)
+      const modified = modifiedPotions.find(p => p.number === potion.number);
       return modified || potion;
     }),
     // Add completely new potions that don't exist in original data
-    ...modifiedPotions.filter(modified => !originalPotions.find(original => original.name === modified.name && original.number === modified.number))
+    ...modifiedPotions.filter(modified => !originalPotions.find(original => original.number === modified.number))
   ];
 
   // Apply modifications to ingredients and add new ones
@@ -359,9 +360,9 @@ export default function DatabaseView() {
     } else if (type === 'potion') {
       // Only allow deleting custom potions (not in original data)
       const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
-      const isCustomItem = !originalPotions.find(original => original.name === item.name && original.number === item.number);
+      const isCustomItem = !originalPotions.find(original => original.number === item.number);
       if (isCustomItem) {
-        setModifiedPotions(prev => prev.filter(p => !(p.name === item.name && p.number === item.number)));
+        setModifiedPotions(prev => prev.filter(p => p.number !== item.number));
       }
     } else if (type === 'creature') {
       // Only allow deleting custom creatures (not in original data or imported data)  
@@ -412,7 +413,7 @@ export default function DatabaseView() {
       return !ingredients.find(original => original.name === item.name);
     } else if (type === 'potion') {
       const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
-      return !originalPotions.find(original => original.name === item.name && original.number === item.number);
+      return !originalPotions.find(original => original.number === item.number);
     } else if (type === 'creature') {
       const importedCreatures = getImportedCreatures();
       const allBaseCreatures = [...creatures, ...importedCreatures];
