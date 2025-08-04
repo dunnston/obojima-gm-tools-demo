@@ -215,10 +215,10 @@ export default function QuestLog() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📜</div>
               <h3 className="text-xl font-semibold text-slate-300 mb-2">
-                {t('quests.emptyState.noQuests', { status: activeTab === 'available' ? t('quests.status.available').toLowerCase() : activeTab === 'in-progress' ? t('quests.status.inProgress').toLowerCase() : activeTab === 'completed' ? t('quests.status.completed').toLowerCase() : t('quests.status.failed').toLowerCase() })}
+                {t(`quests.emptyState.noQuests.${activeTab === 'in-progress' ? 'inProgress' : activeTab}`)}
               </h3>
               <p className="text-slate-400 mb-6">
-                {activeTab === 'available' ? t('quests.emptyState.createFirst') : t('quests.emptyState.noneFound', { status: activeTab === 'in-progress' ? t('quests.status.inProgress').toLowerCase() : activeTab === 'completed' ? t('quests.status.completed').toLowerCase() : t('quests.status.failed').toLowerCase() })}
+                {activeTab === 'available' ? t('quests.emptyState.createFirst') : t(`quests.emptyState.noneFound.${activeTab === 'in-progress' ? 'inProgress' : activeTab}`)}
               </p>
               {activeTab === 'available' && (
                 <button

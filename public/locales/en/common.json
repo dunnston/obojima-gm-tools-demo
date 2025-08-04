@@ -654,9 +654,19 @@
       "failed": "Failed"
     },
     "emptyState": {
-      "noQuests": "No {status} quests",
+      "noQuests": {
+        "available": "No Available Quests",
+        "inProgress": "No In Progress Quests", 
+        "completed": "No Completed Quests",
+        "failed": "No Failed Quests"
+      },
       "createFirst": "Create your first quest to get started!",
-      "noneFound": "No {status} quests found."
+      "noneFound": {
+        "available": "No available quests found.",
+        "inProgress": "No in progress quests found.",
+        "completed": "No completed quests found.",
+        "failed": "No failed quests found."
+      }
     },
     "objectiveCount": "objectives",
     "goldAbbrev": "gp"

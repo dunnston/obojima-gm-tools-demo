@@ -178,7 +178,7 @@ export default function EnhancedObojimaCalendar({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Current Day Event Alert */}
       {currentDayAlert.length > 0 && (
         <div className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/50 rounded-lg p-4">

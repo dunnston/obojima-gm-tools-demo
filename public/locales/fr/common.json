@@ -654,9 +654,19 @@
       "failed": "Échouées"
     },
     "emptyState": {
-      "noQuests": "Aucune quête {status}",
+      "noQuests": {
+        "available": "Aucune Quête Disponible",
+        "inProgress": "Aucune Quête En Cours",
+        "completed": "Aucune Quête Terminée", 
+        "failed": "Aucune Quête Échouée"
+      },
       "createFirst": "Créez votre première quête pour commencer !",
-      "noneFound": "Aucune quête {status} trouvée."
+      "noneFound": {
+        "available": "Aucune quête disponible trouvée.",
+        "inProgress": "Aucune quête en cours trouvée.",
+        "completed": "Aucune quête terminée trouvée.",
+        "failed": "Aucune quête échouée trouvée."
+      }
     },
     "objectiveCount": "objectifs",
     "goldAbbrev": "po"
