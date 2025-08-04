@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   ObojimaDate, 
   Season, 
@@ -37,6 +38,7 @@ interface ObojimaCalendarProps {
 }
 
 export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, syncStatus = 'idle' }: ObojimaCalendarProps) {
+  const { t } = useTranslation();
   const [showTimeAdvancement, setShowTimeAdvancement] = useState(false);
   const [daysToAdvance, setDaysToAdvance] = useState(1);
 
@@ -152,18 +154,18 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-white">Obojima Calendar</h2>
+                <h2 className="text-2xl font-bold text-white">{t('calendar.title')}</h2>
                 {/* Sync status indicator */}
                 {syncStatus === 'syncing' && (
                   <ArrowPathIcon className="h-4 w-4 text-blue-400 animate-spin" />
                 )}
                 {syncStatus === 'error' && (
-                  <span className="text-xs text-amber-400">Offline</span>
+                  <span className="text-xs text-amber-400">{t('calendar.offline')}</span>
                 )}
               </div>
               <p className="text-slate-400">
-                Current Date{syncStatus === 'syncing' ? ' (syncing...)' : ''}
-                <span className="text-xs text-slate-500 ml-2">• Auto-sync every 30min</span>
+                {t('calendar.currentDate')}{syncStatus === 'syncing' ? ` (${t('calendar.syncing')})` : ''}
+                <span className="text-xs text-slate-500 ml-2">• {t('calendar.autoSync')}</span>
               </p>
             </div>
           </div>
@@ -171,7 +173,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
             <button
               onClick={onRefresh}
               className="p-2 text-slate-400 hover:text-white transition-colors"
-              title="Refresh Calendar Data"
+              title={t('calendar.refreshCalendarData')}
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
@@ -190,7 +192,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
 
       {/* Date Navigation */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Date Navigation</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('calendar.dateNavigation')}</h3>
         
         <div className="flex items-center justify-between mb-4">
           <button
@@ -198,11 +200,11 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
             className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
           >
             <ChevronLeftIcon className="h-4 w-4" />
-            Previous Day
+            {t('calendar.previousDay')}
           </button>
           
           <div className="text-center">
-            <div className="text-sm text-slate-400">Quick Navigation</div>
+            <div className="text-sm text-slate-400">{t('calendar.quickNavigation')}</div>
             <div className="text-lg font-semibold text-white">
               {formatObojimaDateShort(currentDate)}
             </div>
@@ -212,7 +214,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
             onClick={handleNextDay}
             className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
           >
-            Next Day
+            {t('calendar.nextDay')}
             <ChevronRightIcon className="h-4 w-4" />
           </button>
         </div>
@@ -222,7 +224,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
         >
           <ForwardIcon className="h-5 w-5" />
-          Advance Time Between Sessions
+          {t('calendar.advanceTimeBetweenSessions')}
         </button>
       </div>
 
@@ -237,7 +239,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
           <p className="text-slate-300 mb-4">{currentSeason?.description}</p>
           
           <div className="space-y-2">
-            <div className="text-sm text-slate-400">Season Progress</div>
+            <div className="text-sm text-slate-400">{t('calendar.seasonProgress')}</div>
             <div className="space-y-1">
               {MOON_PHASES.map((phase, index) => {
                 const isCurrent = phase.name === currentDate.phase;
@@ -257,7 +259,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                       {getMoonPhaseEmoji(phase.name)} {phase.name}
                     </span>
                     <span className="text-xs text-slate-500">
-                      {phase.days} days
+                      {phase.days} {t('calendar.days')}
                     </span>
                   </div>
                 );
@@ -277,9 +279,9 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-slate-400">Phase Progress</span>
+                <span className="text-sm text-slate-400">{t('calendar.phaseProgress')}</span>
                 <span className="text-sm text-slate-300">
-                  Day {currentDate.day} of {currentPhase?.days}
+                  {t('calendar.day')} {currentDate.day} {t('calendar.of')} {currentPhase?.days}
                 </span>
               </div>
               <div className="w-full bg-slate-700 rounded-full h-2">
@@ -291,7 +293,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
             </div>
             
             <div className="text-xs text-slate-500">
-              {(currentPhase?.days || 0) - currentDate.day} days remaining in this phase
+              {(currentPhase?.days || 0) - currentDate.day} {t('calendar.daysRemaining')}
             </div>
           </div>
         </div>
@@ -299,7 +301,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
 
       {/* Year Overview */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Year {currentDate.year} Overview</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('calendar.yearOverview', { year: currentDate.year })}</h3>
         
         <div className="grid grid-cols-4 gap-4">
           {SEASONS.map((season) => {
@@ -319,7 +321,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                   {season.name}
                 </div>
                 <div className="text-xs text-slate-400 mt-1">
-                  {season.totalDays} days
+                  {season.totalDays} {t('calendar.days')}
                 </div>
               </div>
             );
@@ -331,24 +333,24 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
       {showTimeAdvancement && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">Advance Time Between Sessions</h3>
+            <h3 className="text-xl font-bold text-white mb-4">{t('calendar.advanceTime.title')}</h3>
             
             <div className="mb-6">
               <div className="text-center mb-4">
                 <ClockIcon className="h-12 w-12 text-blue-400 mx-auto mb-2" />
                 <p className="text-slate-300">
-                  How many days would you like to advance?
+                  {t('calendar.advanceTime.howMany')}
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-700/50 rounded p-2 mt-2">
-                  Current: {currentDate.day}/{getDaysInCurrentPhase()} days in {currentDate.phase}<br/>
-                  {getDaysRemainingInPhase()} days left in current phase
+                  {t('calendar.advanceTime.current', { day: currentDate.day, total: getDaysInCurrentPhase(), phase: currentDate.phase })}<br/>
+                  {t('calendar.advanceTime.daysLeft', { days: getDaysRemainingInPhase() })}
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Days to Advance
+                    {t('calendar.advanceTime.daysToAdvance')}
                   </label>
                   <div className="flex items-center gap-2">
                     <button
@@ -375,7 +377,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                 </div>
 
                 <div className="text-sm text-slate-400 text-center">
-                  New date will be: <br />
+                  {t('calendar.advanceTime.newDate')} <br />
                   <span className="text-white font-medium">
                     {formatObojimaDate(addDaysToObojimaDate(currentDate, daysToAdvance))}
                   </span>
@@ -387,21 +389,21 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                     className="px-2 py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded transition-colors"
                     title={`${getDaysToNextPhase()} days to next phase`}
                   >
-                    1 Phase<br/>({getDaysToNextPhase()}d)
+                    {t('calendar.advanceTime.onePhase')}<br/>({getDaysToNextPhase()}d)
                   </button>
                   <button
                     onClick={() => setDaysToAdvance(getDaysToNextSeason())}
                     className="px-2 py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded transition-colors"
                     title={`${getDaysToNextSeason()} days to next season`}
                   >
-                    1 Season<br/>({getDaysToNextSeason()}d)
+                    {t('calendar.advanceTime.oneSeason')}<br/>({getDaysToNextSeason()}d)
                   </button>
                   <button
                     onClick={() => setDaysToAdvance(DAYS_PER_YEAR)}
                     className="px-2 py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded transition-colors"
                     title={`${DAYS_PER_YEAR} days (1 full year)`}
                   >
-                    1 Year<br/>({DAYS_PER_YEAR}d)
+                    {t('calendar.advanceTime.oneYear')}<br/>({DAYS_PER_YEAR}d)
                   </button>
                 </div>
               </div>
@@ -413,13 +415,13 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                 disabled={daysToAdvance < 1}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
               >
-                Advance Time
+                {t('calendar.advanceTime.advanceTimeButton')}
               </button>
               <button
                 onClick={() => setShowTimeAdvancement(false)}
                 className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
               >
-                Cancel
+                {t('calendar.advanceTime.cancel')}
               </button>
             </div>
           </div>

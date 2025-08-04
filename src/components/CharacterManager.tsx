@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PlayerCharacter } from '@/data/characters';
 import CharacterForm from './CharacterForm';
 import { syncService } from '@/services/sync';
@@ -23,6 +24,7 @@ export default function CharacterManager() {
   const [selectedCharacter, setSelectedCharacter] = useState<PlayerCharacter | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const { t } = useTranslation();
 
   // Validate and fix character data structure
   const validateCharacter = (char: any): PlayerCharacter => {
@@ -191,7 +193,7 @@ export default function CharacterManager() {
 
   const handleDeleteCharacter = async (characterId: string) => {
     const character = characters.find(c => c.id === characterId);
-    if (character && confirm(`Are you sure you want to delete ${character.characterName}?`)) {
+    if (character && confirm(`${t('characters.confirmDelete')} ${character.characterName}?`)) {
       const updatedCharacters = characters.filter(char => char.id !== characterId);
       await saveCharacters(updatedCharacters);
       
@@ -230,21 +232,21 @@ export default function CharacterManager() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Character Manager</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">{t('characters.title')}</h1>
         <div className="flex items-center justify-between">
-          <p className="text-gray-300">Manage player characters for your Obojima campaign</p>
+          <p className="text-gray-300">{t('characters.subtitle')}</p>
           {/* Minimal sync status indicator */}
           <div className="flex items-center gap-2">
             {syncStatus === 'syncing' && (
               <ArrowPathIcon className="h-4 w-4 text-blue-400 animate-spin" />
             )}
             {syncStatus === 'error' && (
-              <span className="text-xs text-amber-400">Offline</span>
+              <span className="text-xs text-amber-400">{t('characters.offline')}</span>
             )}
             <button
               onClick={loadCharacters}
               className="p-1 text-gray-400 hover:text-white transition-colors"
-              title="Refresh"
+              title={t('characters.refresh')}
             >
               <ArrowPathIcon className="h-4 w-4" />
             </button>
@@ -257,7 +259,7 @@ export default function CharacterManager() {
         <div className="flex-1 relative">
           <input
             type="text"
-            placeholder="Search characters..."
+            placeholder={t('characters.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-800 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -272,7 +274,7 @@ export default function CharacterManager() {
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
         >
           <PlusIcon className="h-5 w-5" />
-          Add Character
+          {t('characters.addCharacter')}
         </button>
       </div>
 
@@ -281,12 +283,12 @@ export default function CharacterManager() {
         <div className="text-center py-12">
           <UserIcon className="h-16 w-16 text-slate-600 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-400 mb-2">
-            {characters.length === 0 ? 'No Characters Yet' : 'No Characters Found'}
+            {characters.length === 0 ? t('characters.noCharactersYet') : t('characters.noCharactersFound')}
           </h3>
           <p className="text-slate-500">
             {characters.length === 0 
-              ? 'Add your first character to get started' 
-              : 'Try adjusting your search terms'}
+              ? t('characters.addFirstCharacter') 
+              : t('characters.adjustSearchTerms')}
           </p>
         </div>
       ) : (
@@ -325,21 +327,21 @@ export default function CharacterManager() {
                   <button
                     onClick={() => openCharacterDetails(character)}
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors"
-                    title="View Details"
+                    title={t('characters.viewDetails')}
                   >
                     <EyeIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => openEditForm(character)}
                     className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
-                    title="Edit Character"
+                    title={t('characters.editCharacter')}
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteCharacter(character.id)}
                     className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                    title="Delete Character"
+                    title={t('characters.deleteCharacter')}
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -349,32 +351,32 @@ export default function CharacterManager() {
               {/* Character Info */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-400">Class:</span>
-                  <span className="text-white font-medium">{character.class || 'Unknown'}</span>
+                  <span className="text-sm text-slate-400">{t('characters.class')}:</span>
+                  <span className="text-white font-medium">{character.class || t('characters.form.unknown')}</span>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                   <div className="bg-slate-700/30 rounded-lg p-2">
-                    <div className="text-xs text-slate-400">AC</div>
+                    <div className="text-xs text-slate-400">{t('characters.form.ac')}</div>
                     <div className="text-white font-bold">{character.armorClass || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
-                    <div className="text-xs text-slate-400">HP</div>
+                    <div className="text-xs text-slate-400">{t('initiative.hp')}</div>
                     <div className="text-white font-bold">{character.hitPoints || 0}/{character.maxHitPoints || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
-                    <div className="text-xs text-slate-400">PP</div>
+                    <div className="text-xs text-slate-400">{t('characters.form.pp')}</div>
                     <div className="text-white font-bold">{character.passivePerception || 0}</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-2">
-                    <div className="text-xs text-slate-400">Level</div>
+                    <div className="text-xs text-slate-400">{t('characters.level')}</div>
                     <div className="text-white font-bold">{character.level || 1}</div>
                   </div>
                 </div>
 
                 {character.notes && (
                   <div className="bg-slate-700/20 rounded-lg p-3">
-                    <div className="text-xs text-slate-400 mb-1">Notes:</div>
+                    <div className="text-xs text-slate-400 mb-1">{t('characters.notes')}:</div>
                     <div className="text-sm text-slate-300 line-clamp-2">{character.notes}</div>
                   </div>
                 )}
@@ -422,7 +424,7 @@ export default function CharacterManager() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">{selectedCharacter.characterName}</h2>
-                  <p className="text-slate-400">Played by {selectedCharacter.playerName}</p>
+                  <p className="text-slate-400">{t('characters.playedBy')} {selectedCharacter.playerName}</p>
                 </div>
               </div>
               <button
@@ -437,30 +439,30 @@ export default function CharacterManager() {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Class</div>
-                  <div className="text-white font-bold">{selectedCharacter.class || 'Unknown'} {selectedCharacter.level || 1}</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.class')}</div>
+                  <div className="text-white font-bold">{selectedCharacter.class || t('characters.form.unknown')} {selectedCharacter.level || 1}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Armor Class</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.armorClass')}</div>
                   <div className="text-white font-bold">{selectedCharacter.armorClass || 0}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Hit Points</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.hitPoints')}</div>
                   <div className="text-white font-bold">{selectedCharacter.hitPoints || 0} / {selectedCharacter.maxHitPoints || 0}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Passive Perception</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.passivePerception')}</div>
                   <div className="text-white font-bold">{selectedCharacter.passivePerception}</div>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Passive Insight</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.passiveInsight')}</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInsight || 10}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-sm text-slate-400 mb-1">Passive Investigation</div>
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.passiveInvestigation')}</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInvestigation || 10}</div>
                 </div>
               </div>
@@ -468,7 +470,7 @@ export default function CharacterManager() {
               {/* Character Goal */}
               {selectedCharacter.characterGoal && (
                 <div className="bg-slate-700/20 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-emerald-400 mb-2">Character Goal</h3>
+                  <h3 className="text-lg font-semibold text-emerald-400 mb-2">{t('characters.characterGoal')}</h3>
                   <p className="text-slate-300">{selectedCharacter.characterGoal}</p>
                 </div>
               )}
@@ -477,7 +479,7 @@ export default function CharacterManager() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {selectedCharacter.boons && selectedCharacter.boons.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-yellow-400 mb-3">Boons</h3>
+                    <h3 className="text-lg font-semibold text-yellow-400 mb-3">{t('characters.boons')}</h3>
                     <ul className="space-y-1">
                       {selectedCharacter.boons.map((boon, index) => (
                         <li key={index} className="text-slate-300 text-sm">• {boon}</li>
@@ -488,7 +490,7 @@ export default function CharacterManager() {
 
                 {selectedCharacter.personalityTraits && selectedCharacter.personalityTraits.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-blue-400 mb-3">Personality Traits</h3>
+                    <h3 className="text-lg font-semibold text-blue-400 mb-3">{t('characters.personalityTraits')}</h3>
                     <ul className="space-y-1">
                       {selectedCharacter.personalityTraits.map((trait, index) => (
                         <li key={index} className="text-slate-300 text-sm">• {trait}</li>
@@ -499,7 +501,7 @@ export default function CharacterManager() {
 
                 {selectedCharacter.ideals && selectedCharacter.ideals.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-green-400 mb-3">Ideals</h3>
+                    <h3 className="text-lg font-semibold text-green-400 mb-3">{t('characters.ideals')}</h3>
                     <ul className="space-y-1">
                       {selectedCharacter.ideals.map((ideal, index) => (
                         <li key={index} className="text-slate-300 text-sm">• {ideal}</li>
@@ -510,7 +512,7 @@ export default function CharacterManager() {
 
                 {selectedCharacter.bonds && selectedCharacter.bonds.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-purple-400 mb-3">Bonds</h3>
+                    <h3 className="text-lg font-semibold text-purple-400 mb-3">{t('characters.bonds')}</h3>
                     <ul className="space-y-1">
                       {selectedCharacter.bonds.map((bond, index) => (
                         <li key={index} className="text-slate-300 text-sm">• {bond}</li>
@@ -521,7 +523,7 @@ export default function CharacterManager() {
 
                 {selectedCharacter.flaws && selectedCharacter.flaws.length > 0 && (
                   <div className="bg-slate-700/20 rounded-lg p-4 md:col-span-2">
-                    <h3 className="text-lg font-semibold text-red-400 mb-3">Flaws</h3>
+                    <h3 className="text-lg font-semibold text-red-400 mb-3">{t('characters.flaws')}</h3>
                     <ul className="space-y-1">
                       {selectedCharacter.flaws.map((flaw, index) => (
                         <li key={index} className="text-slate-300 text-sm">• {flaw}</li>
@@ -534,7 +536,7 @@ export default function CharacterManager() {
               {/* Notes */}
               {selectedCharacter.notes && (
                 <div className="bg-slate-700/20 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-slate-400 mb-3">Additional Notes</h3>
+                  <h3 className="text-lg font-semibold text-slate-400 mb-3">{t('characters.additionalNotes')}</h3>
                   <p className="text-slate-300 whitespace-pre-line">{selectedCharacter.notes}</p>
                 </div>
               )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PlayerCharacter, CharacterFormData, DND_CLASSES, createEmptyCharacter, formDataToCharacter } from '@/data/characters';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
@@ -14,6 +15,7 @@ interface CharacterFormProps {
 export default function CharacterForm({ character, onSave, onCancel, isEditing = false }: CharacterFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<CharacterFormData>(() => {
     if (character) {
       return {
@@ -98,7 +100,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
     
     // Basic validation
     if (!formData.characterName.trim() || !formData.playerName.trim()) {
-      alert('Character name and player name are required');
+      alert(t('characters.form.namesRequired'));
       return;
     }
 
@@ -118,7 +120,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
         
       } catch (error) {
         console.error('Error handling file upload:', error);
-        alert('Error uploading character portrait. Please try again.');
+        alert(t('characters.form.uploadError'));
         return;
       }
     }
@@ -133,7 +135,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <h2 className="text-2xl font-bold text-white">
-            {isEditing ? 'Edit Character' : 'Add New Character'}
+            {isEditing ? t('characters.form.editCharacter') : t('characters.form.addNewCharacter')}
           </h2>
           <button
             onClick={onCancel}
@@ -148,28 +150,28 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Character Name *
+                {t('characters.form.characterName')} *
               </label>
               <input
                 type="text"
                 value={formData.characterName}
                 onChange={(e) => handleInputChange('characterName', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Enter character name..."
+                placeholder={t('characters.form.characterNamePlaceholder')}
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Player Name *
+                {t('characters.form.playerName')} *
               </label>
               <input
                 type="text"
                 value={formData.playerName}
                 onChange={(e) => handleInputChange('playerName', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Enter player name..."
+                placeholder={t('characters.form.playerNamePlaceholder')}
                 required
               />
             </div>
@@ -179,14 +181,14 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Class
+                {t('characters.class')}
               </label>
               <select
                 value={formData.class}
                 onChange={(e) => handleInputChange('class', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
               >
-                <option value="">Select class...</option>
+                <option value="">{t('characters.form.selectClass')}</option>
                 {DND_CLASSES.map(cls => (
                   <option key={cls} value={cls}>{cls}</option>
                 ))}
@@ -195,7 +197,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Level
+                {t('characters.level')}
               </label>
               <input
                 type="number"
@@ -204,13 +206,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.level}
                 onChange={(e) => handleInputChange('level', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Level"
+                placeholder={t('characters.level')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Armor Class
+                {t('characters.armorClass')}
               </label>
               <input
                 type="number"
@@ -219,13 +221,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.armorClass}
                 onChange={(e) => handleInputChange('armorClass', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="AC"
+                placeholder={t('characters.form.ac')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Current Hit Points
+                {t('characters.form.currentHitPoints')}
               </label>
               <input
                 type="number"
@@ -234,13 +236,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.hitPoints}
                 onChange={(e) => handleInputChange('hitPoints', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Current HP"
+                placeholder={t('characters.form.currentHp')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Max Hit Points
+                {t('characters.form.maxHitPoints')}
               </label>
               <input
                 type="number"
@@ -249,13 +251,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.maxHitPoints}
                 onChange={(e) => handleInputChange('maxHitPoints', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Max HP"
+                placeholder={t('characters.form.maxHp')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Passive Perception
+                {t('characters.passivePerception')}
               </label>
               <input
                 type="number"
@@ -264,13 +266,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.passivePerception}
                 onChange={(e) => handleInputChange('passivePerception', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="PP"
+                placeholder={t('characters.form.pp')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Passive Insight
+                {t('characters.passiveInsight')}
               </label>
               <input
                 type="number"
@@ -279,7 +281,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.passiveInsight}
                 onChange={(e) => handleInputChange('passiveInsight', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="PI"
+                placeholder={t('characters.form.pi')}
               />
             </div>
           </div>
@@ -287,7 +289,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Passive Investigation
+                {t('characters.passiveInvestigation')}
               </label>
               <input
                 type="number"
@@ -296,14 +298,14 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 value={formData.passiveInvestigation}
                 onChange={(e) => handleInputChange('passiveInvestigation', e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                placeholder="Passive Investigation"
+                placeholder={t('characters.passiveInvestigation')}
               />
             </div>
 
             {/* Character Portrait Upload */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Character Portrait
+                {t('characters.form.characterPortrait')}
               </label>
               
               {/* Drag and Drop Area */}
@@ -323,10 +325,10 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                   <div className="space-y-2">
                     <div className="text-4xl">🖼️</div>
                     <div className="text-sm text-slate-300">
-                      Drag and drop a portrait here, or <span className="text-emerald-400">click to browse</span>
+                      {t('characters.form.dragDropPortrait')} <span className="text-emerald-400">{t('characters.form.clickToBrowse')}</span>
                     </div>
                     <div className="text-xs text-slate-500">
-                      Supports JPG, PNG, GIF up to 10MB
+                      {t('characters.form.supportedFormats')}
                     </div>
                   </div>
                 </label>
@@ -347,7 +349,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                       }}
                       className="text-red-400 hover:text-red-300 text-xs"
                     >
-                      Remove
+                      {t('characters.form.remove')}
                     </button>
                   </div>
                 </div>
@@ -357,7 +359,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
               {previewUrl && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Preview
+                    {t('characters.form.preview')}
                   </label>
                   <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-800">
                     <img 
@@ -373,7 +375,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
               {!previewUrl && formData.imageUrl && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Current Portrait
+                    {t('characters.form.currentPortrait')}
                   </label>
                   <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-800">
                     <img 
@@ -393,14 +395,14 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           {/* Character Goal */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Character Goal
+              {t('characters.characterGoal')}
             </label>
             <textarea
               value={formData.characterGoal}
               onChange={(e) => handleInputChange('characterGoal', e.target.value)}
               rows={2}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-              placeholder="What does this character want to achieve?"
+              placeholder={t('characters.form.characterGoalPlaceholder')}
             />
           </div>
 
@@ -408,66 +410,66 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Boons
+                {t('characters.boons')}
               </label>
               <textarea
                 value={formData.boons}
                 onChange={(e) => handleInputChange('boons', e.target.value)}
                 rows={3}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                placeholder="Enter each boon on a new line..."
+                placeholder={t('characters.form.boonsPlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Personality Traits
+                {t('characters.personalityTraits')}
               </label>
               <textarea
                 value={formData.personalityTraits}
                 onChange={(e) => handleInputChange('personalityTraits', e.target.value)}
                 rows={3}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                placeholder="Enter each trait on a new line..."
+                placeholder={t('characters.form.personalityTraitsPlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Ideals
+                {t('characters.ideals')}
               </label>
               <textarea
                 value={formData.ideals}
                 onChange={(e) => handleInputChange('ideals', e.target.value)}
                 rows={3}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                placeholder="Enter each ideal on a new line..."
+                placeholder={t('characters.form.idealsPlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Bonds
+                {t('characters.bonds')}
               </label>
               <textarea
                 value={formData.bonds}
                 onChange={(e) => handleInputChange('bonds', e.target.value)}
                 rows={3}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                placeholder="Enter each bond on a new line..."
+                placeholder={t('characters.form.bondsPlaceholder')}
               />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Flaws
+                {t('characters.flaws')}
               </label>
               <textarea
                 value={formData.flaws}
                 onChange={(e) => handleInputChange('flaws', e.target.value)}
                 rows={2}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                placeholder="Enter each flaw on a new line..."
+                placeholder={t('characters.form.flawsPlaceholder')}
               />
             </div>
           </div>
@@ -475,14 +477,14 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Additional Notes
+              {t('characters.additionalNotes')}
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               rows={4}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-              placeholder="Any additional notes about this character..."
+              placeholder={t('characters.form.notesPlaceholder')}
             />
           </div>
 
@@ -493,13 +495,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
               onClick={onCancel}
               className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
-              Cancel
+{t('buttons.cancel')}
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
             >
-              {isEditing ? 'Update Character' : 'Add Character'}
+              {isEditing ? t('characters.form.updateCharacter') : t('characters.form.addCharacter')}
             </button>
           </div>
         </form>

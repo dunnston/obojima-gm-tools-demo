@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { regions, rollEncounter, type Encounter } from '@/data/encounters';
 import { 
   XMarkIcon, 
@@ -25,6 +26,7 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
   const [selectedRegionId, setSelectedRegionId] = useState<string>('');
   const [generatedEncounter, setGeneratedEncounter] = useState<GeneratedEncounter | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { t } = useTranslation();
 
   const handleGenerateEncounter = async () => {
     if (!selectedRegionId) return;
@@ -58,7 +60,7 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
         <div className="flex items-center justify-between p-6 border-b border-slate-600">
           <div className="flex items-center gap-3">
             <MapIcon className="h-6 w-6 text-emerald-400" />
-            <h2 className="text-2xl font-bold text-white">Random Encounter Generator</h2>
+            <h2 className="text-2xl font-bold text-white">{t('encounters.generator.title')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -74,14 +76,14 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
               {/* Region Selection */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-3">
-                  Select Region
+                  {t('encounters.generator.selectRegion')}
                 </label>
                 <select
                   value={selectedRegionId}
                   onChange={(e) => setSelectedRegionId(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
                 >
-                  <option value="">Choose a region...</option>
+                  <option value="">{t('encounters.generator.chooseRegion')}</option>
                   {regions.map((region) => (
                     <option key={region.id} value={region.id}>
                       {region.name}
@@ -104,7 +106,7 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
                   `}
                 >
                   <PuzzlePieceIcon className={`h-6 w-6 ${isGenerating ? 'animate-spin' : ''}`} />
-                  {isGenerating ? 'Rolling the dice...' : 'Generate Random Encounter'}
+                  {isGenerating ? t('encounters.generator.rolling') : t('encounters.generator.generateEncounter')}
                 </button>
               </div>
 
@@ -112,11 +114,10 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
               <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50">
                 <div className="flex items-center gap-2 mb-2">
                   <SparklesIcon className="h-5 w-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">How it works</h3>
+                  <h3 className="font-semibold text-white">{t('encounters.generator.howItWorks')}</h3>
                 </div>
                 <p className="text-slate-300 text-sm">
-                  Select a region and click the generate button to roll a d12 and get a random encounter 
-                  from that region's encounter table. Perfect for adding unexpected moments to your sessions!
+                  {t('encounters.generator.description')}
                 </p>
               </div>
             </>
@@ -142,7 +143,7 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
                 </div>
 
                 <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                  <h4 className="font-semibold text-white mb-3">Description</h4>
+                  <h4 className="font-semibold text-white mb-3">{t('common.description')}</h4>
                   <p className="text-slate-300 leading-relaxed">
                     {generatedEncounter.encounter.description}
                   </p>
@@ -156,13 +157,13 @@ export default function EncounterGenerator({ onClose }: EncounterGeneratorProps)
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                 >
                   <PuzzlePieceIcon className="h-5 w-5" />
-                  Generate Another
+                  {t('encounters.generator.generateAnother')}
                 </button>
                 <button
                   onClick={onClose}
                   className="px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
                 >
-                  Close
+                  {t('buttons.close')}
                 </button>
               </div>
             </>

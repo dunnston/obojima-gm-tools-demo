@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   LOCATIONS, 
   Location, 
@@ -25,6 +26,7 @@ export default function IngredientForaging() {
   const [searchHistory, setSearchHistory] = useState<ForagingResult[]>([]);
   const [ingredientDropdownOpen, setIngredientDropdownOpen] = useState<boolean>(false);
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState<string>('');
+  const { t } = useTranslation();
 
   const locationInfo = getLocationInfo(selectedLocation);
 
@@ -88,9 +90,9 @@ export default function IngredientForaging() {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3">
           <MagnifyingGlassIcon className="h-8 w-8 text-emerald-400" />
-          <h1 className="text-3xl font-bold text-white">Ingredient Foraging</h1>
+          <h1 className="text-3xl font-bold text-white">{t('ingredients.foraging.title')}</h1>
         </div>
-        <p className="text-slate-400">Search for ingredients throughout Obojima's diverse locations</p>
+        <p className="text-slate-400">{t('ingredients.foraging.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -98,13 +100,13 @@ export default function IngredientForaging() {
         <div className="space-y-6">
           {/* Location & Search Setup */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Foraging Setup</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('ingredients.foraging.title')}</h2>
             
             <div className="space-y-4">
               {/* Location Selection */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Search Location
+                  {t('ingredients.foraging.location')}
                 </label>
                 <select
                   value={selectedLocation}
@@ -120,7 +122,7 @@ export default function IngredientForaging() {
               {/* Search Type */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Search Method
+                  {t('ingredients.foraging.searchType')}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -132,7 +134,7 @@ export default function IngredientForaging() {
                     }`}
                   >
                     <BeakerIcon className="h-5 w-5 mx-auto mb-1" />
-                    <div className="text-sm font-medium">Survival</div>
+                    <div className="text-sm font-medium">{t('ingredients.foraging.searchTypes.survival')}</div>
                     <div className="text-xs opacity-75">Natural foraging</div>
                   </button>
                   <button
@@ -144,7 +146,7 @@ export default function IngredientForaging() {
                     }`}
                   >
                     <Cog6ToothIcon className="h-5 w-5 mx-auto mb-1" />
-                    <div className="text-sm font-medium">Salvage</div>
+                    <div className="text-sm font-medium">{t('ingredients.foraging.searchTypes.salvage')}</div>
                     <div className="text-xs opacity-75">Machinery/ruins</div>
                   </button>
                 </div>
@@ -159,7 +161,7 @@ export default function IngredientForaging() {
                     onChange={(e) => setIsSpecificSearch(e.target.checked)}
                     className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-400 focus:ring-emerald-400"
                   />
-                  <span className="text-slate-300">Search for specific ingredient</span>
+                  <span className="text-slate-300">{t('ingredients.foraging.specificSearch')}</span>
                 </label>
               </div>
 
@@ -167,7 +169,7 @@ export default function IngredientForaging() {
               {isSpecificSearch && (
                 <div className="relative">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Target Ingredient
+                    {t('ingredients.foraging.targetIngredient')}
                   </label>
                   <div className="relative">
                     <button
@@ -176,7 +178,7 @@ export default function IngredientForaging() {
                       className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400 text-left flex items-center justify-between"
                     >
                       <span className={targetIngredient ? 'text-white' : 'text-slate-400'}>
-                        {targetIngredient || 'Select ingredient...'}
+                        {targetIngredient || t('ingredients.foraging.selectIngredient')}
                       </span>
                       <ChevronDownIcon className={`h-5 w-5 text-slate-400 transition-transform ${ingredientDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -188,7 +190,7 @@ export default function IngredientForaging() {
                             type="text"
                             value={ingredientSearchTerm}
                             onChange={(e) => setIngredientSearchTerm(e.target.value)}
-                            placeholder="Search ingredients..."
+                            placeholder={t('ingredients.foraging.searchIngredients')}
                             className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-400"
                             autoFocus
                           />
@@ -234,7 +236,7 @@ export default function IngredientForaging() {
               {/* Roll Input */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {searchType === 'survival' ? 'Survival' : 'Salvage'} Roll Result
+                  {searchType === 'survival' ? t('ingredients.foraging.searchTypes.survival') : t('ingredients.foraging.searchTypes.salvage')} {t('ingredients.foraging.rollResult')}
                 </label>
                 <div className="flex gap-3">
                   <input
@@ -259,7 +261,7 @@ export default function IngredientForaging() {
                 onClick={performSearch}
                 className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg"
               >
-                🔍 Search for Ingredients
+                🔍 {t('ingredients.foraging.forage')}
               </button>
             </div>
           </div>
@@ -305,7 +307,7 @@ export default function IngredientForaging() {
           {foragingResult && (
             <div className={`bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border p-6 ${getResultColor(foragingResult)}`}>
               <h2 className="text-xl font-semibold text-white mb-4">
-                {foragingResult.success ? '✅ Success!' : '❌ Failed'}
+                {foragingResult.success ? `✅ ${t('ingredients.foraging.ingredientFound')}` : `❌ ${t('ingredients.foraging.nothingFound')}`}
               </h2>
               
               {foragingResult.ingredient && (
@@ -340,7 +342,7 @@ export default function IngredientForaging() {
               <div className="bg-slate-700/30 rounded-lg p-4 mb-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-slate-400">Roll Result:</span>
+                    <span className="text-slate-400">{t('ingredients.foraging.rollResult')}:</span>
                     <span className="text-white font-bold ml-2">{foragingResult.dcMet}</span>
                   </div>
                   <div>
@@ -348,11 +350,11 @@ export default function IngredientForaging() {
                     <span className="text-white font-bold ml-2">{foragingResult.dcRequired}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Search Type:</span>
+                    <span className="text-slate-400">{t('ingredients.foraging.searchType')}:</span>
                     <span className="text-white ml-2 capitalize">{foragingResult.searchType}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Location:</span>
+                    <span className="text-slate-400">{t('ingredients.foraging.location')}:</span>
                     <span className="text-white ml-2">{foragingResult.location}</span>
                   </div>
                 </div>
@@ -364,10 +366,10 @@ export default function IngredientForaging() {
 
           {/* Search History */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Search History</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('ingredients.foraging.history')}</h2>
             
             {searchHistory.length === 0 ? (
-              <p className="text-slate-400 text-center py-8">No searches performed yet</p>
+              <p className="text-slate-400 text-center py-8">{t('ingredients.foraging.noResults')}</p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {searchHistory.map((result, index) => (

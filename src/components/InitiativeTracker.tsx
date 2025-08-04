@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { creatures, Encounter } from '@/data/creatures';
 import { PlayerCharacter } from '@/data/characters';
 import { getCreatureImagePath } from '@/utils/imageUtils';
@@ -38,6 +39,7 @@ export default function InitiativeTracker() {
   const [round, setRound] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'player' | 'creature'>('player');
+  const { t } = useTranslation();
 
   // Check for pending encounter on mount
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function InitiativeTracker() {
 
   const startCombat = () => {
     if (participants.length < 2) {
-      alert('Add at least 2 participants to start combat');
+      alert(t('initiative.addTwoParticipants'));
       return;
     }
     setCombatStarted(true);
@@ -130,7 +132,7 @@ export default function InitiativeTracker() {
     
     // If all participants are dead, end combat
     if (attempts >= sortedParticipants.length) {
-      alert('All participants are defeated! Combat ended.');
+      alert(t('initiative.allDefeated'));
       endCombat();
       return;
     }
@@ -215,10 +217,10 @@ export default function InitiativeTracker() {
       <div className="w-1/2 bg-slate-800/50 p-6 border-r border-slate-700">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">Initiative Order</h2>
+            <h2 className="text-2xl font-bold text-white">{t('initiative.initiativeOrder')}</h2>
             {combatStarted && (
               <div className="text-sm text-slate-400">
-                Round {round}
+                {t('initiative.round')} {round}
               </div>
             )}
           </div>
@@ -232,21 +234,21 @@ export default function InitiativeTracker() {
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   <UserPlusIcon className="h-4 w-4" />
-                  Add Player
+                  {t('initiative.addPlayer')}
                 </button>
                 <button
                   onClick={() => { setAddType('creature'); setShowAddModal(true); }}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                 >
                   <UserPlusIcon className="h-4 w-4" />
-                  Add Creature
+                  {t('initiative.addCreature')}
                 </button>
                 <button
                   onClick={startCombat}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors ml-auto"
                 >
                   <PlayIcon className="h-4 w-4" />
-                  Start Combat
+                  {t('initiative.startCombat')}
                 </button>
               </>
             ) : (
@@ -256,14 +258,14 @@ export default function InitiativeTracker() {
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                 >
                   <ForwardIcon className="h-4 w-4" />
-                  Next Turn
+                  {t('initiative.nextTurn')}
                 </button>
                 <button
                   onClick={endCombat}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                 >
                   <ArrowPathIcon className="h-4 w-4" />
-                  End Combat
+                  {t('initiative.endCombat')}
                 </button>
               </>
             )}
@@ -319,21 +321,21 @@ export default function InitiativeTracker() {
                         <h3 className={`font-semibold ${isDead ? 'text-red-400 line-through' : 'text-white'}`}>
                           {participant.name}
                         </h3>
-                        {isDead && <span className="text-red-400 text-xs font-bold">💀 DEAD</span>}
+                        {isDead && <span className="text-red-400 text-xs font-bold">💀 {t('initiative.dead')}</span>}
                       </div>
                       <div className="text-sm text-slate-400">
                         {participant.type === 'player' && participant.playerClass && (
-                          <span>Level {participant.level} {participant.playerClass}</span>
+                          <span>{t('initiative.level')} {participant.level} {participant.playerClass}</span>
                         )}
                         {participant.type === 'creature' && (
-                          <span>Creature</span>
+                          <span>{t('initiative.creature')}</span>
                         )}
                       </div>
                       {/* HP Bar */}
                       {combatStarted && participant.hp !== undefined && participant.maxHp && (
                         <div className="mt-2">
                           <div className="flex justify-between text-xs text-slate-400 mb-1">
-                            <span>HP</span>
+                            <span>{t('initiative.hp')}</span>
                             <span>{participant.hp}/{participant.maxHp}</span>
                           </div>
                           <div className="w-full bg-slate-600 rounded-full h-2">
@@ -360,7 +362,7 @@ export default function InitiativeTracker() {
                           value={participant.initiative}
                           onChange={(e) => updateInitiative(participant.id, parseInt(e.target.value) || 0)}
                           className="w-16 px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-center"
-                          placeholder="Init"
+                          placeholder={t('initiative.init')}
                         />
                         <button
                           onClick={() => removeParticipant(participant.id)}
@@ -396,8 +398,8 @@ export default function InitiativeTracker() {
           {participants.length === 0 && (
             <div className="text-center py-12 text-slate-400">
               <UserPlusIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No participants added yet</p>
-              <p className="text-sm mt-2">Add players and creatures to begin tracking initiative</p>
+              <p>{t('initiative.noParticipants')}</p>
+              <p className="text-sm mt-2">{t('initiative.noParticipantsSubtitle')}</p>
             </div>
           )}
         </div>
@@ -409,8 +411,8 @@ export default function InitiativeTracker() {
           <div className="space-y-6">
             {/* Header */}
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">{currentParticipant.name}'s Turn</h2>
-              <div className="text-slate-400">Round {round}</div>
+              <h2 className="text-3xl font-bold text-white mb-2">{currentParticipant.name}{t('initiative.currentTurn')}</h2>
+              <div className="text-slate-400">{t('initiative.round')} {round}</div>
             </div>
 
             {/* Image */}
@@ -461,8 +463,8 @@ export default function InitiativeTracker() {
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
               <BoltIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-xl">No active combat</p>
-              <p className="text-sm mt-2">Start combat to see turn details</p>
+              <p className="text-xl">{t('initiative.noActiveCombat')}</p>
+              <p className="text-sm mt-2">{t('initiative.startCombatToSee')}</p>
             </div>
           </div>
         )}
@@ -495,25 +497,26 @@ function PlayerDetails({
   const [hpInput, setHpInput] = useState('');
   const [healAmount, setHealAmount] = useState('');
   const [damageAmount, setDamageAmount] = useState('');
+  const { t } = useTranslation();
   return (
     <div className="bg-slate-800/50 rounded-lg p-6 space-y-4">
-      <h3 className="text-xl font-semibold text-white mb-4">Player Details</h3>
+      <h3 className="text-xl font-semibold text-white mb-4">{t('initiative.playerDetails')}</h3>
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-slate-700/50 rounded-lg p-4">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <UserIcon className="h-4 w-4" />
-            <span className="text-sm">Class</span>
+            <span className="text-sm">{t('initiative.class')}</span>
           </div>
           <div className="text-white font-semibold">
-            {participant.playerClass || 'Unknown'} (Level {participant.level || 1})
+            {participant.playerClass || t('initiative.unknown')} ({t('initiative.level')} {participant.level || 1})
           </div>
         </div>
 
         <div className="bg-slate-700/50 rounded-lg p-4">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <ShieldCheckIcon className="h-4 w-4" />
-            <span className="text-sm">Armor Class</span>
+            <span className="text-sm">{t('initiative.armorClass')}</span>
           </div>
           <div className="text-white font-semibold text-2xl">
             {participant.ac || '—'}
@@ -523,7 +526,7 @@ function PlayerDetails({
         <div className="bg-slate-700/50 rounded-lg p-4 col-span-2">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <HeartIcon className="h-4 w-4" />
-            <span className="text-sm">Hit Points</span>
+            <span className="text-sm">{t('initiative.hitPoints')}</span>
           </div>
           <div className="text-white font-semibold text-2xl">
             {participant.hp || 0} / {participant.maxHp || 0}
@@ -545,7 +548,7 @@ function PlayerDetails({
 
       {/* HP Controls */}
       <div className="bg-slate-700/50 rounded-lg p-4">
-        <h4 className="text-white font-semibold mb-3">Health Management</h4>
+        <h4 className="text-white font-semibold mb-3">{t('initiative.healthManagement')}</h4>
         
         {/* Direct HP Set */}
         <div className="grid grid-cols-3 gap-2 mb-3">
@@ -553,7 +556,7 @@ function PlayerDetails({
             type="number"
             value={hpInput}
             onChange={(e) => setHpInput(e.target.value)}
-            placeholder="Set HP"
+            placeholder={t('initiative.setHp')}
             className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
             min="0"
             max={participant.maxHp || 100}
@@ -568,13 +571,13 @@ function PlayerDetails({
             }}
             className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
           >
-            Set HP
+            {t('initiative.setHp')}
           </button>
           <button
             onClick={() => onUpdateHP(participant.id, participant.maxHp || 100)}
             className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
           >
-            Full Heal
+            {t('initiative.fullHeal')}
           </button>
         </div>
 
@@ -585,7 +588,7 @@ function PlayerDetails({
               type="number"
               value={healAmount}
               onChange={(e) => setHealAmount(e.target.value)}
-              placeholder="Heal amount"
+              placeholder={t('initiative.healAmount')}
               className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
               min="1"
             />
@@ -599,7 +602,7 @@ function PlayerDetails({
               }}
               className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
             >
-              ❤️ Heal
+              ❤️ {t('initiative.heal')}
             </button>
           </div>
           
@@ -608,7 +611,7 @@ function PlayerDetails({
               type="number"
               value={damageAmount}
               onChange={(e) => setDamageAmount(e.target.value)}
-              placeholder="Damage amount"
+              placeholder={t('initiative.damageAmount')}
               className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
               min="1"
             />
@@ -622,7 +625,7 @@ function PlayerDetails({
               }}
               className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
             >
-              ⚔️ Damage
+              ⚔️ {t('initiative.damage')}
             </button>
           </div>
         </div>
@@ -646,13 +649,14 @@ function CreatureDetails({
   const [hpInput, setHpInput] = useState('');
   const [healAmount, setHealAmount] = useState('');
   const [damageAmount, setDamageAmount] = useState('');
+  const { t } = useTranslation();
   const creature = participant.creatureData;
   
   if (!creature) return null;
 
   return (
     <div className="bg-slate-800/50 rounded-lg p-6 space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto">
-      <h3 className="text-xl font-semibold text-white mb-4">Creature Stats</h3>
+      <h3 className="text-xl font-semibold text-white mb-4">{t('initiative.creatureStats')}</h3>
       
       {/* Basic Info */}
       <div className="bg-slate-700/50 rounded-lg p-4 mb-4">
@@ -662,7 +666,7 @@ function CreatureDetails({
             {creature.size} {creature.type}, {creature.alignment}
           </div>
           <div className="text-slate-400 text-sm mt-1">
-            Challenge Rating: {creature.challenge_rating} (Proficiency: +{creature.proficiency_bonus})
+            {t('initiative.challengeRating')}: {creature.challenge_rating} ({t('initiative.proficiency')}: +{creature.proficiency_bonus})
           </div>
         </div>
       </div>
@@ -681,7 +685,7 @@ function CreatureDetails({
           <div className="text-slate-400 text-xs mt-1">{creature.hit_points}</div>
         </div>
         <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-          <div className="text-slate-400 text-sm">Speed</div>
+          <div className="text-slate-400 text-sm">{t('initiative.speed')}</div>
           <div className="text-white font-bold text-sm">
             {typeof creature.speed === 'object' 
               ? Object.entries(creature.speed).map(([type, value]) => 
@@ -712,7 +716,7 @@ function CreatureDetails({
 
       {/* HP Controls */}
       <div className="bg-slate-700/50 rounded-lg p-4">
-        <h4 className="text-white font-semibold mb-3">Health Management</h4>
+        <h4 className="text-white font-semibold mb-3">{t('initiative.healthManagement')}</h4>
         
         {/* HP Bar */}
         {participant.maxHp && participant.hp !== undefined && (
@@ -736,7 +740,7 @@ function CreatureDetails({
             type="number"
             value={hpInput}
             onChange={(e) => setHpInput(e.target.value)}
-            placeholder="Set HP"
+            placeholder={t('initiative.setHp')}
             className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
             min="0"
             max={participant.maxHp || 100}
@@ -751,13 +755,13 @@ function CreatureDetails({
             }}
             className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
           >
-            Set HP
+            {t('initiative.setHp')}
           </button>
           <button
             onClick={() => onUpdateHP(participant.id, participant.maxHp || 100)}
             className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
           >
-            Full Heal
+            {t('initiative.fullHeal')}
           </button>
         </div>
 
@@ -768,7 +772,7 @@ function CreatureDetails({
               type="number"
               value={healAmount}
               onChange={(e) => setHealAmount(e.target.value)}
-              placeholder="Heal amount"
+              placeholder={t('initiative.healAmount')}
               className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
               min="1"
             />
@@ -782,7 +786,7 @@ function CreatureDetails({
               }}
               className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
             >
-              ❤️ Heal
+              ❤️ {t('initiative.heal')}
             </button>
           </div>
           
@@ -791,7 +795,7 @@ function CreatureDetails({
               type="number"
               value={damageAmount}
               onChange={(e) => setDamageAmount(e.target.value)}
-              placeholder="Damage amount"
+              placeholder={t('initiative.damageAmount')}
               className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
               min="1"
             />
@@ -805,7 +809,7 @@ function CreatureDetails({
               }}
               className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
             >
-              ⚔️ Damage
+              ⚔️ {t('initiative.damage')}
             </button>
           </div>
         </div>
@@ -816,7 +820,7 @@ function CreatureDetails({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {creature.saving_throws && Object.keys(creature.saving_throws).length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-white font-semibold mb-2 text-sm">Saving Throws</h4>
+              <h4 className="text-white font-semibold mb-2 text-sm">{t('initiative.savingThrows')}</h4>
               <div className="text-slate-300 text-sm">
                 {Object.entries(creature.saving_throws).map(([save, bonus]) => 
                   `${save.toUpperCase()} +${bonus}`
@@ -827,7 +831,7 @@ function CreatureDetails({
           
           {creature.skills && Object.keys(creature.skills).length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-white font-semibold mb-2 text-sm">Skills</h4>
+              <h4 className="text-white font-semibold mb-2 text-sm">{t('initiative.skills')}</h4>
               <div className="text-slate-300 text-sm">
                 {Object.entries(creature.skills).map(([skill, bonus]) => 
                   `${skill} +${bonus}`
@@ -843,28 +847,28 @@ function CreatureDetails({
         <div className="space-y-2">
           {creature.damage_resistances && creature.damage_resistances.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-orange-400 font-semibold mb-1 text-sm">Damage Resistances</h4>
+              <h4 className="text-orange-400 font-semibold mb-1 text-sm">{t('initiative.damageResistances')}</h4>
               <div className="text-slate-300 text-sm">{creature.damage_resistances.join(', ')}</div>
             </div>
           )}
           
           {creature.damage_immunities && creature.damage_immunities.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-green-400 font-semibold mb-1 text-sm">Damage Immunities</h4>
+              <h4 className="text-green-400 font-semibold mb-1 text-sm">{t('initiative.damageImmunities')}</h4>
               <div className="text-slate-300 text-sm">{creature.damage_immunities.join(', ')}</div>
             </div>
           )}
           
           {creature.damage_vulnerabilities && creature.damage_vulnerabilities.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-red-400 font-semibold mb-1 text-sm">Damage Vulnerabilities</h4>
+              <h4 className="text-red-400 font-semibold mb-1 text-sm">{t('initiative.damageVulnerabilities')}</h4>
               <div className="text-slate-300 text-sm">{creature.damage_vulnerabilities.join(', ')}</div>
             </div>
           )}
           
           {creature.condition_immunities && creature.condition_immunities.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3">
-              <h4 className="text-blue-400 font-semibold mb-1 text-sm">Condition Immunities</h4>
+              <h4 className="text-blue-400 font-semibold mb-1 text-sm">{t('initiative.conditionImmunities')}</h4>
               <div className="text-slate-300 text-sm">{creature.condition_immunities.join(', ')}</div>
             </div>
           )}
@@ -874,18 +878,18 @@ function CreatureDetails({
       {/* Senses and Languages */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-slate-700/50 rounded-lg p-3">
-          <h4 className="text-white font-semibold mb-2 text-sm">Senses</h4>
+          <h4 className="text-white font-semibold mb-2 text-sm">{t('initiative.senses')}</h4>
           <div className="text-slate-300 text-sm">
             {creature.senses.darkvision && <div>Darkvision {creature.senses.darkvision}</div>}
             {creature.senses.truesight && <div>Truesight {creature.senses.truesight}</div>}
-            <div>Passive Perception {creature.senses.passive_perception}</div>
+            <div>{t('initiative.passivePerception')} {creature.senses.passive_perception}</div>
           </div>
         </div>
         
         <div className="bg-slate-700/50 rounded-lg p-3">
-          <h4 className="text-white font-semibold mb-2 text-sm">Languages</h4>
+          <h4 className="text-white font-semibold mb-2 text-sm">{t('initiative.languages')}</h4>
           <div className="text-slate-300 text-sm">
-            {creature.languages.length > 0 ? creature.languages.join(', ') : 'None'}
+            {creature.languages.length > 0 ? creature.languages.join(', ') : t('initiative.none')}
           </div>
         </div>
       </div>
@@ -893,7 +897,7 @@ function CreatureDetails({
       {/* Traits */}
       {creature.traits && creature.traits.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Traits</h4>
+          <h4 className="text-white font-semibold mb-2">{t('initiative.traits')}</h4>
           <div className="space-y-2">
             {creature.traits.map((trait, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
@@ -908,7 +912,7 @@ function CreatureDetails({
       {/* Actions */}
       {creature.actions && creature.actions.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Actions</h4>
+          <h4 className="text-white font-semibold mb-2">{t('initiative.actions')}</h4>
           <div className="space-y-2">
             {creature.actions.map((action, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
@@ -923,7 +927,7 @@ function CreatureDetails({
       {/* Bonus Actions */}
       {creature.bonus_actions && creature.bonus_actions.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Bonus Actions</h4>
+          <h4 className="text-white font-semibold mb-2">{t('initiative.bonusActions')}</h4>
           <div className="space-y-2">
             {creature.bonus_actions.map((action, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
@@ -938,7 +942,7 @@ function CreatureDetails({
       {/* Reactions */}
       {creature.reactions && creature.reactions.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Reactions</h4>
+          <h4 className="text-white font-semibold mb-2">{t('initiative.reactions')}</h4>
           <div className="space-y-2">
             {creature.reactions.map((reaction, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
@@ -953,7 +957,7 @@ function CreatureDetails({
       {/* Legendary Actions */}
       {creature.legendary_actions && creature.legendary_actions.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold mb-2">Legendary Actions</h4>
+          <h4 className="text-white font-semibold mb-2">{t('initiative.legendaryActions')}</h4>
           <div className="space-y-2">
             {creature.legendary_actions.map((action, index) => (
               <div key={index} className="bg-slate-700/50 rounded-lg p-3">
@@ -985,6 +989,7 @@ function AddParticipantModal({
   const [searchTerm, setSearchTerm] = useState('');
   const [hp, setHp] = useState(10);
   const [maxHp, setMaxHp] = useState(10);
+  const { t } = useTranslation();
 
   // Load characters from localStorage
   useEffect(() => {
@@ -1051,20 +1056,20 @@ function AddParticipantModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-white mb-4">
-          Add {type === 'player' ? 'Player' : 'Creature'}
+          {t('initiative.addParticipant')} {type === 'player' ? t('initiative.player') : t('initiative.creature')}
         </h3>
 
         <div className="space-y-4">
           {type === 'player' ? (
             <>
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Search Characters</label>
+                <label className="block text-sm text-slate-400 mb-1">{t('initiative.searchCharacters')}</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  placeholder="Search by character or player name..."
+                  placeholder={t('initiative.searchCharactersPlaceholder')}
                 />
               </div>
 
@@ -1104,11 +1109,11 @@ function AddParticipantModal({
                 ) : (
                   <div className="p-4 text-center text-slate-400">
                     <UserIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <div>No characters found</div>
+                    <div>{t('initiative.noCharactersFound')}</div>
                     <div className="text-xs mt-1">
                       {characters.length === 0 
-                        ? 'Create characters in the Player Characters tab first'
-                        : 'Try adjusting your search terms'
+                        ? t('initiative.createCharactersFirst')
+                        : t('initiative.adjustSearchTerms')
                       }
                     </div>
                   </div>
@@ -1127,7 +1132,7 @@ function AddParticipantModal({
               {selectedCharacter && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-slate-400 mb-1">Current HP</label>
+                    <label className="block text-sm text-slate-400 mb-1">{t('initiative.currentHp')}</label>
                     <input
                       type="number"
                       value={hp}
@@ -1136,7 +1141,7 @@ function AddParticipantModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-400 mb-1">Max HP</label>
+                    <label className="block text-sm text-slate-400 mb-1">{t('initiative.maxHp')}</label>
                     <input
                       type="number"
                       value={maxHp}
@@ -1150,13 +1155,13 @@ function AddParticipantModal({
           ) : (
             <>
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Search Creatures</label>
+                <label className="block text-sm text-slate-400 mb-1">{t('initiative.searchCreatures')}</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                  placeholder="Search by name..."
+                  placeholder={t('initiative.searchCreaturesPlaceholder')}
                 />
               </div>
 
@@ -1198,13 +1203,13 @@ function AddParticipantModal({
           )}
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1">Initiative Roll</label>
+            <label className="block text-sm text-slate-400 mb-1">{t('initiative.initiativeRoll')}</label>
             <input
               type="number"
               value={initiative}
               onChange={(e) => setInitiative(parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-              placeholder="Roll + modifier"
+              placeholder={t('initiative.rollModifier')}
             />
           </div>
         </div>
@@ -1215,13 +1220,13 @@ function AddParticipantModal({
             disabled={type === 'player' ? !selectedCharacter : !selectedCreature}
             className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
-            Add {type === 'player' ? 'Player' : 'Creature'}
+            {t('initiative.addParticipant')} {type === 'player' ? t('initiative.player') : t('initiative.creature')}
           </button>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
           >
-            Cancel
+            {t('buttons.cancel')}
           </button>
         </div>
       </div>
@@ -1244,6 +1249,7 @@ function HPControls({
   const [showControls, setShowControls] = useState(false);
   const [damageAmount, setDamageAmount] = useState('');
   const [healAmount, setHealAmount] = useState('');
+  const { t } = useTranslation();
 
   const handleDamage = () => {
     const damage = parseInt(damageAmount);
@@ -1278,7 +1284,7 @@ function HPControls({
       <button
         onClick={() => setShowControls(true)}
         className="px-2 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-colors"
-        title="Modify HP"
+        title={t('initiative.modifyHp')}
       >
         ❤️
       </button>
@@ -1302,7 +1308,7 @@ function HPControls({
         <button
           onClick={handleDamage}
           className="px-1 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-colors"
-          title="Deal Damage"
+          title={t('initiative.dealDamage')}
         >
           ⚔️
         </button>
@@ -1322,7 +1328,7 @@ function HPControls({
         <button
           onClick={handleHeal}
           className="px-1 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition-colors"
-          title="Heal"
+          title={t('initiative.heal')}
         >
           ❤️
         </button>
@@ -1336,7 +1342,7 @@ function HPControls({
           setHealAmount('');
         }}
         className="px-1 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-colors ml-1"
-        title="Close"
+        title={t('buttons.close')}
       >
         ✕
       </button>

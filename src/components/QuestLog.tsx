@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Quest, QuestStatus, updateQuest } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
 
 export default function QuestLog() {
+  const { t } = useTranslation();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [activeTab, setActiveTab] = useState<QuestStatus>('available');
   const [showForm, setShowForm] = useState(false);
@@ -35,7 +37,7 @@ export default function QuestLog() {
       await loadQuests();
     } catch (error) {
       console.error('Error saving quest:', error);
-      alert('Error saving quest data. Data saved locally but may not sync to other devices.');
+      alert(t('quests.errorSaving'));
     }
   };
 
@@ -54,7 +56,7 @@ export default function QuestLog() {
       await loadQuests();
     } catch (error) {
       console.error('Error deleting quest:', error);
-      alert('Error deleting quest. Changes may not sync to other devices.');
+      alert(t('quests.errorDeleting'));
     }
   };
 
@@ -66,10 +68,10 @@ export default function QuestLog() {
   }, []);
 
   const tabs: { status: QuestStatus; label: string; color: string }[] = [
-    { status: 'available', label: 'Available', color: 'text-cyan-400 border-cyan-400' },
-    { status: 'in-progress', label: 'In Progress', color: 'text-yellow-400 border-yellow-400' },
-    { status: 'completed', label: 'Completed', color: 'text-emerald-400 border-emerald-400' },
-    { status: 'failed', label: 'Failed', color: 'text-red-400 border-red-400' }
+    { status: 'available', label: t('quests.status.available'), color: 'text-cyan-400 border-cyan-400' },
+    { status: 'in-progress', label: t('quests.status.inProgress'), color: 'text-yellow-400 border-yellow-400' },
+    { status: 'completed', label: t('quests.status.completed'), color: 'text-emerald-400 border-emerald-400' },
+    { status: 'failed', label: t('quests.status.failed'), color: 'text-red-400 border-red-400' }
   ];
 
   const filteredQuests = quests.filter(quest => quest.status === activeTab);
@@ -85,7 +87,7 @@ export default function QuestLog() {
   };
 
   const handleDeleteQuest = async (questId: string) => {
-    if (confirm('Are you sure you want to delete this quest?')) {
+    if (confirm(t('quests.confirmDelete'))) {
       await deleteQuest(questId);
     }
   };
@@ -150,23 +152,23 @@ export default function QuestLog() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Quest Log
+                {t('quests.title')}
               </h1>
               {/* Minimal sync status indicator */}
               {syncStatus === 'syncing' && (
                 <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
               )}
               {syncStatus === 'error' && (
-                <span className="text-xs text-amber-400">Offline</span>
+                <span className="text-xs text-amber-400">{t('quests.offline')}</span>
               )}
             </div>
-            <p className="text-slate-400 mt-2">Track your adventures and objectives</p>
+            <p className="text-slate-400 mt-2">{t('quests.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={loadQuests}
               className="p-2 text-slate-400 hover:text-white transition-colors"
-              title="Refresh"
+              title={t('quests.refresh')}
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
@@ -175,7 +177,7 @@ export default function QuestLog() {
               className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-medium"
             >
               <PlusIcon className="h-5 w-5" />
-              New Quest
+              {t('quests.newQuest')}
             </button>
           </div>
         </div>
@@ -213,17 +215,17 @@ export default function QuestLog() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📜</div>
               <h3 className="text-xl font-semibold text-slate-300 mb-2">
-                No {activeTab.replace('-', ' ')} quests
+                {t('quests.emptyState.noQuests', { status: activeTab === 'available' ? t('quests.status.available').toLowerCase() : activeTab === 'in-progress' ? t('quests.status.inProgress').toLowerCase() : activeTab === 'completed' ? t('quests.status.completed').toLowerCase() : t('quests.status.failed').toLowerCase() })}
               </h3>
               <p className="text-slate-400 mb-6">
-                {activeTab === 'available' ? 'Create your first quest to get started!' : `No ${activeTab} quests found.`}
+                {activeTab === 'available' ? t('quests.emptyState.createFirst') : t('quests.emptyState.noneFound', { status: activeTab === 'in-progress' ? t('quests.status.inProgress').toLowerCase() : activeTab === 'completed' ? t('quests.status.completed').toLowerCase() : t('quests.status.failed').toLowerCase() })}
               </p>
               {activeTab === 'available' && (
                 <button
                   onClick={handleAddQuest}
                   className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-medium"
                 >
-                  Create Quest
+                  {t('quests.createQuest')}
                 </button>
               )}
             </div>
@@ -241,23 +243,23 @@ export default function QuestLog() {
                         {getStatusIcon(quest.status)}
                         <h3 className="text-xl font-semibold text-white">{quest.title}</h3>
                         <span className="text-sm text-slate-400">
-                          by {quest.questGiver}
+                          {t('quests.by')} {quest.questGiver}
                         </span>
                       </div>
                       <p className="text-slate-300 line-clamp-2">{quest.description}</p>
                       <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span>
-                          {quest.objectives.filter(obj => obj.completed).length}/{quest.objectives.length} objectives
+                          {quest.objectives.filter(obj => obj.completed).length}/{quest.objectives.length} {t('quests.objectiveCount')}
                         </span>
                         <span>•</span>
                         <span>
-                          Created {formatDate(quest.dateCreated)}
+                          {t('quests.created')} {formatDate(quest.dateCreated)}
                         </span>
                         {quest.dateCompleted && (
                           <>
                             <span>•</span>
                             <span>
-                              Completed {formatDate(quest.dateCompleted)}
+                              {t('quests.completed')} {formatDate(quest.dateCompleted)}
                             </span>
                           </>
                         )}
@@ -269,14 +271,14 @@ export default function QuestLog() {
                       <button
                         onClick={() => handleEditQuest(quest)}
                         className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
-                        title="Edit Quest"
+                        title={t('quests.editQuest')}
                       >
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteQuest(quest.id)}
                         className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700/50 rounded-lg transition-colors"
-                        title="Delete Quest"
+                        title={t('quests.deleteQuest')}
                       >
                         <TrashIcon className="h-5 w-5" />
                       </button>
@@ -290,7 +292,7 @@ export default function QuestLog() {
                     {/* Objectives */}
                     {quest.objectives.length > 0 && (
                       <div className="mb-6">
-                        <h4 className="text-lg font-semibold text-white mb-3">Objectives</h4>
+                        <h4 className="text-lg font-semibold text-white mb-3">{t('quests.objectives')}</h4>
                         <div className="space-y-2">
                           {quest.objectives.map((objective) => (
                             <div key={objective.id} className="flex items-center gap-3">
@@ -322,7 +324,7 @@ export default function QuestLog() {
                     {/* Rewards */}
                     {quest.rewards.length > 0 && (
                       <div className="mb-6">
-                        <h4 className="text-lg font-semibold text-white mb-3">Rewards</h4>
+                        <h4 className="text-lg font-semibold text-white mb-3">{t('quests.rewards')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {quest.rewards.map((reward) => (
                             <div key={reward.id} className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
@@ -343,7 +345,7 @@ export default function QuestLog() {
                                   <div className="text-sm text-slate-400">{reward.description}</div>
                                 )}
                                 {reward.value && (
-                                  <div className="text-sm text-emerald-400">{reward.value} gp</div>
+                                  <div className="text-sm text-emerald-400">{reward.value} {t('quests.goldAbbrev')}</div>
                                 )}
                               </div>
                             </div>
@@ -355,7 +357,7 @@ export default function QuestLog() {
                     {/* Notes */}
                     {quest.notes && (
                       <div>
-                        <h4 className="text-lg font-semibold text-white mb-3">Notes</h4>
+                        <h4 className="text-lg font-semibold text-white mb-3">{t('quests.notes')}</h4>
                         <div className="p-4 bg-slate-700/50 rounded-lg text-slate-200 whitespace-pre-wrap">
                           {quest.notes}
                         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   SpecificDowntimeActivity,
   DowntimeActivityType,
@@ -45,6 +46,7 @@ interface DowntimeTrackerProps {
 }
 
 export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerProps) {
+  const { t } = useTranslation();
   const [activities, setActivities] = useState<SpecificDowntimeActivity[]>([]);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [selectedView, setSelectedView] = useState<'dashboard' | 'activities'>('dashboard');
@@ -131,7 +133,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
       localStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
     } catch (error) {
       console.error('Error saving downtime activity:', error);
-      alert('Error saving downtime data. Data saved locally but may not sync to other devices.');
+      alert(t('downtime.errorSaving'));
     }
   };
 
@@ -147,7 +149,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
       localStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
     } catch (error) {
       console.error('Error saving downtime activities:', error);
-      alert('Error saving downtime data. Data saved locally but may not sync to other devices.');
+      alert(t('downtime.errorSaving'));
     }
   };
 
@@ -177,7 +179,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   };
 
   const handleDeleteActivity = async (activityId: string) => {
-    if (confirm('Are you sure you want to delete this downtime activity?')) {
+    if (confirm(t('downtime.confirmDelete'))) {
       try {
         // Delete from server
         await syncService.deleteDowntimeActivity(activityId);
@@ -192,7 +194,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
         setSelectedActivity(null);
       } catch (error) {
         console.error('Error deleting downtime activity:', error);
-        alert('Error deleting activity. Changes may not sync to other devices.');
+        alert(t('downtime.errorDeleting'));
       }
     }
   };
@@ -291,49 +293,49 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-white mb-2">Downtime Tracker</h1>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('downtime.title')}</h1>
               {/* Minimal sync status indicator */}
               {syncStatus === 'syncing' && (
                 <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
               )}
               {syncStatus === 'error' && (
-                <span className="text-xs text-amber-400">Offline</span>
+                <span className="text-xs text-amber-400">{t('downtime.offline')}</span>
               )}
             </div>
-            <p className="text-slate-400">Manage character downtime activities between sessions</p>
+            <p className="text-slate-400">{t('downtime.subtitle')}</p>
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={loadAllData}
               className="p-2 text-slate-400 hover:text-white transition-colors"
-              title="Refresh"
+              title={t('downtime.refresh')}
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
             <button
               onClick={async () => {
-                if (confirm('Are you sure you want to clear ALL downtime activities? This cannot be undone.')) {
+                if (confirm(t('downtime.confirmClearAll'))) {
                   await saveActivities([]);
                   setSelectedActivity(null);
                 }
               }}
               className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
             >
-              Clear All Data
+              {t('downtime.clearAllData')}
             </button>
             <div className="text-right">
-              <p className="text-sm text-slate-400">Current Game Date</p>
+              <p className="text-sm text-slate-400">{t('downtime.currentGameDate')}</p>
               <div className="px-3 py-1 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm">
                 {formatObojimaDate(currentObojimaDate)}
               </div>
-              <p className="text-xs text-slate-500 mt-1">Use Calendar to change date</p>
+              <p className="text-xs text-slate-500 mt-1">{t('downtime.useCalendarToChange')}</p>
             </div>
             <button
               onClick={() => setShowNewActivityForm(true)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
             >
               <PlusIcon className="h-5 w-5" />
-              New Activity
+              {t('downtime.newActivity')}
             </button>
           </div>
         </div>
@@ -349,7 +351,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
             }`}
           >
             <ChartBarIcon className="h-5 w-5 inline mr-2" />
-            Dashboard
+            {t('downtime.dashboard')}
           </button>
           <button
             onClick={() => setSelectedView('activities')}
@@ -360,7 +362,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5 inline mr-2" />
-            Activities
+            {t('downtime.activities')}
           </button>
         </div>
       </div>
@@ -385,7 +387,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
               onChange={(e) => setFilterCharacter(e.target.value)}
               className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
             >
-              <option value="all">All Characters</option>
+              <option value="all">{t('downtime.allCharacters')}</option>
               {characters.map(char => (
                 <option key={char.id} value={char.id}>
                   {char.characterName}
@@ -397,14 +399,14 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
               onChange={(e) => setFilterType(e.target.value as DowntimeActivityType | 'all')}
               className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
             >
-              <option value="all">All Activities</option>
-              <option value="sword_school">Sword School</option>
-              <option value="witch_coven">Witch Coven</option>
-              <option value="crafting">Crafting</option>
-              <option value="gathering">Gathering</option>
-              <option value="carousing">Carousing</option>
-              <option value="learning">Learning</option>
-              <option value="faction_work">Faction Work</option>
+              <option value="all">{t('downtime.allActivities')}</option>
+              <option value="sword_school">{t('downtime.activityTypes.sword_school')}</option>
+              <option value="witch_coven">{t('downtime.activityTypes.witch_coven')}</option>
+              <option value="crafting">{t('downtime.activityTypes.crafting')}</option>
+              <option value="gathering">{t('downtime.activityTypes.gathering')}</option>
+              <option value="carousing">{t('downtime.activityTypes.carousing')}</option>
+              <option value="learning">{t('downtime.activityTypes.learning')}</option>
+              <option value="faction_work">{t('downtime.activityTypes.faction_work')}</option>
             </select>
           </div>
 
@@ -439,11 +441,11 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center gap-2 text-slate-300">
                       <CalendarDaysIcon className="h-4 w-4" />
-                      Started {formatDowntimeObojimaDate(activity.startDate)}
+                      {t('downtime.started')} {formatDowntimeObojimaDate(activity.startDate)}
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
                       <ClockIcon className="h-4 w-4" />
-                      {phasesElapsed} phases elapsed
+                      {phasesElapsed} {t('downtime.phasesElapsed')}
                     </div>
                   </div>
                 </div>
@@ -454,7 +456,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
           {filteredActivities.length === 0 && (
             <div className="text-center py-12">
               <CalendarDaysIcon className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400">No downtime activities found</p>
+              <p className="text-slate-400">{t('downtime.noActivitiesFound')}</p>
             </div>
           )}
         </div>
@@ -467,7 +469,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
             onClick={() => setSelectedActivity(null)}
             className="mb-4 text-slate-400 hover:text-white transition-colors"
           >
-            ← Back to Activities
+            {t('downtime.backToActivities')}
           </button>
           {getActivityComponent(selectedActivity)}
         </div>

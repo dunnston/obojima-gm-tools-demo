@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   BeakerIcon, 
   BookOpenIcon, 
@@ -18,6 +19,7 @@ import {
   InformationCircleIcon,
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export interface SidebarProps {
   onPageChange: (page: string) => void;
@@ -26,21 +28,22 @@ export interface SidebarProps {
 
 export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const { t } = useTranslation();
 
   const menuItems = [
-    { id: 'potions', name: 'Potion Brewing', icon: BeakerIcon, color: 'text-emerald-400' },
-    { id: 'foraging', name: 'Ingredient Foraging', icon: MagnifyingGlassIcon, color: 'text-green-400' },
-    { id: 'vending', name: 'Vending Machine', icon: BuildingStorefrontIcon, color: 'text-orange-400' },
-    { id: 'encounters', name: 'Encounters', icon: SparklesIcon, color: 'text-purple-400' },
-    { id: 'initiative', name: 'Initiative Tracker', icon: BoltIcon, color: 'text-yellow-400' },
-    { id: 'characters', name: 'Player Characters', icon: UserIcon, color: 'text-cyan-400' },
-    { id: 'notes', name: 'Session Planner', icon: BookOpenIcon, color: 'text-blue-400' },
-    { id: 'calendar', name: 'Obojima Calendar', icon: CalendarDaysIcon, color: 'text-sky-400' },
-    { id: 'downtime', name: 'Downtime Tracker', icon: CalendarDaysIcon, color: 'text-violet-400' },
-    { id: 'quests', name: 'Quest Log', icon: DocumentTextIcon, color: 'text-rose-400' },
-    { id: 'database', name: 'Database', icon: CircleStackIcon, color: 'text-amber-400' },
-    { id: 'settings', name: 'Settings', icon: CogIcon, color: 'text-gray-400' },
-    { id: 'credits', name: 'Credits', icon: InformationCircleIcon, color: 'text-indigo-400' }
+    { id: 'potions', name: t('navigation.potions'), icon: BeakerIcon, color: 'text-emerald-400' },
+    { id: 'foraging', name: t('navigation.ingredients'), icon: MagnifyingGlassIcon, color: 'text-green-400' },
+    { id: 'vending', name: t('vendingMachine.title'), icon: BuildingStorefrontIcon, color: 'text-orange-400' },
+    { id: 'encounters', name: t('navigation.encounters'), icon: SparklesIcon, color: 'text-purple-400' },
+    { id: 'initiative', name: t('navigation.initiativeTracker'), icon: BoltIcon, color: 'text-yellow-400' },
+    { id: 'characters', name: t('navigation.playerCharacters'), icon: UserIcon, color: 'text-cyan-400' },
+    { id: 'notes', name: t('navigation.sessionPlanner'), icon: BookOpenIcon, color: 'text-blue-400' },
+    { id: 'calendar', name: t('navigation.obojimaCalendar'), icon: CalendarDaysIcon, color: 'text-sky-400' },
+    { id: 'downtime', name: t('navigation.downtimeTracker'), icon: CalendarDaysIcon, color: 'text-violet-400' },
+    { id: 'quests', name: t('navigation.questLog'), icon: DocumentTextIcon, color: 'text-rose-400' },
+    { id: 'database', name: t('navigation.databaseEditor'), icon: CircleStackIcon, color: 'text-amber-400' },
+    { id: 'settings', name: t('navigation.settings'), icon: CogIcon, color: 'text-gray-400' },
+    { id: 'credits', name: t('navigation.credits'), icon: InformationCircleIcon, color: 'text-indigo-400' }
   ];
 
   return (
@@ -85,6 +88,13 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
             </div>
           </div>
 
+          {/* Language Switcher */}
+          {isOpen && (
+            <div className="px-6 py-3 border-b border-white/10">
+              <LanguageSwitcher />
+            </div>
+          )}
+
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             {menuItems.map((item) => {
@@ -123,7 +133,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
               ${!isOpen && 'md:justify-center md:px-2'}
             `}>
               <PlusIcon className="h-5 w-5" />
-              {isOpen && <span className="font-medium">Add Section</span>}
+              {isOpen && <span className="font-medium">{t('buttons.addNew')}</span>}
             </button>
           </div>
 

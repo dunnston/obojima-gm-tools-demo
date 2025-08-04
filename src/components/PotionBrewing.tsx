@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ingredients, Ingredient } from '@/data/ingredients';
 import { brewPotion, selectPotionFromTie, BrewingResult } from '@/utils/potionBrewing';
 import { BeakerIcon, SparklesIcon, ShieldCheckIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
@@ -11,6 +12,7 @@ export default function PotionBrewing() {
   const [selectedIngredients, setSelectedIngredients] = useState<(Ingredient | null)[]>([null, null, null]);
   const [brewingResult, setBrewingResult] = useState<BrewingResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'Combat' | 'Utility' | 'Whimsy' | null>(null);
+  const { t } = useTranslation();
 
   const handleIngredientSelect = (ingredient: Ingredient | null, slotIndex: number) => {
     const newSelection = [...selectedIngredients];
@@ -58,6 +60,15 @@ export default function PotionBrewing() {
     }
   };
 
+  const getCategoryTranslation = (category: string) => {
+    switch (category) {
+      case 'Combat': return t('potions.categories.combat');
+      case 'Utility': return t('potions.categories.utility');
+      case 'Whimsy': return t('potions.categories.whimsy');
+      default: return category;
+    }
+  };
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Combat': return 'text-red-400 border-red-400/50 bg-red-400/10';
@@ -73,28 +84,28 @@ export default function PotionBrewing() {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3">
           <BeakerIcon className="h-8 w-8 text-emerald-400" />
-          <h1 className="text-3xl font-bold text-white">Potion Brewing Station</h1>
+          <h1 className="text-3xl font-bold text-white">{t('potions.brewingStation.title')}</h1>
         </div>
-        <p className="text-slate-400">Select three ingredients to create magical potions</p>
+        <p className="text-slate-400">{t('potions.brewingStation.subtitle')}</p>
       </div>
 
       {/* Ingredient Selection */}
       <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Select Ingredients</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{t('potions.brewingStation.selectIngredients')}</h2>
         
         {/* Ingredient Slots */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {selectedIngredients.map((ingredient, index) => (
             <div key={index} className="space-y-3">
               <label className="block text-sm font-medium text-slate-300">
-                Ingredient {index + 1}
+                {t('potions.brewingStation.ingredient')} {index + 1}
               </label>
               
               <SearchableDropdown
                 ingredients={ingredients}
                 selectedIngredient={ingredient}
                 onSelect={(selected) => handleIngredientSelect(selected, index)}
-                placeholder={`Choose ingredient ${index + 1}...`}
+                placeholder={`${t('potions.brewingStation.chooseIngredient')} ${index + 1}...`}
               />
             </div>
           ))}
@@ -107,13 +118,13 @@ export default function PotionBrewing() {
             disabled={selectedIngredients.some(ing => ing === null)}
             className="flex-1 bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg"
           >
-            🧪 Brew Potion
+            🧪 {t('potions.brewingStation.brewPotion')}
           </button>
           <button
             onClick={clearAll}
             className="px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-xl transition-all duration-200 border border-slate-600"
           >
-            Clear All
+            {t('potions.brewingStation.clearAll')}
           </button>
         </div>
       </div>
@@ -121,7 +132,7 @@ export default function PotionBrewing() {
       {/* Brewing Results */}
       {brewingResult && (
         <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">Brewing Results</h2>
+          <h2 className="text-xl font-semibold text-white mb-6">{t('potions.brewingStation.brewingResults')}</h2>
           
           {/* Final Potion Result - Now First! */}
           {brewingResult.potion && (
@@ -173,7 +184,7 @@ export default function PotionBrewing() {
           {/* Tie Resolution */}
           {brewingResult.winner === 'Tie' && brewingResult.tiedCategories && !brewingResult.potion && (
             <div className="mb-6">
-              <h3 className="text-lg font-medium text-white mb-3">Tie! Choose a category:</h3>
+              <h3 className="text-lg font-medium text-white mb-3">{t('potions.brewingStation.categoryTie')} {t('potions.brewingStation.selectCategory')}</h3>
               <div className="flex gap-3 justify-center">
                 {brewingResult.tiedCategories.map((category) => (
                   <button
@@ -182,7 +193,7 @@ export default function PotionBrewing() {
                     className={`flex items-center gap-2 px-6 py-3 rounded-xl border transition-all duration-200 ${getCategoryColor(category)} hover:bg-opacity-20`}
                   >
                     {getCategoryIcon(category)}
-                    {category}
+                    {getCategoryTranslation(category)}
                   </button>
                 ))}
               </div>
@@ -194,21 +205,21 @@ export default function PotionBrewing() {
             <div className={`p-4 rounded-xl border ${getCategoryColor('Combat')}`}>
               <div className="flex items-center gap-2 mb-2">
                 {getCategoryIcon('Combat')}
-                <span className="font-medium">Combat</span>
+                <span className="font-medium">{t('potions.categories.combat')}</span>
               </div>
               <div className="text-2xl font-bold">{brewingResult.combat}</div>
             </div>
             <div className={`p-4 rounded-xl border ${getCategoryColor('Utility')}`}>
               <div className="flex items-center gap-2 mb-2">
                 {getCategoryIcon('Utility')}
-                <span className="font-medium">Utility</span>
+                <span className="font-medium">{t('potions.categories.utility')}</span>
               </div>
               <div className="text-2xl font-bold">{brewingResult.utility}</div>
             </div>
             <div className={`p-4 rounded-xl border ${getCategoryColor('Whimsy')}`}>
               <div className="flex items-center gap-2 mb-2">
                 {getCategoryIcon('Whimsy')}
-                <span className="font-medium">Whimsy</span>
+                <span className="font-medium">{t('potions.categories.whimsy')}</span>
               </div>
               <div className="text-2xl font-bold">{brewingResult.whimsy}</div>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
@@ -32,6 +33,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [encounters, setEncounters] = useState<Encounter[]>([]);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const { t } = useTranslation();
   
   // Validator for session data
   const validateSession = (session: any): GameSession => ({
@@ -136,7 +138,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       localStorage.setItem('obojima-sessions', JSON.stringify(allSessions));
     } catch (error) {
       console.error('Error saving session:', error);
-      alert('Error saving session data. Data saved locally but may not sync to other devices.');
+      alert(t('sessions.errorSaving'));
     }
   };
 
@@ -151,7 +153,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
     } catch (error) {
       console.error('Error saving sessions:', error);
-      alert('Error saving session data. Data saved locally but may not sync to other devices.');
+      alert(t('sessions.errorSaving'));
     }
   };
 
@@ -291,7 +293,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   };
 
   const deleteSession = async (sessionId: string) => {
-    if (confirm('Are you sure you want to delete this session?')) {
+    if (confirm(t('sessions.confirmDelete'))) {
       try {
         // Cancel any pending saves for this session
         const existingTimeout = saveTimeouts.get(sessionId);
@@ -344,7 +346,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         }
       } catch (error) {
         console.error('Error deleting session:', error);
-        alert('Error deleting session. Changes may not sync to other devices.');
+        alert(t('sessions.errorDeleting'));
       }
     }
   };
@@ -376,22 +378,22 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-white mb-2">Session Planner</h1>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('sessions.title')}</h1>
               {/* Minimal sync status indicator */}
               {syncStatus === 'syncing' && (
                 <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
               )}
               {syncStatus === 'error' && (
-                <span className="text-xs text-amber-400">Offline</span>
+                <span className="text-xs text-amber-400">{t('sessions.offline')}</span>
               )}
             </div>
-            <p className="text-slate-400">Plan and manage your tabletop RPG sessions</p>
+            <p className="text-slate-400">{t('sessions.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={loadAllData}
               className="p-2 text-slate-400 hover:text-white transition-colors"
-              title="Refresh"
+              title={t('sessions.refresh')}
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
@@ -400,7 +402,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
               className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
             >
               <PlusIcon className="h-5 w-5" />
-              New Session
+              {t('sessions.newSession')}
             </button>
           </div>
         </div>
@@ -420,7 +422,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
                   session.status === 'in-progress' ? 'bg-yellow-500/20 text-yellow-300' :
                   'bg-slate-500/20 text-slate-300'
                 }`}>
-                  {session.status}
+                  {t(`sessions.status.${session.status}`)}
                 </span>
               </div>
               
@@ -437,11 +439,11 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
                 )}
                 <div className="flex items-center gap-2">
                   <UserGroupIcon className="h-4 w-4" />
-                  {session.playerCharacters?.length || 0} players
+                  {session.playerCharacters?.length || 0} {t('sessions.players')}
                 </div>
                 <div className="flex items-center gap-2">
                   <DocumentTextIcon className="h-4 w-4" />
-                  {session.scenes?.length || 0} scenes
+                  {session.scenes?.length || 0} {t('sessions.scenes')}
                 </div>
               </div>
 
@@ -462,13 +464,13 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
           {sessions.length === 0 && (
             <div className="col-span-full text-center py-12">
               <DocumentTextIcon className="h-16 w-16 text-slate-400 mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-semibold text-white mb-2">No Sessions Yet</h3>
-              <p className="text-slate-400 mb-6">Create your first session to start planning your campaign</p>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('sessions.noSessionsYet')}</h3>
+              <p className="text-slate-400 mb-6">{t('sessions.createFirstSession')}</p>
               <button
                 onClick={() => setIsCreating(true)}
                 className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Create First Session
+                {t('sessions.createFirstSessionButton')}
               </button>
             </div>
           )}
@@ -505,10 +507,10 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
               <span>{selectedSession.realWorldDate.toLocaleDateString()}</span>
               {selectedSession.gameDate && (
                 <span className="text-emerald-400">
-                  Game: {formatObojimaDate(selectedSession.gameDate as any)}
+                  {t('sessions.game')}: {formatObojimaDate(selectedSession.gameDate as any)}
                 </span>
               )}
-              <span>{selectedSession.playerCharacters?.length || 0} players</span>
+              <span>{selectedSession.playerCharacters?.length || 0} {t('sessions.players')}</span>
               <span className={`px-2 py-1 rounded-full text-xs ${
                 selectedSession.status === 'completed' ? 'bg-green-500/20 text-green-300' :
                 selectedSession.status === 'in-progress' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -524,7 +526,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
           <button
             onClick={() => setIsEditingSession(true)}
             className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
-            title="Edit Session Details"
+            title={t('sessions.editSessionDetails')}
           >
             <PencilIcon className="h-5 w-5" />
           </button>
@@ -541,12 +543,12 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
             {selectedSession.status === 'in-progress' ? (
               <>
                 <PauseIcon className="h-4 w-4 inline mr-2" />
-                End Session
+                {t('sessions.endSession')}
               </>
             ) : (
               <>
                 <PlayIcon className="h-4 w-4 inline mr-2" />
-                Start Session
+                {t('sessions.startSession')}
               </>
             )}
           </button>
@@ -619,6 +621,7 @@ function CreateSessionModal({
     }
   );
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
+  const { t } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -650,7 +653,7 @@ function CreateSessionModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-xl font-bold text-white mb-4">Create New Session</h3>
+        <h3 className="text-xl font-bold text-white mb-4">{t('sessions.form.createNewSession')}</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -685,7 +688,7 @@ function CreateSessionModal({
                 onChange={(e) => setUseGameDate(e.target.checked)}
                 className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
               />
-              Set Game World Date
+              {t('sessions.form.setGameWorldDate')}
             </label>
             
             {useGameDate && (
@@ -787,8 +790,8 @@ function CreateSessionModal({
               ) : (
                 <div className="p-4 text-center text-slate-400">
                   <UserGroupIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <div>No characters found</div>
-                  <div className="text-xs mt-1">Create characters in the Player Characters tab first</div>
+                  <div>{t('sessions.form.noCharactersFound')}</div>
+                  <div className="text-xs mt-1">{t('sessions.form.createCharactersFirst')}</div>
                 </div>
               )}
             </div>
@@ -800,14 +803,14 @@ function CreateSessionModal({
               disabled={!name.trim()}
               className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
-              Create Session
+              {t('sessions.form.createSession')}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
-              Cancel
+              {t('buttons.cancel')}
             </button>
           </div>
         </form>
@@ -876,7 +879,7 @@ function EditSessionModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h3 className="text-xl font-bold text-white mb-4">Edit Session</h3>
+        <h3 className="text-xl font-bold text-white mb-4">{t('sessions.form.editSession')}</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -911,7 +914,7 @@ function EditSessionModal({
                 onChange={(e) => setUseGameDate(e.target.checked)}
                 className="text-blue-400 focus:ring-blue-400 focus:ring-offset-0 bg-slate-700 border-slate-600 rounded"
               />
-              Set Game World Date
+              {t('sessions.form.setGameWorldDate')}
             </label>
             
             {useGameDate && (
@@ -1013,8 +1016,8 @@ function EditSessionModal({
               ) : (
                 <div className="p-4 text-center text-slate-400">
                   <UserGroupIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <div>No characters found</div>
-                  <div className="text-xs mt-1">Create characters in the Player Characters tab first</div>
+                  <div>{t('sessions.form.noCharactersFound')}</div>
+                  <div className="text-xs mt-1">{t('sessions.form.createCharactersFirst')}</div>
                 </div>
               )}
             </div>
@@ -1026,14 +1029,14 @@ function EditSessionModal({
               disabled={!name.trim()}
               className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
-              Save Changes
+              {t('sessions.form.saveChanges')}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
-              Cancel
+              {t('buttons.cancel')}
             </button>
           </div>
         </form>

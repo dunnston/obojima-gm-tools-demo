@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { creatures } from '@/data/creatures';
@@ -36,6 +37,7 @@ export default function DatabaseView() {
   const [activeTab, setActiveTab] = useState<TabType>('potions');
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingType, setEditingType] = useState<string>('');
+  const { t } = useTranslation();
   
   // State for modified data with localStorage persistence
   const [modifiedIngredients, setModifiedIngredients] = useState<any[]>([]);
@@ -881,9 +883,9 @@ export default function DatabaseView() {
       name: 'Items',
       icon: BeakerIcon,
       tabs: [
-        { id: 'potions' as TabType, name: 'Potions', icon: BeakerIcon, count: potions.length },
-        { id: 'ingredients' as TabType, name: 'Ingredients', icon: SparklesIcon, count: currentIngredients.length },
-        { id: 'magicItems' as TabType, name: 'Magic Items', icon: GiftIcon, count: currentMagicItems.length }
+        { id: 'potions' as TabType, name: t('database.tabs.potions'), icon: BeakerIcon, count: potions.length },
+        { id: 'ingredients' as TabType, name: t('database.tabs.ingredients'), icon: SparklesIcon, count: currentIngredients.length },
+        { id: 'magicItems' as TabType, name: t('database.tabs.magicItems'), icon: GiftIcon, count: currentMagicItems.length }
       ]
     },
     {
@@ -891,8 +893,8 @@ export default function DatabaseView() {
       name: 'Entities',
       icon: UserGroupIcon,
       tabs: [
-        { id: 'creatures' as TabType, name: 'Creatures', icon: FireIcon, count: currentCreatures.length },
-        { id: 'npcs' as TabType, name: 'NPCs', icon: UserGroupIcon, count: modifiedNPCs.length }
+        { id: 'creatures' as TabType, name: t('database.tabs.creatures'), icon: FireIcon, count: currentCreatures.length },
+        { id: 'npcs' as TabType, name: t('database.tabs.npcs'), icon: UserGroupIcon, count: modifiedNPCs.length }
       ]
     },
     {
@@ -900,8 +902,8 @@ export default function DatabaseView() {
       name: 'Companions',
       icon: FireIcon,
       tabs: [
-        { id: 'companionTypes' as TabType, name: 'Types', icon: FireIcon, count: currentCompanionTypes.length },
-        { id: 'companions' as TabType, name: 'Companions', icon: SparklesIcon, count: modifiedCompanions.length }
+        { id: 'companionTypes' as TabType, name: t('database.tabs.companionTypes'), icon: FireIcon, count: currentCompanionTypes.length },
+        { id: 'companions' as TabType, name: t('database.tabs.companions'), icon: SparklesIcon, count: modifiedCompanions.length }
       ]
     }
   ];
@@ -926,7 +928,7 @@ export default function DatabaseView() {
           <div className="flex-1"></div>
           <div className="flex items-center gap-3">
             <BeakerIcon className="h-8 w-8 text-emerald-400" />
-            <h1 className="text-3xl font-bold text-white">Database Explorer</h1>
+            <h1 className="text-3xl font-bold text-white">{t('database.title')}</h1>
             {/* Sync status indicator */}
             {syncStatus === 'syncing' && (
               <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
@@ -1083,6 +1085,7 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
   const [filterRarity, setFilterRarity] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPrice, setFilterPrice] = useState('all');
+  const { t } = useTranslation();
 
   const filteredPotions = potions.filter(potion => {
     const matchesSearch = searchTerm === '' || potion.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1106,7 +1109,7 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search potions..."
+                placeholder={t('common.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
@@ -1154,13 +1157,13 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
-          Add New Potion
+          {t('potions.addPotion')}
         </button>
       </div>
 
       {/* Results Count */}
       <div className="text-slate-400 text-sm">
-        Showing {filteredPotions.length} of {potions.length} potions
+        {t('common.search')} {filteredPotions.length} / {potions.length} {t('potions.title').toLowerCase()}
       </div>
 
       {/* Potions Grid */}

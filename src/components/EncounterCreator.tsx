@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { creatures, Creature, Encounter } from '@/data/creatures';
 import StatBlock from './StatBlock';
 import { calculateEncounterDifficulty, getEncounterDifficultyRating } from '@/utils/encounterCalculator';
@@ -26,6 +27,7 @@ export default function EncounterCreator() {
   const [savedEncounters, setSavedEncounters] = useState<Encounter[]>([]);
   const [partyLevel, setPartyLevel] = useState(5);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const { t } = useTranslation();
 
   // Validator for encounter data
   const validateEncounter = (encounter: any): Encounter => ({
@@ -116,12 +118,12 @@ export default function EncounterCreator() {
 
   const saveEncounter = async () => {
     if (!encounterName.trim()) {
-      alert('Please enter an encounter name');
+      alert(t('encounters.creator.enterEncounterName'));
       return;
     }
 
     if (encounterCreatures.length === 0) {
-      alert('Please add at least one creature to the encounter');
+      alert(t('encounters.creator.addOneCreature'));
       return;
     }
 
@@ -138,7 +140,7 @@ export default function EncounterCreator() {
 
     const updated = [...savedEncounters, newEncounter];
     await saveEncounters(updated);
-    alert('Encounter saved successfully!');
+    alert(t('encounters.creator.encounterSaved'));
     clearEncounter();
   };
 
@@ -159,7 +161,7 @@ export default function EncounterCreator() {
   };
 
   const deleteEncounter = async (encounterId: string) => {
-    if (confirm('Are you sure you want to delete this encounter?')) {
+    if (confirm(t('encounters.creator.confirmDelete'))) {
       const updated = savedEncounters.filter(e => e.id !== encounterId);
       await saveEncounters(updated);
     }
@@ -170,21 +172,21 @@ export default function EncounterCreator() {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3">
-          <h1 className="text-3xl font-bold text-white">Encounter Creator</h1>
+          <h1 className="text-3xl font-bold text-white">{t('encounters.creator.title')}</h1>
           {/* Minimal sync status indicator */}
           {syncStatus === 'syncing' && (
             <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
           )}
           {syncStatus === 'error' && (
-            <span className="text-xs text-amber-400">Offline</span>
+            <span className="text-xs text-amber-400">{t('encounters.creator.offline')}</span>
           )}
         </div>
         <div className="flex items-center justify-center gap-3">
-          <p className="text-slate-400">Build custom encounters with Obojima creatures</p>
+          <p className="text-slate-400">{t('encounters.creator.subtitle')}</p>
           <button
             onClick={loadEncounters}
             className="p-2 text-slate-400 hover:text-white transition-colors"
-            title="Refresh"
+            title={t('encounters.creator.refresh')}
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>
@@ -196,52 +198,52 @@ export default function EncounterCreator() {
         <div className="space-y-6">
           {/* Encounter Details */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Encounter Details</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('encounters.creator.encounterDetails')}</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Encounter Name *
+                  {t('encounters.creator.encounterNameRequired')}
                 </label>
                 <input
                   type="text"
                   value={encounterName}
                   onChange={(e) => setEncounterName(e.target.value)}
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                  placeholder="Enter encounter name..."
+                  placeholder={t('encounters.creator.encounterNamePlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Description
+                  {t('encounters.creator.description')}
                 </label>
                 <textarea
                   value={encounterDescription}
                   onChange={(e) => setEncounterDescription(e.target.value)}
                   rows={3}
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
-                  placeholder="Describe the encounter..."
+                  placeholder={t('encounters.creator.descriptionPlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Environment
+                    {t('encounters.creator.environment')}
                   </label>
                   <input
                     type="text"
                     value={environment}
                     onChange={(e) => setEnvironment(e.target.value)}
                     className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
-                    placeholder="Forest, Cave, etc."
+                    placeholder={t('encounters.creator.environmentPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Party Level
+                    {t('encounters.creator.partyLevel')}
                   </label>
                   <select
                     value={partyLevel}
@@ -249,7 +251,7 @@ export default function EncounterCreator() {
                     className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
                   >
                     {Array.from({ length: 20 }, (_, i) => i + 1).map(level => (
-                      <option key={level} value={level}>Level {level}</option>
+                      <option key={level} value={level}>{t('encounters.creator.level')} {level}</option>
                     ))}
                   </select>
                 </div>
@@ -268,51 +270,62 @@ export default function EncounterCreator() {
               'Hard': 'text-orange-400',
               'Deadly': 'text-red-400'
             }[difficultyRating] || 'text-gray-400';
+            
+            const getDifficultyTranslation = (difficulty: string) => {
+              switch (difficulty) {
+                case 'Trivial': return t('encounters.difficulty.trivial');
+                case 'Easy': return t('encounters.difficulty.easy');
+                case 'Medium': return t('encounters.difficulty.medium');
+                case 'Hard': return t('encounters.difficulty.hard');
+                case 'Deadly': return t('encounters.difficulty.deadly');
+                default: return difficulty;
+              }
+            };
 
             return (
               <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <CalculatorIcon className="h-6 w-6 text-emerald-400" />
-                  <h2 className="text-xl font-semibold text-white">Encounter Difficulty</h2>
+                  <h2 className="text-xl font-semibold text-white">{t('encounters.creator.encounterDifficulty')}</h2>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-white">{encounterDifficulty.totalCreatures}</div>
-                    <div className="text-sm text-slate-400">Total Creatures</div>
+                    <div className="text-sm text-slate-400">{t('encounters.creator.totalCreatures')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-emerald-400">{encounterDifficulty.totalXp}</div>
-                    <div className="text-sm text-slate-400">Base XP</div>
+                    <div className="text-sm text-slate-400">{t('encounters.creator.baseXp')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-400">{encounterDifficulty.adjustedXp}</div>
-                    <div className="text-sm text-slate-400">Adjusted XP</div>
+                    <div className="text-sm text-slate-400">{t('encounters.creator.adjustedXp')}</div>
                   </div>
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${difficultyColor}`}>{difficultyRating}</div>
-                    <div className="text-sm text-slate-400">Difficulty</div>
+                    <div className={`text-2xl font-bold ${difficultyColor}`}>{getDifficultyTranslation(difficultyRating)}</div>
+                    <div className="text-sm text-slate-400">{t('encounters.creator.difficulty')}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                   <div className="text-center p-3 bg-slate-700/30 rounded-lg">
-                    <div className="font-semibold text-white">Average CR</div>
+                    <div className="font-semibold text-white">{t('encounters.creator.averageCr')}</div>
                     <div className="text-slate-300">{encounterDifficulty.averageCr}</div>
                   </div>
                   <div className="text-center p-3 bg-slate-700/30 rounded-lg">
-                    <div className="font-semibold text-white">Highest CR</div>
+                    <div className="font-semibold text-white">{t('encounters.creator.highestCr')}</div>
                     <div className="text-slate-300">{encounterDifficulty.highestCr}</div>
                   </div>
                   <div className="text-center p-3 bg-slate-700/30 rounded-lg">
-                    <div className="font-semibold text-white">Multiplier</div>
+                    <div className="font-semibold text-white">{t('encounters.creator.multiplier')}</div>
                     <div className="text-slate-300">×{encounterDifficulty.multiplier}</div>
                   </div>
                 </div>
 
                 {/* XP Breakdown */}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">XP Breakdown:</h3>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">{t('encounters.creator.xpBreakdown')}:</h3>
                   {encounterDifficulty.breakdown.map((item, index) => (
                     <div key={index} className="flex justify-between items-center text-sm bg-slate-700/20 rounded-lg p-2">
                       <span className="text-white">
@@ -331,26 +344,26 @@ export default function EncounterCreator() {
           {/* Current Encounter */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">Current Encounter</h2>
+              <h2 className="text-xl font-semibold text-white">{t('encounters.creator.currentEncounter')}</h2>
               <div className="flex gap-2">
                 <button
                   onClick={saveEncounter}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                 >
                   <BookmarkIcon className="h-4 w-4" />
-                  Save
+                  {t('buttons.save')}
                 </button>
                 <button
                   onClick={clearEncounter}
                   className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
                 >
-                  Clear
+                  {t('buttons.reset')}
                 </button>
               </div>
             </div>
 
             {encounterCreatures.length === 0 ? (
-              <p className="text-slate-400 text-center py-8">No creatures added yet</p>
+              <p className="text-slate-400 text-center py-8">{t('encounters.creator.noCreaturesAdded')}</p>
             ) : (
               <div className="space-y-3">
                 {encounterCreatures.map((ec, index) => (
@@ -394,7 +407,7 @@ export default function EncounterCreator() {
 
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-slate-300">Count:</label>
+                        <label className="text-sm text-slate-300">{t('encounters.creator.count')}:</label>
                         <input
                           type="number"
                           min="1"
@@ -406,7 +419,7 @@ export default function EncounterCreator() {
                       <div className="flex-1">
                         <input
                           type="text"
-                          placeholder="Notes..."
+                          placeholder={t('encounters.creator.notesPlaceholder')}
                           value={ec.notes || ''}
                           onChange={(e) => updateCreatureNotes(index, e.target.value)}
                           className="w-full px-3 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm placeholder-slate-400"
@@ -424,12 +437,12 @@ export default function EncounterCreator() {
         <div className="space-y-6">
           {/* Creature Library */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Creature Library</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('encounters.creator.creatureLibrary')}</h2>
             
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="Search creatures..."
+                placeholder={t('encounters.creator.searchCreatures')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
@@ -467,14 +480,14 @@ export default function EncounterCreator() {
                     <button
                       onClick={() => openStatBlock(creature)}
                       className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
-                      title="View Stat Block"
+                      title={t('encounters.creator.viewStatBlock')}
                     >
                       <EyeIcon className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => addCreatureToEncounter(creature)}
                       className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
-                      title="Add to Encounter"
+                      title={t('encounters.creator.addToEncounter')}
                     >
                       <PlusIcon className="h-4 w-4" />
                     </button>
@@ -486,10 +499,10 @@ export default function EncounterCreator() {
 
           {/* Saved Encounters */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Saved Encounters</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('encounters.creator.savedEncounters')}</h2>
             
             {savedEncounters.length === 0 ? (
-              <p className="text-slate-400 text-center py-4">No saved encounters yet</p>
+              <p className="text-slate-400 text-center py-4">{t('encounters.creator.noSavedEncounters')}</p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {savedEncounters.map((encounter) => (
@@ -497,7 +510,7 @@ export default function EncounterCreator() {
                     <div className="flex-1">
                       <div className="font-medium text-white">{encounter.name}</div>
                       <div className="text-sm text-slate-400">
-                        {encounter.creatures.length} creature{encounter.creatures.length !== 1 ? 's' : ''}
+                        {encounter.creatures.length} {encounter.creatures.length !== 1 ? t('encounters.creator.creatures') : t('encounters.creator.creature')}
                         {encounter.difficulty && ` • ${encounter.difficulty}`}
                       </div>
                     </div>
@@ -506,7 +519,7 @@ export default function EncounterCreator() {
                         onClick={() => loadEncounter(encounter)}
                         className="px-3 py-1 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
                       >
-                        Load
+                        {t('encounters.creator.load')}
                       </button>
                       <button
                         onClick={() => deleteEncounter(encounter.id)}

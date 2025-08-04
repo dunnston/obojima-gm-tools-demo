@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
@@ -8,6 +9,7 @@ import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 
 export default function Settings() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
   const [activeTab, setActiveTab] = useState<'vendingMachine'>('vendingMachine');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
@@ -55,7 +57,7 @@ export default function Settings() {
   };
 
   const handleReset = () => {
-    if (confirm('Are you sure you want to reset all settings to default? This cannot be undone.')) {
+    if (confirm(t('settings.confirmReset'))) {
       const newSettings = resetSettings();
       setSettings(newSettings);
     }
@@ -67,21 +69,21 @@ export default function Settings() {
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <CogIcon className="h-8 w-8 text-slate-400" />
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
+          <h1 className="text-3xl font-bold text-white">{t('settings.title')}</h1>
           {/* Minimal sync status indicator */}
           {syncStatus === 'syncing' && (
             <ArrowPathIcon className="h-5 w-5 text-blue-400 animate-spin" />
           )}
           {syncStatus === 'error' && (
-            <span className="text-xs text-amber-400">Offline</span>
+            <span className="text-xs text-amber-400">{t('settings.offline')}</span>
           )}
         </div>
         <div className="flex items-center justify-center gap-3">
-          <p className="text-slate-400">Customize your app preferences and behavior</p>
+          <p className="text-slate-400">{t('settings.subtitle')}</p>
           <button
             onClick={loadSettings}
             className="p-2 text-slate-400 hover:text-white transition-colors"
-            title="Refresh"
+            title={t('settings.refresh')}
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>
@@ -100,7 +102,7 @@ export default function Settings() {
             }`}
           >
             <BuildingStorefrontIcon className="h-5 w-5" />
-            Vending Machine
+            {t('settings.vendingMachine.title')}
           </button>
         </div>
       </div>
@@ -121,7 +123,7 @@ export default function Settings() {
           onClick={handleReset}
           className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
         >
-          Reset All Settings
+          {t('settings.resetAllSettings')}
         </button>
       </div>
     </div>
@@ -134,6 +136,7 @@ interface VendingMachineSettingsProps {
 }
 
 function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsProps) {
+  const { t } = useTranslation();
   const [excludeSearch, setExcludeSearch] = useState({
     potions: '',
     ingredients: '',
@@ -201,13 +204,13 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Vending Machine Settings</h2>
-        <p className="text-slate-400">Customize what appears in your vending machine</p>
+        <h2 className="text-2xl font-bold text-white mb-2">{t('settings.vendingMachine.subtitle')}</h2>
+        <p className="text-slate-400">{t('settings.vendingMachine.description')}</p>
       </div>
 
       {/* Categories */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-white">Categories</h3>
+        <h3 className="text-xl font-semibold text-white">{t('settings.vendingMachine.categories')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Object.entries(settings.categories).map(([category, enabled]) => (
             <div key={category} className="bg-slate-700/30 rounded-lg p-4">
@@ -230,7 +233,7 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
         {/* Potion & Ingredient Quantities */}
         <div className="space-y-6">
           <div>
-            <h3 className="text-xl font-semibold text-white mb-4">Potion Quantities</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">{t('settings.vendingMachine.potionQuantities')}</h3>
             <div className="space-y-3">
               {Object.entries(settings.potionQuantities).map(([rarity, quantity]) => (
                 <div key={rarity} className="flex items-center justify-between bg-slate-700/30 rounded-lg p-3">
@@ -249,7 +252,7 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold text-white mb-4">Ingredient Quantities</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">{t('settings.vendingMachine.ingredientQuantities')}</h3>
             <div className="space-y-3">
               {Object.entries(settings.ingredientQuantities).map(([rarity, quantity]) => (
                 <div key={rarity} className="flex items-center justify-between bg-slate-700/30 rounded-lg p-3">
@@ -270,11 +273,11 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
 
         {/* Magic Item Quantities */}
         <div>
-          <h3 className="text-xl font-semibold text-white mb-4">Magic Item Quantities</h3>
+          <h3 className="text-xl font-semibold text-white mb-4">{t('settings.vendingMachine.magicItemQuantities')}</h3>
           <div className="space-y-3">
             {Object.entries(settings.magicItemQuantities).map(([type, quantity]) => (
               <div key={type} className="flex items-center justify-between bg-slate-700/30 rounded-lg p-3">
-                <span className="text-white capitalize">{type === 'wondrous' ? 'Wondrous Items' : type}</span>
+                <span className="text-white capitalize">{type === 'wondrous' ? t('settings.vendingMachine.wondrousItems') : type}</span>
                 <input
                   type="number"
                   min="0"
@@ -291,8 +294,8 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
 
       {/* Exclude Lists */}
       <div className="space-y-6">
-        <h3 className="text-xl font-semibold text-white">Exclude Items</h3>
-        <p className="text-slate-400">Select items to never appear in the vending machine</p>
+        <h3 className="text-xl font-semibold text-white">{t('settings.vendingMachine.excludeItems')}</h3>
+        <p className="text-slate-400">{t('settings.vendingMachine.excludeItemsDescription')}</p>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {(['potions', 'ingredients', 'magicItems'] as const).map((category) => (
@@ -329,6 +332,7 @@ function ExcludeItemsSection({
   onSearchChange, 
   onToggleExclude 
 }: ExcludeItemsSectionProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-slate-700/30 rounded-lg p-4">
       <h4 className="text-lg font-medium text-white mb-3 capitalize">{category}</h4>
@@ -338,7 +342,7 @@ function ExcludeItemsSection({
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
         <input
           type="text"
-          placeholder={`Search ${category}...`}
+          placeholder={t('settings.vendingMachine.searchPlaceholder', { category })}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2 bg-slate-600 border border-slate-500 rounded-lg text-white text-sm placeholder-slate-400 focus:outline-none focus:border-orange-400"
@@ -375,7 +379,7 @@ function ExcludeItemsSection({
         
         {items.length === 0 && (
           <div className="text-center py-4 text-slate-400 text-sm">
-            No items found
+            {t('settings.vendingMachine.noItemsFound')}
           </div>
         )}
       </div>
@@ -384,7 +388,10 @@ function ExcludeItemsSection({
       {excludedItems.length > 0 && (
         <div className="mt-3 pt-3 border-t border-slate-600">
           <span className="text-red-400 text-sm">
-            {excludedItems.length} item{excludedItems.length !== 1 ? 's' : ''} excluded
+            {t('settings.vendingMachine.itemsExcluded', { 
+              count: excludedItems.length, 
+              plural: excludedItems.length !== 1 ? 's' : '' 
+            })}
           </span>
         </div>
       )}
