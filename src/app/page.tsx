@@ -14,7 +14,7 @@ import InitiativeTracker from '@/components/InitiativeTracker';
 import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
-import ObojimaCalendar from '@/components/ObojimaCalendar';
+import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
 import { syncService } from '@/services/sync';
 
 export default function Home() {
@@ -95,7 +95,7 @@ export default function Home() {
   };
 
   // Save Obojima date to settings with sync when it changes
-  const handleObojimaDateChange = async (newDate: any) => {
+  const handleObojimaDateChange = async (newDate: any, skipEventIds?: string[]) => {
     setCurrentObojimaDate(newDate);
     
     try {
@@ -139,7 +139,7 @@ export default function Home() {
       case 'initiative':
         return <InitiativeTracker />;
       case 'calendar':
-        return <ObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} onRefresh={loadCalendarDate} syncStatus={calendarSyncStatus} />;
+        return <EnhancedObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} onRefresh={loadCalendarDate} syncStatus={calendarSyncStatus} />;
       case 'downtime':
         return <DowntimeTracker currentObojimaDate={currentObojimaDate} />;
       case 'settings':

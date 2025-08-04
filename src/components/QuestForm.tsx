@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, QUEST_REWARD_TYPES, QuestStatus, loadQuests } from '@/data/quests';
 import { syncService } from '@/services/sync';
-import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { CalendarEvent, formatEventDate } from '@/data/calendarEvents';
+import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import QuestRewardSelector from './QuestRewardSelector';
 
 interface QuestFormProps {
@@ -34,6 +35,34 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
     }
     return createEmptyQuest();
   });
+
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [eventSearchTerm, setEventSearchTerm] = useState('');
+  const [showEventSearch, setShowEventSearch] = useState(false);
+  const [linkedEvents, setLinkedEvents] = useState<CalendarEvent[]>([]);
+
+  // Load calendar events and find linked ones
+  useEffect(() => {
+    const loadCalendarEvents = async () => {
+      try {
+        const response = await fetch('/api/calendar-events');
+        if (response.ok) {
+          const events: CalendarEvent[] = await response.json();
+          setCalendarEvents(events);
+          
+          // Find events linked to this quest
+          if (quest) {
+            const questLinkedEvents = events.filter(event => event.questId === quest.id);
+            setLinkedEvents(questLinkedEvents);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading calendar events:', error);
+      }
+    };
+
+    loadCalendarEvents();
+  }, [quest]);
 
   const handleInputChange = (field: keyof QuestFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -85,6 +114,62 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
   const removeReward = (index: number) => {
     const newRewards = formData.rewards.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, rewards: newRewards }));
+  };
+
+  const handleEventLink = async (event: CalendarEvent) => {
+    try {
+      // Link the event to this quest if we're editing
+      if (quest) {
+        const updatedEvent = {
+          ...event,
+          questId: quest.id,
+          questTitle: quest.title
+        };
+
+        const response = await fetch('/api/calendar-events', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedEvent)
+        });
+
+        if (response.ok) {
+          setLinkedEvents(prev => [...prev, updatedEvent]);
+          setCalendarEvents(prev => prev.filter(e => e.id !== event.id));
+          setShowEventSearch(false);
+          setEventSearchTerm('');
+        }
+      } else {
+        // For new quests, we'll need to handle this after quest creation
+        alert('Please save the quest first, then you can link events to it.');
+      }
+    } catch (error) {
+      console.error('Error linking event:', error);
+      alert('Error linking event. Please try again.');
+    }
+  };
+
+  const handleEventUnlink = async (event: CalendarEvent) => {
+    try {
+      const updatedEvent = {
+        ...event,
+        questId: undefined,
+        questTitle: undefined
+      };
+
+      const response = await fetch('/api/calendar-events', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEvent)
+      });
+
+      if (response.ok) {
+        setLinkedEvents(prev => prev.filter(e => e.id !== event.id));
+        setCalendarEvents(prev => [...prev, updatedEvent]);
+      }
+    } catch (error) {
+      console.error('Error unlinking event:', error);
+      alert('Error unlinking event. Please try again.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -281,6 +366,122 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
                 />
               ))}
             </div>
+          </div>
+
+          {/* Calendar Events */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-slate-300">
+                <CalendarDaysIcon className="h-4 w-4 inline mr-1" />
+                Linked Calendar Events
+              </label>
+              {quest && (
+                <button
+                  type="button"
+                  onClick={() => setShowEventSearch(!showEventSearch)}
+                  className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Link Event
+                </button>
+              )}
+            </div>
+
+            {/* Linked Events Display */}
+            {linkedEvents.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {linkedEvents.map(event => (
+                  <div key={event.id} className="flex items-center justify-between p-3 bg-slate-700/50 border border-slate-600 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                      <div>
+                        <p className="text-white font-medium">{event.title}</p>
+                        <p className="text-sm text-slate-400">{formatEventDate(event)}</p>
+                        {event.location && (
+                          <p className="text-sm text-slate-500">{event.location}</p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleEventUnlink(event)}
+                      className="text-red-400 hover:text-red-300 text-sm"
+                    >
+                      Unlink
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Event Search */}
+            {showEventSearch && quest && (
+              <div className="relative mb-4">
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={eventSearchTerm}
+                    onChange={(e) => setEventSearchTerm(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-400"
+                    placeholder="Search for calendar events to link..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEventSearch(false)}
+                    className="px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Event Search Results */}
+                <div className="max-h-40 bg-slate-800 border border-slate-600 rounded-lg overflow-y-auto">
+                  {calendarEvents
+                    .filter(event => 
+                      !event.questId && // Only show unlinked events
+                      (event.title.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                       event.description.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                       event.location.toLowerCase().includes(eventSearchTerm.toLowerCase()))
+                    )
+                    .map(event => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => handleEventLink(event)}
+                        className="w-full p-3 text-left hover:bg-slate-700 transition-colors border-b border-slate-600 last:border-b-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                          <div>
+                            <p className="text-white font-medium">{event.title}</p>
+                            <p className="text-sm text-slate-400">{formatEventDate(event)}</p>
+                            {event.location && (
+                              <p className="text-sm text-slate-500">{event.location}</p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  
+                  {calendarEvents.filter(event => 
+                    !event.questId &&
+                    (event.title.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                     event.description.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                     event.location.toLowerCase().includes(eventSearchTerm.toLowerCase()))
+                  ).length === 0 && (
+                    <div className="p-3 text-slate-400 text-sm">
+                      No available events found. {eventSearchTerm && `Try searching for "${eventSearchTerm}"`}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!quest && (
+              <div className="p-3 bg-slate-700/30 border border-slate-600 rounded-lg text-slate-400 text-sm">
+                Save the quest first to link calendar events to it.
+              </div>
+            )}
           </div>
 
           {/* Notes */}
