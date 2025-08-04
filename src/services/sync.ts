@@ -1,4 +1,5 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 export interface SyncResult<T> {
   success: boolean;
@@ -70,6 +71,12 @@ class SyncService {
 
   // Settings-specific methods (since they work differently)
   async getSettings(): Promise<SyncResult<any>> {
+    // In demo mode, skip server requests entirely
+    if (IS_DEMO_MODE || !API_BASE) {
+      console.log('Demo mode: Loading settings from localStorage only');
+      return { success: false, error: 'Demo mode - no server sync' };
+    }
+    
     try {
       const response = await fetch(`${API_BASE}/api/settings`);
       if (!response.ok) throw new Error('Failed to fetch');
@@ -88,6 +95,12 @@ class SyncService {
   }
 
   async saveSetting(key: string, value: any): Promise<SyncResult<void>> {
+    // In demo mode, skip server requests entirely
+    if (IS_DEMO_MODE || !API_BASE) {
+      console.log('Demo mode: Settings saved to localStorage only');
+      return { success: true };
+    }
+    
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
         method: 'POST',
@@ -344,6 +357,12 @@ class SyncService {
     try {
       // Save to localStorage immediately for offline support
       localStorage.setItem(localStorageKey, JSON.stringify(items));
+      
+      // In demo mode, skip server sync entirely
+      if (IS_DEMO_MODE || !API_BASE) {
+        console.log(`Demo mode: ${dataType} saved to localStorage only`);
+        return;
+      }
       
       // For user-potions and user-magic-items, we need special handling to avoid duplicates
       if (dataType === 'user-potions' || dataType === 'user-magic-items') {
