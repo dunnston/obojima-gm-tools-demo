@@ -47,7 +47,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
       try {
         const response = await fetch('/api/calendar-events');
         if (response.ok) {
-          const events: CalendarEvent[] = await response.json();
+          const eventsData = await response.json();
+          // Calendar events API returns the array directly
+          const events: CalendarEvent[] = Array.isArray(eventsData) ? eventsData : eventsData.events || [];
           // Ensure events is an array
           if (Array.isArray(events)) {
             setCalendarEvents(events);
@@ -58,7 +60,7 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
               setLinkedEvents(questLinkedEvents);
             }
           } else {
-            console.warn('Calendar events data is not an array:', events);
+            console.warn('Calendar events data is not an array:', eventsData);
             setCalendarEvents([]);
             setLinkedEvents([]);
           }

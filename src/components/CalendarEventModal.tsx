@@ -63,9 +63,11 @@ export default function CalendarEventModal({
         const response = await fetch('/api/quests');
         if (response.ok) {
           const questData = await response.json();
-          // Ensure questData is an array
-          if (Array.isArray(questData)) {
-            setQuests(questData);
+          // The quests API returns { quests: [...] }, so we need to extract the quests array
+          const questsArray = questData.quests || questData;
+          // Ensure questsArray is an array
+          if (Array.isArray(questsArray)) {
+            setQuests(questsArray);
           } else {
             console.warn('Quest data is not an array:', questData);
             setQuests([]);
