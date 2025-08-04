@@ -79,7 +79,12 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
       return;
     }
 
-    let updatedPotion = { ...potion, ...formData };
+    // Preserve original imageUrl if no new file is selected
+    let updatedPotion = { 
+      ...potion, 
+      ...formData,
+      imageUrl: potion.imageUrl // Ensure original image is preserved
+    };
 
     if (selectedFile) {
       try {
