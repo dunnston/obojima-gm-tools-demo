@@ -912,24 +912,29 @@ if (typeof window !== 'undefined') {
 export function getPotionImageUrl(potionName: string): string {
   const localImageExtensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
   
-  // First check for files with original potion name (exact match with spaces)
+  // For known potions that have existing image files, check both formats
+  // This is a temporary fix until the file registration system is improved
   for (const ext of localImageExtensions) {
+    // Check original filename with spaces (e.g., "Essence of the River Spirit.webp")
     const originalFilename = `${potionName}.${ext}`;
+    
+    // Check normalized filename with dashes (e.g., "essence-of-the-river-spirit.webp")  
+    const cleanName = potionName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const normalizedFilename = `${cleanName}.${ext}`;
+    
+    // Return the path if either format might exist (the browser will handle 404s gracefully)
+    // Priority: original name first, then normalized name
     if (localPotionFiles.has(originalFilename)) {
       return `/images/potions/${originalFilename}`;
     }
-  }
-  
-  // Then check for normalized names (with dashes instead of spaces)
-  const cleanName = potionName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  for (const ext of localImageExtensions) {
-    const filename = `${cleanName}.${ext}`;
-    if (localPotionFiles.has(filename)) {
-      return `/images/potions/${filename}`;
+    if (localPotionFiles.has(normalizedFilename)) {
+      return `/images/potions/${normalizedFilename}`;
     }
   }
   
-  return '/images/potions/default-potion.svg';
+  // If we don't have it registered, try the original format first
+  // This handles cases where files exist but aren't registered in localPotionFiles
+  return `/images/potions/${potionName}.webp`;
 }
 
 // Get specific image for ingredient or fallback to default
