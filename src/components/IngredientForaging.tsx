@@ -9,6 +9,7 @@ import {
   ForagingResult, 
   ForagingAttempt,
   performRandomForaging,
+  performRandomForagingAllPossible,
   performSpecificSearch,
   getLocationInfo
 } from '@/utils/ingredientForaging';
@@ -27,6 +28,7 @@ export default function IngredientForaging() {
   const [searchHistory, setSearchHistory] = useState<ForagingResult[]>([]);
   const [ingredientDropdownOpen, setIngredientDropdownOpen] = useState<boolean>(false);
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState<string>('');
+  const [autoMode, setAutoMode] = useState<boolean>(true);
   const { t } = useTranslation();
   const { translateIngredientName } = useItemTranslation();
 
@@ -70,7 +72,9 @@ export default function IngredientForaging() {
 
     const result = isSpecificSearch 
       ? performSpecificSearch(attempt)
-      : performRandomForaging(attempt);
+      : autoMode 
+        ? performRandomForaging(attempt)
+        : performRandomForagingAllPossible(attempt);
 
     setForagingResult(result);
     setSearchHistory(prev => [result, ...prev.slice(0, 9)]); // Keep last 10 results
@@ -167,6 +171,25 @@ export default function IngredientForaging() {
                   />
                   <span className="text-slate-300">{t('ingredients.foraging.specificSearch')}</span>
                 </label>
+              </div>
+
+              {/* Auto Mode Toggle */}
+              <div>
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={autoMode}
+                    onChange={(e) => setAutoMode(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-400 focus:ring-emerald-400"
+                  />
+                  <span className="text-slate-300">Auto Mode</span>
+                </label>
+                <p className="text-xs text-slate-400 mt-1 ml-7">
+                  {autoMode 
+                    ? "Automatically selects one ingredient based on your roll" 
+                    : "Shows all possible ingredients that could be found with your roll"
+                  }
+                </p>
               </div>
 
               {/* Specific Ingredient Dropdown */}
@@ -290,15 +313,22 @@ export default function IngredientForaging() {
               </div>
             </div>
 
-            <div className="space-y-2 text-sm">
-              <h3 className="font-semibold text-slate-300">DC Guidelines:</h3>
-              <div className="space-y-1 text-slate-400">
-                <div>• Common (native): DC 10-15</div>
-                <div>• Uncommon (native) / Common (non-native): DC 16-20</div>
-                <div>• Uncommon (non-native): DC 21-25</div>
-                <div>• Rare ingredients: Not found foraging</div>
-                <div className="text-xs mt-2 text-slate-500">
-                  * Specific searches have +2-4 DC increase
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="text-emerald-400 font-medium mb-2">Random Search:</h4>
+                <div className="space-y-1 text-slate-400 ml-2">
+                  <div>• Common (native): DC 10-15</div>
+                  <div>• Uncommon (native): DC 16-18</div>
+                  <div>• Non-native items cannot be found randomly</div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-blue-400 font-medium mb-2">Specific Search:</h4>
+                <div className="space-y-1 text-slate-400 ml-2">
+                  <div>• Common (native): DC 13-15</div>
+                  <div>• Uncommon (native) or Common (non-native): DC 19-20</div>
+                  <div>• Uncommon (non-native): DC 21-25</div>
+                  <div>• Rare items cannot be found foraging</div>
                 </div>
               </div>
             </div>
@@ -311,7 +341,12 @@ export default function IngredientForaging() {
           {foragingResult && (
             <div className={`bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border p-6 ${getResultColor(foragingResult)}`}>
               <h2 className="text-xl font-semibold text-white mb-4">
-                {foragingResult.success ? `✅ ${t('ingredients.foraging.ingredientFound')}` : `❌ ${t('ingredients.foraging.nothingFound')}`}
+                {foragingResult.success 
+                  ? foragingResult.possibleIngredients 
+                    ? `🔍 Foraging Results` 
+                    : `✅ ${t('ingredients.foraging.ingredientFound')}`
+                  : `❌ ${t('ingredients.foraging.nothingFound')}`
+                }
               </h2>
               
               {foragingResult.ingredient && (
@@ -339,6 +374,42 @@ export default function IngredientForaging() {
                       <span className="text-blue-400">🔧{foragingResult.ingredient.utility}</span>
                       <span className="text-purple-400">✨{foragingResult.ingredient.whimsy}</span>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {foragingResult.possibleIngredients && foragingResult.possibleIngredients.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-white mb-3">Possible Ingredients ({foragingResult.possibleIngredients.length})</h3>
+                  <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                    {foragingResult.possibleIngredients.map((ingredient, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 bg-slate-700/30 rounded-lg">
+                        <div className="w-10 h-10 bg-slate-700/50 rounded flex items-center justify-center flex-shrink-0">
+                          <img
+                            src={getIngredientImagePath(ingredient.name)}
+                            alt={ingredient.name}
+                            className="w-8 h-8 object-cover rounded"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                              const parent = img.parentElement;
+                              if (parent) {
+                                parent.innerHTML = '<span class="text-lg">🌿</span>';
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">{translateIngredientName(ingredient.name)}</div>
+                          <div className="text-xs text-slate-400">{ingredient.rarity} • {ingredient.type}</div>
+                        </div>
+                        <div className="flex gap-1 text-xs flex-shrink-0">
+                          <span className="text-red-400">⚔️{ingredient.combat}</span>
+                          <span className="text-blue-400">🔧{ingredient.utility}</span>
+                          <span className="text-purple-400">✨{ingredient.whimsy}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
