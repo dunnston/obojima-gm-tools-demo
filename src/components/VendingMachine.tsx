@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { generateVendingMachineInventory, VendingMachineInventory } from '@/utils/vendingMachine';
 import { ArrowPathIcon, SparklesIcon, BeakerIcon, WrenchScrewdriverIcon, CogIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { getPotionImagePath, getIngredientImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
+import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 export default function VendingMachine() {
   const [inventory, setInventory] = useState<VendingMachineInventory | null>(null);
@@ -12,6 +13,7 @@ export default function VendingMachine() {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedItemType, setSelectedItemType] = useState<'ingredient' | 'potion' | 'magicItem' | null>(null);
   const { t } = useTranslation();
+  const { translatePotionName, translateIngredientName } = useItemTranslation();
 
   const refreshInventory = async () => {
     setIsRefreshing(true);
@@ -235,6 +237,7 @@ interface ItemDetailModalProps {
 
 function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
   const { t } = useTranslation();
+  const { translatePotionName, translateIngredientName } = useItemTranslation();
   const getRarityColor = (rarity: string) => {
     switch (rarity.toLowerCase()) {
       case 'common': return 'border-gray-400/50 bg-gray-400/10 text-gray-300';
@@ -332,7 +335,11 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
           {/* Item Details */}
           <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-white mb-2">{item.name}</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                {itemType === 'potion' ? translatePotionName(item.name) :
+                 itemType === 'ingredient' ? translateIngredientName(item.name) :
+                 item.name}
+              </h3>
               <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRarityColor(item.rarity)}`}>
                 {item.rarity}
               </div>

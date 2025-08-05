@@ -7,12 +7,14 @@ import { brewPotion, selectPotionFromTie, BrewingResult } from '@/utils/potionBr
 import { BeakerIcon, SparklesIcon, ShieldCheckIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
 import SearchableDropdown from './SearchableDropdown';
 import { getPotionImagePath } from '@/utils/imageUtils';
+import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 export default function PotionBrewing() {
   const [selectedIngredients, setSelectedIngredients] = useState<(Ingredient | null)[]>([null, null, null]);
   const [brewingResult, setBrewingResult] = useState<BrewingResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'Combat' | 'Utility' | 'Whimsy' | null>(null);
   const { t } = useTranslation();
+  const { translatePotionName } = useItemTranslation();
 
   const handleIngredientSelect = (ingredient: Ingredient | null, slotIndex: number) => {
     const newSelection = [...selectedIngredients];
@@ -157,7 +159,7 @@ export default function PotionBrewing() {
                 
                 {/* Potion Details */}
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white mb-3">{brewingResult.potion.name}</h3>
+                  <h3 className="text-2xl font-bold text-white mb-3">{translatePotionName(brewingResult.potion.name)}</h3>
                   <div className="flex items-center gap-3 mb-3">
                     <span className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${getCategoryColor(brewingResult.potion.category)}`}>
                       {getCategoryIcon(brewingResult.potion.category)}

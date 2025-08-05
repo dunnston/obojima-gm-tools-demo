@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Ingredient } from '@/data/ingredients';
 import Image from 'next/image';
 import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 interface SearchableDropdownProps {
   ingredients: Ingredient[];
@@ -22,11 +23,14 @@ export default function SearchableDropdown({
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { translateIngredientName } = useItemTranslation();
 
   // Filter ingredients based on search term
-  const filteredIngredients = ingredients.filter(ingredient =>
-    ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIngredients = ingredients.filter(ingredient => {
+    const translatedName = translateIngredientName(ingredient.name);
+    return ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           translatedName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function SearchableDropdown({
                 </div>
               )}
               <div className="flex-1">
-                <h3 className="font-medium text-white">{selectedIngredient.name}</h3>
+                <h3 className="font-medium text-white">{translateIngredientName(selectedIngredient.name)}</h3>
                 <div className="flex gap-2 text-xs mt-1">
                   <span className="text-red-400">⚔️ {selectedIngredient.combat}</span>
                   <span className="text-blue-400">🔧 {selectedIngredient.utility}</span>
@@ -161,7 +165,7 @@ export default function SearchableDropdown({
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-medium truncate">{ingredient.name}</span>
+                        <span className="text-white font-medium truncate">{translateIngredientName(ingredient.name)}</span>
                         <span className={`text-xs ${getRarityColor(ingredient.rarity)}`}>
                           {ingredient.rarity}
                         </span>

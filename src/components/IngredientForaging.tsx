@@ -15,6 +15,7 @@ import {
 import { ingredients } from '@/data/ingredients';
 import { getIngredientImagePath } from '@/utils/imageUtils';
 import { MagnifyingGlassIcon, MapPinIcon, BeakerIcon, Cog6ToothIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 export default function IngredientForaging() {
   const [selectedLocation, setSelectedLocation] = useState<Location>('Gale Fields');
@@ -27,6 +28,7 @@ export default function IngredientForaging() {
   const [ingredientDropdownOpen, setIngredientDropdownOpen] = useState<boolean>(false);
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState<string>('');
   const { t } = useTranslation();
+  const { translateIngredientName } = useItemTranslation();
 
   const locationInfo = getLocationInfo(selectedLocation);
 
@@ -42,9 +44,11 @@ export default function IngredientForaging() {
 
     return ingredients
       .filter(typeFilter)
-      .filter(ingredient => 
-        ingredient.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())
-      )
+      .filter(ingredient => {
+        const translatedName = translateIngredientName(ingredient.name);
+        return ingredient.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase()) ||
+               translatedName.toLowerCase().includes(ingredientSearchTerm.toLowerCase());
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
@@ -178,7 +182,7 @@ export default function IngredientForaging() {
                       className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400 text-left flex items-center justify-between"
                     >
                       <span className={targetIngredient ? 'text-white' : 'text-slate-400'}>
-                        {targetIngredient || t('ingredients.foraging.selectIngredient')}
+                        {targetIngredient ? translateIngredientName(targetIngredient) : t('ingredients.foraging.selectIngredient')}
                       </span>
                       <ChevronDownIcon className={`h-5 w-5 text-slate-400 transition-transform ${ingredientDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -204,7 +208,7 @@ export default function IngredientForaging() {
                                 className="w-full px-4 py-2 text-left hover:bg-slate-700/50 text-white text-sm flex items-center justify-between transition-colors"
                               >
                                 <div>
-                                  <div className="font-medium">{ingredient.name}</div>
+                                  <div className="font-medium">{translateIngredientName(ingredient.name)}</div>
                                   <div className="text-xs text-slate-400">{ingredient.rarity} • {ingredient.type}</div>
                                 </div>
                                 <div className="flex gap-1 text-xs">
@@ -328,7 +332,7 @@ export default function IngredientForaging() {
                       />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">{foragingResult.ingredient.name}</h3>
+                    <h3 className="text-lg font-bold text-white">{translateIngredientName(foragingResult.ingredient.name)}</h3>
                     <p className="text-sm text-slate-300">{foragingResult.ingredient.rarity}</p>
                     <div className="flex gap-2 text-xs mt-1">
                       <span className="text-red-400">⚔️{foragingResult.ingredient.combat}</span>

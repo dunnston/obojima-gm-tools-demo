@@ -30,6 +30,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
+import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 type TabType = 'potions' | 'ingredients' | 'creatures' | 'magicItems' | 'npcs' | 'companionTypes' | 'companions';
 
@@ -38,6 +39,7 @@ export default function DatabaseView() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingType, setEditingType] = useState<string>('');
   const { t } = useTranslation();
+  const { translatePotionName, translateIngredientName } = useItemTranslation();
   
   // State for modified data with localStorage persistence
   const [modifiedIngredients, setModifiedIngredients] = useState<any[]>([]);
@@ -1086,9 +1088,13 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPrice, setFilterPrice] = useState('all');
   const { t } = useTranslation();
+  const { translatePotionName } = useItemTranslation();
 
   const filteredPotions = potions.filter(potion => {
-    const matchesSearch = searchTerm === '' || potion.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const translatedName = translatePotionName(potion.name);
+    const matchesSearch = searchTerm === '' || 
+      potion.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      translatedName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRarity = filterRarity === 'all' || potion.rarity === filterRarity;
     const matchesCategory = filterCategory === 'all' || potion.category === filterCategory;
     const matchesPrice = filterPrice === 'all' || potion.price.toString() === filterPrice;
@@ -1182,7 +1188,7 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
             {/* Potion Info */}
             <div className="space-y-2">
               <div className="flex items-start justify-between">
-                <h3 className="font-semibold text-white text-sm">{potion.name}</h3>
+                <h3 className="font-semibold text-white text-sm">{translatePotionName(potion.name)}</h3>
                 <span className="text-xs text-slate-400">#{potion.number}</span>
               </div>
               
@@ -1238,9 +1244,12 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
   const [filterType, setFilterType] = useState('all');
   const [filterLocation, setFilterLocation] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const { translateIngredientName } = useItemTranslation();
 
   const filteredIngredients = ingredients.filter(ingredient => {
-    const matchesSearch = ingredient.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const translatedName = translateIngredientName(ingredient.name);
+    const matchesSearch = ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      translatedName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRarity = filterRarity === 'all' || ingredient.rarity === filterRarity;
     const matchesType = filterType === 'all' || ingredient.type === filterType;
     const matchesLocation = filterLocation === 'all' || ingredient.locations.some((loc: string) => 
@@ -1356,7 +1365,7 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
                 </div>
                 
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-white">{ingredient.name}</h3>
+                  <h3 className="font-semibold text-white">{translateIngredientName(ingredient.name)}</h3>
                   <div className="flex items-center gap-4 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       ingredient.rarity === 'Common' ? 'bg-gray-500/20 text-gray-300' :
