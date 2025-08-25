@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build:demo",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_DEMO_MODE": "true"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_DEMO_MODE": "true"
+    }
+  }
+}
