@@ -14,7 +14,7 @@
     "launch": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && start http://localhost:3000\"",
     "open": "start http://localhost:3000",
     "backup-creatures": "node scripts/simple-backup.js",
-    "prepare-public": "node scripts/prepare-public-release.js",
+    "prepare-public": "node scripts/prepare-public-release-simple.js",
     "restore-full-creatures": "node scripts/restore-full-creatures.js",
     "build-public": "npm run prepare-public && npm run build"
   },
