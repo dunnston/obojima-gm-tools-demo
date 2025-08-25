@@ -83,50 +83,49 @@ export interface Encounter {
 // Public creatures data - only includes Yokario and any custom creatures
 export const creatures: Creature[] = [
   {
-    "name": "Yokario",
-    "size": "Small",
-    "type": "Humanoid (Yokario)",
-    "alignment": "Neutral",
-    "armor_class": 14,
-    "hit_points": "13 (3d6 + 3)",
-    "speed": {
-      "walk": "30 ft."
+    name: "Yokario",
+    size: "Small",
+    type: "Humanoid (Yokario)",
+    alignment: "Neutral",
+    armor_class: 14,
+    hit_points: "13 (3d6 + 3)",
+    speed: {
+      walk: "30 ft."
     },
-    "ability_scores": {
-      "STR": 10,
-      "DEX": 14,
-      "CON": 12,
-      "INT": 10,
-      "WIS": 8,
-      "CHA": 8
+    ability_scores: {
+      STR: 10,
+      DEX: 14,
+      CON: 12,
+      INT: 10,
+      WIS: 8,
+      CHA: 8
     },
-    "skills": {
-      "Performance": 3
+    skills: {
+      Performance: 3
     },
-    "senses": {
-      "darkvision": "60 ft.",
-      "passive_perception": 9
+    senses: {
+      darkvision: "60 ft.",
+      passive_perception: 9
     },
-    "languages": [
+    languages: [
       "Common"
     ],
-    "challenge_rating": 0.25,
-    "xp": 50,
-    "proficiency_bonus": 2,
-    "traits": [
+    challenge_rating: 0.25,
+    proficiency_bonus: 2,
+    traits: [
       {
-        "name": "Drum Line",
-        "description": "If the Yokario makes an attack against a creature that has been hit by one of its allies' Drum Mallets since the end of the Yokario's last turn, its Drum Mallet has an attack bonus of +6 instead of +4."
+        name: "Drum Line",
+        description: "If the Yokario makes an attack against a creature that has been hit by one of its allies' Drum Mallets since the end of the Yokario's last turn, its Drum Mallet has an attack bonus of +6 instead of +4."
       }
     ],
-    "actions": [
+    actions: [
       {
-        "name": "Drum Mallet",
-        "description": "Melee Weapon Attack: +4 to hit (or +6 with Drum Line), reach 5 ft., one target. Hit: 5 (1d6 + 2) bludgeoning damage."
+        name: "Drum Mallet",
+        description: "Melee Weapon Attack: +4 to hit (or +6 with Drum Line), reach 5 ft., one target. Hit: 5 (1d6 + 2) bludgeoning damage."
       },
       {
-        "name": "Sling",
-        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 4 (1d4 + 2) bludgeoning damage."
+        name: "Sling",
+        description: "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 4 (1d4 + 2) bludgeoning damage."
       }
     ]
   }
