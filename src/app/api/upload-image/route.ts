@@ -3,6 +3,15 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 export async function POST(request: NextRequest) {
+  // Check if in demo mode
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+  if (isDemoMode) {
+    return NextResponse.json({
+      error: 'Image upload is not available in demo mode. In the full version, you can upload custom images for your items.'
+    }, { status: 403 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;

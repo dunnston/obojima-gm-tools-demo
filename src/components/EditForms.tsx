@@ -18,14 +18,21 @@ async function copyFileToPublicDirectory(file: File, filename: string, subfolder
       body: formData,
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
+      // If it's a demo mode error, show a more user-friendly message
+      if (response.status === 403 && result.error) {
+        throw new Error(result.error);
+      }
       throw new Error(`Upload failed: ${response.statusText}`);
     }
 
-    const result = await response.json();
     console.log('File uploaded successfully:', result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error copying file:', error);
+    // Show the actual error message to the user
+    alert(error.message || 'Failed to upload image. Please try again.');
     throw error;
   }
 }
@@ -1402,11 +1409,15 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
         body: formData,
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
+        // If it's a demo mode error, show the specific message
+        if (response.status === 403 && data.error) {
+          throw new Error(data.error);
+        }
         throw new Error('Upload failed');
       }
-
-      const data = await response.json();
       
       setEditedNPC((prev: any) => ({
         ...prev,
@@ -1414,9 +1425,9 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
       }));
       
       setUploadProgress(100);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(error.message || 'Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
       setTimeout(() => setUploadProgress(0), 1000);
