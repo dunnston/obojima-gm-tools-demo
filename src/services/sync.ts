@@ -313,12 +313,48 @@ class SyncService {
 
   // Helper method to sync data with localStorage fallback
   async syncWithFallback(dataType: DataType, localStorageKey: string, validator?: (item: any) => any): Promise<any[]> {
+    // In demo mode, always use localStorage
+    if (IS_DEMO_MODE || !API_BASE) {
+      const savedData = localStorage.getItem(localStorageKey);
+      if (savedData) {
+        try {
+          let parsed = JSON.parse(savedData);
+
+          // Fix old potion IDs that don't include category
+          if (dataType === 'user-potions' && parsed.length > 0) {
+            parsed = parsed.map((potion: any) => {
+              // Fix old ID format (potion-1) to new format (potion-Combat-1)
+              if (potion.id && !potion.id.includes(`-${potion.category}-`)) {
+                return {
+                  ...potion,
+                  id: `potion-${potion.category}-${potion.number}`
+                };
+              }
+              return {
+                ...potion,
+                id: potion.id || `potion-${potion.category}-${potion.number}`
+              };
+            });
+            // Save the fixed data back to localStorage
+            localStorage.setItem(localStorageKey, JSON.stringify(parsed));
+          }
+
+          return validator ? parsed.map(validator) : parsed;
+        } catch (e) {
+          console.error(`Error parsing localStorage data for ${localStorageKey}:`, e);
+          return [];
+        }
+      }
+      return [];
+    }
+
+    // Non-demo mode: try to sync with server
     try {
       const result = await this.getData(dataType);
-      
+
       if (result.success && result.data) {
         let validatedData = validator ? result.data.map(validator) : result.data;
-        
+
         // Special handling for potions to ensure they have IDs
         if (dataType === 'user-potions') {
           validatedData = validatedData.map(potion => ({
@@ -326,7 +362,7 @@ class SyncService {
             id: potion.id || `potion-${potion.category}-${potion.number}`
           }));
         }
-        
+
         // Update localStorage as backup
         localStorage.setItem(localStorageKey, JSON.stringify(validatedData));
         return validatedData;
@@ -334,18 +370,58 @@ class SyncService {
         // Fall back to localStorage
         const savedData = localStorage.getItem(localStorageKey);
         if (savedData) {
-          const parsed = JSON.parse(savedData);
+          let parsed = JSON.parse(savedData);
+
+          // Fix old potion IDs that don't include category
+          if (dataType === 'user-potions') {
+            parsed = parsed.map((potion: any) => {
+              // Fix old ID format (potion-1) to new format (potion-Combat-1)
+              if (potion.id && !potion.id.includes(`-${potion.category}-`)) {
+                return {
+                  ...potion,
+                  id: `potion-${potion.category}-${potion.number}`
+                };
+              }
+              return {
+                ...potion,
+                id: potion.id || `potion-${potion.category}-${potion.number}`
+              };
+            });
+            // Save the fixed data back to localStorage
+            localStorage.setItem(localStorageKey, JSON.stringify(parsed));
+          }
+
           return validator ? parsed.map(validator) : parsed;
         }
         return [];
       }
     } catch (error) {
       console.error(`Error syncing ${dataType}:`, error);
-      
+
       // Fall back to localStorage
       const savedData = localStorage.getItem(localStorageKey);
       if (savedData) {
-        const parsed = JSON.parse(savedData);
+        let parsed = JSON.parse(savedData);
+
+        // Fix old potion IDs that don't include category
+        if (dataType === 'user-potions') {
+          parsed = parsed.map((potion: any) => {
+            // Fix old ID format (potion-1) to new format (potion-Combat-1)
+            if (potion.id && !potion.id.includes(`-${potion.category}-`)) {
+              return {
+                ...potion,
+                id: `potion-${potion.category}-${potion.number}`
+              };
+            }
+            return {
+              ...potion,
+              id: potion.id || `potion-${potion.category}-${potion.number}`
+            };
+          });
+          // Save the fixed data back to localStorage
+          localStorage.setItem(localStorageKey, JSON.stringify(parsed));
+        }
+
         return validator ? parsed.map(validator) : parsed;
       }
       return [];

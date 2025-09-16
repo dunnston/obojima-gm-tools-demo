@@ -59,7 +59,7 @@ export default function DatabaseView() {
       // Load all user-generated content in parallel
       const [
         potionData,
-        ingredientData, 
+        ingredientData,
         creatureData,
         magicItemData,
         npcData,
@@ -74,6 +74,9 @@ export default function DatabaseView() {
         syncService.syncWithFallback('user-companion-types', 'modifiedCompanionTypes'),
         syncService.syncWithFallback('companions', 'modifiedCompanions')
       ]);
+
+      console.log('Loaded potion data from sync:', potionData);
+      console.log('LocalStorage modifiedPotions:', localStorage.getItem('modifiedPotions'));
 
       setModifiedPotions(potionData);
       setModifiedIngredients(ingredientData);
@@ -602,11 +605,14 @@ export default function DatabaseView() {
         }
       })();
 
+      console.log('Saving updated potions:', updatedPotions);
       setModifiedPotions(updatedPotions);
 
       // Sync to server
       try {
         await saveUserPotions(updatedPotions);
+        console.log('Potions saved successfully');
+        console.log('LocalStorage after save:', localStorage.getItem('modifiedPotions'));
       } catch (error) {
         console.error('Error syncing potion:', error);
       }
