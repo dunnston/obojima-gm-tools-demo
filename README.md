@@ -2,13 +2,13 @@
 
 A comprehensive Game Master toolkit for running Obojima RPG sessions, featuring potion brewing, creature management, session planning, and much more.
 
-## 🎮 Try the Demo
+##  Try the Demo
 
 **Live Demo:** [obojima-gm-tools-demo.vercel.app](https://obojima-gm-tools-demo.vercel.app)
 
 The demo version includes core functionality and sample content, but for the full experience with all features, we recommend installing locally.
 
-## 🆚 Demo vs Local Installation
+##  Demo vs Local Installation
 
 | Feature | Demo Version | Local Installation |
 |---------|-------------|-------------------|
@@ -20,7 +20,7 @@ The demo version includes core functionality and sample content, but for the ful
 | Data Backup | ❌ | ✅ Full control |
 | Updates | 🔄 Automatic | ✅ You control when |
 
-## 🚀 Local Installation
+##  Local Installation
 
 ### Prerequisites
 
@@ -55,7 +55,7 @@ The demo version includes core functionality and sample content, but for the ful
 
 That's it! You now have the full Obojima GM Tools running locally.
 
-## 🖥️ Platform-Specific Instructions
+##  Platform-Specific Instructions
 
 ### Windows
 
@@ -131,7 +131,7 @@ That's it! You now have the full Obojima GM Tools running locally.
    npm run dev
    ```
 
-## 📋 Available Scripts
+##  Available Scripts
 
 - `npm run dev` - Start development server (localhost:3000)
 - `npm run dev:demo` - Start in demo mode (localhost:3001)
@@ -139,14 +139,14 @@ That's it! You now have the full Obojima GM Tools running locally.
 - `npm run start` - Start production server
 - `npm run lint` - Run code linting
 
-## 🗃️ Data Storage
+##  Data Storage
 
 - **Local Installation**: Uses SQLite database (`data/obojima.db`)
 - **Demo Version**: Uses browser localStorage
 
 Your data is automatically saved and persists between sessions.
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -175,21 +175,21 @@ Your data is automatically saved and persists between sessions.
 - File issues on [GitHub](https://github.com/dunnston/obojima-gm-tools-demo/issues)
 - Make sure you have the latest version
 
-## ✨ Features
+##  Features
 
-- 🧪 **Potion Brewing** - Create and manage magical potions
-- 🌿 **Ingredient Foraging** - Track ingredient gathering
-- 🛒 **Vending Machine** - Automated potion dispensing
-- ⚔️ **Encounter Creator** - Build combat encounters
-- 🎯 **Initiative Tracker** - Manage combat turn order
-- 👥 **Character Manager** - Track player characters
-- 📝 **Session Planner** - Plan and run game sessions
-- 📅 **Obojima Calendar** - Track in-game time
-- ⏰ **Downtime Tracker** - Manage character downtime activities
-- 🗃️ **Database Editor** - Customize your content
-- 📊 **Quest Log** - Track campaign quests
+-  **Potion Brewing** - Create and manage magical potions
+-  **Ingredient Foraging** - Track ingredient gathering
+-  **Vending Machine** - Automated potion dispensing
+-  **Encounter Creator** - Build combat encounters
+-  **Initiative Tracker** - Manage combat turn order
+-  **Character Manager** - Track player characters
+-  **Session Planner** - Plan and run game sessions
+-  **Obojima Calendar** - Track in-game time
+-  **Downtime Tracker** - Manage character downtime activities
+-  **Database Editor** - Customize your content
+-  **Quest Log** - Track campaign quests
 
-## 🎯 Why Install Locally?
+##  Why Install Locally?
 
 ### Complete Experience
 - Access to the full creature database (300+ creatures vs 9 in demo)
@@ -207,7 +207,7 @@ Your data is automatically saved and persists between sessions.
 - No network latency
 - Works completely offline
 
-## 🔄 Updating
+##  Updating
 
 To update your local installation:
 
@@ -227,11 +227,11 @@ npm run dev
 
 If you downloaded as ZIP, simply download the latest version and replace your files (your `data/` folder will be preserved).
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
