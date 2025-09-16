@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Potion Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .danger { background-color: #dc3545; color: white; }
+        .success { background-color: #28a745; color: white; }
+        .info { background-color: #17a2b8; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Potion Fix</h1>
+    
+    <div class="section">
+        <h2>Step 1: Clear modifiedPotions from localStorage</h2>
+        <p>This will ensure we're starting fresh with the fix applied.</p>
+        <button class="button danger" onclick="clearModifiedPotions()">Clear modifiedPotions</button>
+        <div id="clear-result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 2: Reload Your App</h2>
+        <p>After clearing localStorage:</p>
+        <ol>
+            <li>Go to your app at <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+            <li>Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)</li>
+            <li>Go to Database view</li>
+            <li>You should see only 1 "Rabbit's Speed" potion</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>Step 3: Test Editing</h2>
+        <ol>
+            <li>Edit "Rabbit's Speed" and change the name to "Rabbit's Speed 2"</li>
+            <li>Save the changes</li>
+            <li>Check if you still see duplicates</li>
+            <li>Report back the results</li>
+        </ol>
+    </div>
+    
+    <script>
+        function clearModifiedPotions() {
+            const resultDiv = document.getElementById('clear-result');
+            
+            // Check current state
+            const current = localStorage.getItem('modifiedPotions');
+            if (current) {
+                try {
+                    const potions = JSON.parse(current);
+                    resultDiv.innerHTML = `<p>Found ${potions.length} potions in localStorage. Clearing...</p>`;
+                    
+                    // Clear it
+                    localStorage.removeItem('modifiedPotions');
+                    
+                    // Verify
+                    const after = localStorage.getItem('modifiedPotions');
+                    if (!after) {
+                        resultDiv.innerHTML += '<p style="color: green">✅ Successfully cleared modifiedPotions from localStorage!</p>';
+                        resultDiv.innerHTML += '<p>Now reload your app and test editing.</p>';
+                    } else {
+                        resultDiv.innerHTML += '<p style="color: red">❌ Failed to clear localStorage</p>';
+                    }
+                } catch (e) {
+                    resultDiv.innerHTML = '<p style="color: red">Error: ' + e.message + '</p>';
+                }
+            } else {
+                resultDiv.innerHTML = '<p style="color: blue">ℹ️ No modifiedPotions found in localStorage (already clear)</p>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -15,6 +15,7 @@ import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
+import LocalSetupPage from './local-setup/page';
 import { syncService } from '@/services/sync';
 
 export default function Home() {
@@ -142,6 +143,8 @@ export default function Home() {
         return <EnhancedObojimaCalendar currentDate={currentObojimaDate} onDateChange={handleObojimaDateChange} onRefresh={loadCalendarDate} syncStatus={calendarSyncStatus} />;
       case 'downtime':
         return <DowntimeTracker currentObojimaDate={currentObojimaDate} />;
+      case 'local-setup':
+        return <LocalSetupPage />;
       case 'settings':
         return <Settings />;
       case 'credits':

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  BeakerIcon, 
-  BookOpenIcon, 
+import {
+  BeakerIcon,
+  BookOpenIcon,
   BuildingStorefrontIcon,
   CogIcon,
   SparklesIcon,
@@ -17,7 +17,8 @@ import {
   BoltIcon,
   DocumentTextIcon,
   InformationCircleIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -30,7 +31,9 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const { t } = useTranslation();
 
-  const menuItems = [
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+  const baseMenuItems = [
     { id: 'potions', name: t('navigation.potions'), icon: BeakerIcon, color: 'text-emerald-400' },
     { id: 'foraging', name: t('navigation.ingredients'), icon: MagnifyingGlassIcon, color: 'text-green-400' },
     { id: 'vending', name: t('vendingMachine.title'), icon: BuildingStorefrontIcon, color: 'text-orange-400' },
@@ -45,6 +48,15 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'settings', name: t('navigation.settings'), icon: CogIcon, color: 'text-gray-400' },
     { id: 'credits', name: t('navigation.credits'), icon: InformationCircleIcon, color: 'text-indigo-400' }
   ];
+
+  // Add local setup page only in demo mode
+  const menuItems = isDemoMode
+    ? [
+        ...baseMenuItems.slice(0, -2), // All items except settings and credits
+        { id: 'local-setup', name: 'Local Installation', icon: ComputerDesktopIcon, color: 'text-emerald-300' },
+        ...baseMenuItems.slice(-2) // Settings and credits at the end
+      ]
+    : baseMenuItems;
 
   return (
     <>
