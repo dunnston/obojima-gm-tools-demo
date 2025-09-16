@@ -88,3 +88,7 @@ prepare-*.js
 clear-potion-localstorage.html
 complete-potion-reset.html
 image-registration.txt
+
+# Audio files - keep folder structure but ignore contents
+public/audio/music/*
+!public/audio/music/.gitkeep
