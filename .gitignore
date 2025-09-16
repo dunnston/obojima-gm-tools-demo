@@ -89,6 +89,9 @@ clear-potion-localstorage.html
 complete-potion-reset.html
 image-registration.txt
 
+# Development scripts folder - keep local only
+scripts/
+
 # Audio files - keep folder structure but ignore contents
 public/audio/music/*
 !public/audio/music/.gitkeep
