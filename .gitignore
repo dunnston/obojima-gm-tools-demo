@@ -96,3 +96,7 @@ public/audio/music/*
 # Character images - keep folder structure but ignore personal images
 public/images/characters/*
 !public/images/characters/.gitkeep
+
+# NPC images - keep folder structure but ignore personal images
+public/images/npcs/*
+!public/images/npcs/.gitkeep
