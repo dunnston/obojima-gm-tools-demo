@@ -67,3 +67,19 @@ data/
 # Proprietary content - keep local only
 src/data/creatures-full.ts
 src/data/creatures-original.ts
+
+# Internal development files - keep local only
+*BETA*.md
+*CREATURE*.md
+*DEMO*.md
+*DISTRIBUTION*.md
+*INSTALLATION*.md
+*Obojima-Potions-Beta*.zip
+*PACKAGE*.bat
+*SETUP*.bat
+*START*.bat
+cleanup-*.js
+download-*.js
+creatures-full-backup.ts
+register-*.js
+prepare-*.js
