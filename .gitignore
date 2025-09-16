@@ -83,3 +83,8 @@ download-*.js
 creatures-full-backup.ts
 register-*.js
 prepare-*.js
+
+# Internal debugging tools
+clear-potion-localstorage.html
+complete-potion-reset.html
+image-registration.txt
