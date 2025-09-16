@@ -63,3 +63,7 @@ data/
 *.db
 *.db-shm
 *.db-wal
+
+# Proprietary content - keep local only
+src/data/creatures-full.ts
+src/data/creatures-original.ts
