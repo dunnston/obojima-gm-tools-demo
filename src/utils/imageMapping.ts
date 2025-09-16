@@ -894,6 +894,114 @@ localCreatureFiles.add('Witch.webp');
 addLocalCreatureFile('Yokario', 'webp');
 localCreatureFiles.add('Yokario.webp');
 
+// Initialize ALL magic item images
+addLocalMagicItemFile('Anglerfish Helm', 'webp');
+localMagicItemFiles.add('Anglerfish Helm.webp');
+addLocalMagicItemFile('Baffled Candle', 'webp');
+localMagicItemFiles.add('Baffled Candle.webp');
+addLocalMagicItemFile('Bell of Resonance', 'webp');
+localMagicItemFiles.add('Bell of Resonance.webp');
+addLocalMagicItemFile('Boots of the Stampede', 'webp');
+localMagicItemFiles.add('Boots of the Stampede.webp');
+addLocalMagicItemFile('Burnright Brand Hair Dryer', 'webp');
+localMagicItemFiles.add('Burnright Brand Hair Dryer.webp');
+addLocalMagicItemFile('Canseco Bat', 'webp');
+localMagicItemFiles.add('Canseco Bat.webp');
+addLocalMagicItemFile('Censer of Arguing Spirits', 'webp');
+localMagicItemFiles.add('Censer of Arguing Spirits.webp');
+addLocalMagicItemFile('Cloud-touched Boomerang', 'webp');
+localMagicItemFiles.add('Cloud-touched Boomerang.webp');
+addLocalMagicItemFile('Coins Edge', 'webp');
+localMagicItemFiles.add('Coins Edge.webp');
+addLocalMagicItemFile('Corrupted Pendant', 'webp');
+localMagicItemFiles.add('Corrupted Pendant.webp');
+addLocalMagicItemFile('CRT TV & Chicken Timer', 'webp');
+localMagicItemFiles.add('CRT TV & Chicken Timer.webp');
+addLocalMagicItemFile('Cube of Cubes', 'webp');
+localMagicItemFiles.add('Cube of Cubes.webp');
+addLocalMagicItemFile('Eye Kite', 'webp');
+localMagicItemFiles.add('Eye Kite.webp');
+addLocalMagicItemFile('Familiars Collar', 'webp');
+localMagicItemFiles.add('Familiars Collar.webp');
+addLocalMagicItemFile('Field Cauldron', 'webp');
+localMagicItemFiles.add('Field Cauldron.webp');
+addLocalMagicItemFile('Fishermans Spear', 'webp');
+localMagicItemFiles.add('Fishermans Spear.webp');
+addLocalMagicItemFile('Flying Broomstick', 'webp');
+localMagicItemFiles.add('Flying Broomstick.webp');
+addLocalMagicItemFile('Gametoy', 'webp');
+localMagicItemFiles.add('Gametoy.webp');
+addLocalMagicItemFile('Guardian Spheres', 'webp');
+localMagicItemFiles.add('Guardian Spheres.webp');
+addLocalMagicItemFile('Herons Eye Ring', 'webp');
+localMagicItemFiles.add('Herons Eye Ring.webp');
+addLocalMagicItemFile('Hover Hopper', 'webp');
+localMagicItemFiles.add('Hover Hopper.webp');
+addLocalMagicItemFile('Hurlers Gloves', 'webp');
+localMagicItemFiles.add('Hurlers Gloves.webp');
+addLocalMagicItemFile('Instaprint Camera', 'webp');
+localMagicItemFiles.add('Instaprint Camera.webp');
+addLocalMagicItemFile('Jabbadoons Feather', 'webp');
+localMagicItemFiles.add('Jabbadoons Feather.webp');
+addLocalMagicItemFile('Keys to the Sandcastle', 'webp');
+localMagicItemFiles.add('Keys to the Sandcastle.webp');
+addLocalMagicItemFile('Keytar', 'webp');
+localMagicItemFiles.add('Keytar.webp');
+addLocalMagicItemFile('Lafulas Iron Teapot', 'webp');
+localMagicItemFiles.add('Lafulas Iron Teapot.webp');
+addLocalMagicItemFile('Lunar Weapon', 'webp');
+localMagicItemFiles.add('Lunar Weapon.webp');
+addLocalMagicItemFile('Oikis Pinwheel', 'webp');
+localMagicItemFiles.add('Oikis Pinwheel.webp');
+addLocalMagicItemFile('Only Members Jacket', 'webp');
+localMagicItemFiles.add('Only Members Jacket.webp');
+addLocalMagicItemFile('Painters Sun Hat', 'webp');
+localMagicItemFiles.add('Painters Sun Hat.webp');
+addLocalMagicItemFile('Pendants of Belonging', 'webp');
+localMagicItemFiles.add('Pendants of Belonging.webp');
+addLocalMagicItemFile('Punch Card', 'webp');
+localMagicItemFiles.add('Punch Card.webp');
+addLocalMagicItemFile('Roakes Clay Urn', 'webp');
+localMagicItemFiles.add('Roakes Clay Urn.webp');
+addLocalMagicItemFile('Ruby Red Bike', 'webp');
+localMagicItemFiles.add('Ruby Red Bike.webp');
+addLocalMagicItemFile('Scarf of Muffling', 'webp');
+localMagicItemFiles.add('Scarf of Muffling.webp');
+addLocalMagicItemFile('Scuttling Lantern', 'webp');
+localMagicItemFiles.add('Scuttling Lantern.webp');
+addLocalMagicItemFile('Sibling Purses 1', 'webp');
+localMagicItemFiles.add('Sibling Purses 1.webp');
+addLocalMagicItemFile('Sibling Purses 2', 'webp');
+localMagicItemFiles.add('Sibling Purses 2.webp');
+addLocalMagicItemFile('Sibling Purses', 'webp');
+localMagicItemFiles.add('Sibling Purses.webp');
+addLocalMagicItemFile('Soda Cans 1', 'webp');
+localMagicItemFiles.add('Soda Cans 1.webp');
+addLocalMagicItemFile('Soda Cans 2', 'webp');
+localMagicItemFiles.add('Soda Cans 2.webp');
+addLocalMagicItemFile('Soda Cans 3', 'webp');
+localMagicItemFiles.add('Soda Cans 3.webp');
+addLocalMagicItemFile('Soda Cans', 'webp');
+localMagicItemFiles.add('Soda Cans.webp');
+addLocalMagicItemFile('Solar Amulet', 'webp');
+localMagicItemFiles.add('Solar Amulet.webp');
+addLocalMagicItemFile('Splinter Bow', 'webp');
+localMagicItemFiles.add('Splinter Bow.webp');
+addLocalMagicItemFile('Sticky Hand', 'webp');
+localMagicItemFiles.add('Sticky Hand.webp');
+addLocalMagicItemFile('Sunbaked Cassette', 'webp');
+localMagicItemFiles.add('Sunbaked Cassette.webp');
+addLocalMagicItemFile('Talisman of the Phoenix', 'webp');
+localMagicItemFiles.add('Talisman of the Phoenix.webp');
+addLocalMagicItemFile('Travel Wok', 'webp');
+localMagicItemFiles.add('Travel Wok.webp');
+addLocalMagicItemFile('Umbrella of Shielding', 'webp');
+localMagicItemFiles.add('Umbrella of Shielding.webp');
+addLocalMagicItemFile('Weapon of the Sun and Moon', 'webp');
+localMagicItemFiles.add('Weapon of the Sun and Moon.webp');
+addLocalMagicItemFile('Yappa Mask', 'webp');
+localMagicItemFiles.add('Yappa Mask.webp');
+
 // Load saved creature files from localStorage
 if (typeof window !== 'undefined') {
   const savedCreatureFiles = JSON.parse(localStorage.getItem('localCreatureFiles') || '[]');
@@ -985,18 +1093,46 @@ export function getCreatureImageUrl(creatureName: string): string {
   return '/images/creatures/default-creature.svg';
 }
 
+// Magic item name to filename mapping for items where display name differs from filename
+const magicItemNameMapping: Record<string, string> = {
+  "Burnbright Brand Hair Dryer": "Burnright Brand Hair Dryer",
+  "Cloud-Touched Boomerang": "Cloud-touched Boomerang",
+  "Coin's Edge": "Coins Edge",
+  "Familiar's Collar": "Familiars Collar",
+  "Fisherman's Spear": "Fishermans Spear",
+  "Heron's Eye Ring": "Herons Eye Ring",
+  "Hurler's Gloves": "Hurlers Gloves",
+  "Jabbadoon's Feather": "Jabbadoons Feather",
+  "Lafula's Iron Teapot": "Lafulas Iron Teapot",
+  "Oiki's Pinwheel": "Oikis Pinwheel",
+  "Painter's Sun Hat": "Painters Sun Hat",
+  "Roake's Clay Urn": "Roakes Clay Urn",
+  "Sunbaked Cassettes": "Sunbaked Cassette"
+};
+
 // Get specific image for magic item or fallback to default
 export function getMagicItemImageUrl(magicItemName: string): string {
   const localImageExtensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
-  
-  // First check for files with original magic item name (exact match with spaces)
+
+  // Check if there's a specific filename mapping for this item
+  const mappedName = magicItemNameMapping[magicItemName] || magicItemName;
+
+  // First check for files with mapped name (exact match with spaces)
+  for (const ext of localImageExtensions) {
+    const mappedFilename = `${mappedName}.${ext}`;
+    if (localMagicItemFiles.has(mappedFilename)) {
+      return `/images/magic-items/${mappedFilename}`;
+    }
+  }
+
+  // Then check for files with original magic item name (exact match with spaces)
   for (const ext of localImageExtensions) {
     const originalFilename = `${magicItemName}.${ext}`;
     if (localMagicItemFiles.has(originalFilename)) {
       return `/images/magic-items/${originalFilename}`;
     }
   }
-  
+
   // Then check for normalized names (with dashes instead of spaces)
   const cleanName = magicItemName.toLowerCase().replace(/[^a-z0-9]/g, '-');
   for (const ext of localImageExtensions) {
@@ -1005,7 +1141,7 @@ export function getMagicItemImageUrl(magicItemName: string): string {
       return `/images/magic-items/${filename}`;
     }
   }
-  
+
   return '/images/magic-items/default-magic-item.svg';
 }
 

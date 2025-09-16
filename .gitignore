@@ -91,6 +91,7 @@ image-registration.txt
 
 # Development scripts folder - keep local only
 scripts/
+!scripts/prepare-public-release-simple.js
 
 # Audio files - keep folder structure but ignore contents
 public/audio/music/*
