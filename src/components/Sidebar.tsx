@@ -60,18 +60,18 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
 
       {/* Sidebar */}
       <div className={`
-        fixed md:relative h-full z-40 transition-all duration-300 ease-in-out
+        fixed md:static h-screen md:h-auto z-40 transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         ${isOpen ? 'w-64' : 'md:w-16'}
       `}>
         {/* Backdrop for mobile */}
         {isOpen && (
-          <div 
+          <div
             className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
             onClick={() => setIsOpen(false)}
           />
         )}
-        
+
         <div className="relative h-full bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-r border-white/10 shadow-2xl z-40">
           {/* Header */}
           <div className="p-6 border-b border-white/10">

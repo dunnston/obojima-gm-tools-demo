@@ -265,7 +265,7 @@ addLocalPotionFile('Iron Belly', 'webp');
 localPotionFiles.add('Iron Belly.webp');
 addLocalPotionFile('Iron Mind', 'webp');
 localPotionFiles.add('Iron Mind.webp');
-addLocalPotionFile('Irresistible', 'webp');
+addLocalPotionFile('Irresistible Charm', 'webp');
 localPotionFiles.add('Irresistible.webp');
 addLocalPotionFile('Island Nectar', 'webp');
 localPotionFiles.add('Island Nectar.webp');
@@ -469,8 +469,8 @@ addLocalPotionFile('Wrathful Spirit', 'webp');
 localPotionFiles.add('Wrathful Spirit.webp');
 
 // Initialize ALL ingredient images
-addLocalIngredientFile('amber', 'webp');
-localIngredientFiles.add('amber.webp');
+addLocalIngredientFile('Amber', 'webp');
+localIngredientFiles.add('Amber.webp');
 addLocalIngredientFile('apper-carrot', 'webp');
 localIngredientFiles.add('apper-carrot.webp');
 addLocalIngredientFile('Bamboo', 'webp');

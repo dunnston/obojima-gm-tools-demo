@@ -160,9 +160,9 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      <div className="flex h-screen relative">
+      <div className="grid grid-cols-[auto_1fr] min-h-screen">
         <Sidebar onPageChange={setCurrentPage} currentPage={currentPage} />
-        <div className="flex-1 overflow-auto">
+        <div className="min-h-screen">
           {renderPage()}
         </div>
       </div>
