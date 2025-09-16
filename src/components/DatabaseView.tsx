@@ -572,7 +572,7 @@ export default function DatabaseView() {
       const updatedPotions = (() => {
         // Check if this is a new item (original editing item had empty name)
         const isNewItem = editingItem?.name === '';
-        
+
         if (isNewItem) {
           // Assign new unique number for new potions
           const maxNumber = Math.max(
@@ -581,20 +581,29 @@ export default function DatabaseView() {
             0
           );
           updatedItem.number = maxNumber + 1;
-          
+
+          // Ensure the new potion has a proper ID based on category AND number
+          updatedItem.id = `potion-${updatedItem.category}-${updatedItem.number}`;
+
           if (updatedItem.name && updatedItem.name.trim()) {
             return [...modifiedPotions, updatedItem];
           }
           return modifiedPotions;
         } else {
-          // For existing items, replace the existing one using the original number
-          const filtered = modifiedPotions.filter(item => item.number !== editingItem.number);
+          // For existing items, replace the existing one using BOTH category AND number for uniqueness
+          const filtered = modifiedPotions.filter(item =>
+            !(item.number === editingItem.number && item.category === editingItem.category)
+          );
+
+          // Ensure the updated potion has a proper ID
+          updatedItem.id = updatedItem.id || `potion-${updatedItem.category}-${updatedItem.number}`;
+
           return [...filtered, updatedItem];
         }
       })();
-      
+
       setModifiedPotions(updatedPotions);
-      
+
       // Sync to server
       try {
         await saveUserPotions(updatedPotions);
