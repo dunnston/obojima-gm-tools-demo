@@ -1,13 +1,13 @@
-# 🎯 Credits & Acknowledgments
+#  Credits & Acknowledgments
 
-## 📚 Source Material
+##  Source Material
 
 **Obojima Book by 1985 Games**
 - Website: https://obojima.com/
 - Source of ingredient, magic item, potion, and creature data
 - Original world setting and lore
 
-## 💡 Inspiration & Data Sources
+##  Inspiration & Data Sources
 
 **weaverotales**
 - Inspiration and spreadsheet data contributions
@@ -17,20 +17,20 @@
 - Inspiration and spreadsheet data contributions
 - Data organization and structure
 
-## 🛠️ Development
+##  Development
 
 **Application Development**
 - Built with Next.js, React, and TypeScript
 - Tailwind CSS for styling
 - Created as a D&D Game Master toolkit
 
-## 🎮 Gaming System
+##  Gaming System
 
 **Dungeons & Dragons**
 - Game mechanics and stat blocks follow D&D 5th Edition conventions
 - Creature statistics and abilities based on D&D standards
 
-## 🔧 Technical Acknowledgments
+## Technical Acknowledgments
 
 **Open Source Libraries**
 - Next.js - React framework
@@ -39,13 +39,13 @@
 - Tailwind CSS - Styling framework
 - Heroicons - Icon library
 
-## 🎨 Assets
+##  Assets
 
 **Images**
 - Creature, potion, ingredient, and magic item images sourced from Obojima materials
 - Default placeholder images created for the application
 
-## 🙏 Special Thanks
+##  Special Thanks
 
 - **1985 Games** for creating the rich Obojima world and allowing use of their materials
 - **weaverotales** and **ThorTheNinja** for their valuable data contributions and inspiration
