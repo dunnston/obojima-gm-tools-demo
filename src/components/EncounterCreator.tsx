@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { creatures, Creature, Encounter } from '@/data/creatures';
+import { getImportedCreatures } from '@/utils/creatureImport';
 import StatBlock from './StatBlock';
 import { calculateEncounterDifficulty, getEncounterDifficultyRating } from '@/utils/encounterCalculator';
 import { syncService } from '@/services/sync';
@@ -27,6 +28,8 @@ export default function EncounterCreator() {
   const [savedEncounters, setSavedEncounters] = useState<Encounter[]>([]);
   const [partyLevel, setPartyLevel] = useState(5);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const [modifiedCreatures, setModifiedCreatures] = useState<any[]>([]);
+  const [availableCreatures, setAvailableCreatures] = useState<Creature[]>([]);
   const { t } = useTranslation();
 
   // Validator for encounter data
@@ -49,16 +52,50 @@ export default function EncounterCreator() {
     }
   };
 
+  // Load creatures from all sources
+  const loadCreatures = async () => {
+    try {
+      // Load modified creatures from sync service
+      const savedCreatures = await syncService.syncWithFallback('user-creatures', 'modifiedCreatures');
+      setModifiedCreatures(savedCreatures || []);
+
+      // Combine original creatures with imported creatures
+      const importedCreatures = getImportedCreatures();
+      const allBaseCreatures = [
+        ...creatures,
+        ...importedCreatures.filter(imported => !creatures.find(original => original.name === imported.name))
+      ];
+
+      // Apply modifications to creatures and add new ones
+      const allCreatures = [
+        ...allBaseCreatures.map(creature => {
+          const modified = savedCreatures?.find((c: any) => c.name === creature.name);
+          return modified || creature;
+        }),
+        // Add completely new creatures that don't exist in base data
+        ...(savedCreatures?.filter((modified: any) =>
+          !allBaseCreatures.find(original => original.name === modified.name)) || [])
+      ];
+
+      setAvailableCreatures(allCreatures);
+    } catch (error) {
+      console.error('Error loading creatures:', error);
+      // Fallback to base creatures if loading fails
+      setAvailableCreatures(creatures);
+    }
+  };
+
   // Load encounters on mount
   useEffect(() => {
     loadEncounters();
-    
+    loadCreatures();
+
     // Note: Auto-sync disabled to prevent conflicts with other components
     // Users can manually refresh using the refresh button
   }, []);
 
   // Filter creatures based on search term
-  const filteredCreatures = creatures.filter(creature =>
+  const filteredCreatures = availableCreatures.filter(creature =>
     creature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     creature.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     creature.size.toLowerCase().includes(searchTerm.toLowerCase())
@@ -184,7 +221,10 @@ export default function EncounterCreator() {
         <div className="flex items-center justify-center gap-3">
           <p className="text-slate-400">{t('encounters.creator.subtitle')}</p>
           <button
-            onClick={loadEncounters}
+            onClick={() => {
+              loadEncounters();
+              loadCreatures();
+            }}
             className="p-2 text-slate-400 hover:text-white transition-colors"
             title={t('encounters.creator.refresh')}
           >
