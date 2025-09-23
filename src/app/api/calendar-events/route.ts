@@ -1,52 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { CalendarEvent } from '@/data/calendarEvents';
+import { getStorageAdapter } from '@/lib/storage';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const EVENTS_FILE = path.join(DATA_DIR, 'calendar-events.json');
-
-// Ensure data directory exists
-async function ensureDataDir() {
-  try {
-    await fs.access(DATA_DIR);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  }
-}
-
-// Read events from file
-async function readEvents(): Promise<CalendarEvent[]> {
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(EVENTS_FILE, 'utf-8');
-    const events = JSON.parse(data);
-    
-    // Ensure dates are properly parsed
-    return events.map((event: any) => ({
-      ...event,
-      createdAt: new Date(event.createdAt),
-      updatedAt: new Date(event.updatedAt)
-    }));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-// Write events to file
-async function writeEvents(events: CalendarEvent[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2));
-}
+const TABLE_NAME = 'calendar_events';
 
 // GET - Fetch all calendar events
 export async function GET() {
   try {
-    const events = await readEvents();
-    return NextResponse.json(events);
+    const storage = getStorageAdapter();
+    const events = await storage.getAll(TABLE_NAME);
+
+    // Ensure dates are properly parsed
+    const parsedEvents = events.map((event: any) => ({
+      ...event,
+      createdAt: event.createdAt ? new Date(event.createdAt) : new Date(),
+      updatedAt: event.updatedAt ? new Date(event.updatedAt) : new Date()
+    }));
+
+    return NextResponse.json(parsedEvents);
   } catch (error) {
     console.error('Error fetching calendar events:', error);
     return NextResponse.json(
@@ -60,8 +31,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const eventData = await request.json();
-    const events = await readEvents();
-    
+    const storage = getStorageAdapter();
+
     const newEvent: CalendarEvent = {
       id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       title: eventData.title,
@@ -74,10 +45,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
-    events.push(newEvent);
-    await writeEvents(events);
-    
+
+    await storage.create(TABLE_NAME, newEvent.id, newEvent);
+
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
     console.error('Error creating calendar event:', error);
@@ -92,18 +62,18 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const eventData = await request.json();
-    const events = await readEvents();
-    
-    const eventIndex = events.findIndex(e => e.id === eventData.id);
-    if (eventIndex === -1) {
+    const storage = getStorageAdapter();
+
+    const existingEvent = await storage.get(TABLE_NAME, eventData.id);
+    if (!existingEvent) {
       return NextResponse.json(
         { error: 'Calendar event not found' },
         { status: 404 }
       );
     }
-    
+
     const updatedEvent: CalendarEvent = {
-      ...events[eventIndex],
+      ...existingEvent,
       title: eventData.title,
       description: eventData.description || '',
       location: eventData.location || '',
@@ -113,10 +83,9 @@ export async function PUT(request: NextRequest) {
       isDmOnly: eventData.isDmOnly || false,
       updatedAt: new Date()
     };
-    
-    events[eventIndex] = updatedEvent;
-    await writeEvents(events);
-    
+
+    await storage.update(TABLE_NAME, eventData.id, updatedEvent);
+
     return NextResponse.json(updatedEvent);
   } catch (error) {
     console.error('Error updating calendar event:', error);
@@ -132,26 +101,26 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('id');
-    
+
     if (!eventId) {
       return NextResponse.json(
         { error: 'Event ID is required' },
         { status: 400 }
       );
     }
-    
-    const events = await readEvents();
-    const updatedEvents = events.filter(event => event.id !== eventId);
-    
-    if (events.length === updatedEvents.length) {
+
+    const storage = getStorageAdapter();
+    const existingEvent = await storage.get(TABLE_NAME, eventId);
+
+    if (!existingEvent) {
       return NextResponse.json(
         { error: 'Calendar event not found' },
         { status: 404 }
       );
     }
-    
-    await writeEvents(updatedEvents);
-    
+
+    await storage.delete(TABLE_NAME, eventId);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting calendar event:', error);
