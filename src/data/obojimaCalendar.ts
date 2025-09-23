@@ -155,7 +155,7 @@ export const addDaysToObojimaDate = (date: ObojimaDate, daysToAdd: number): Oboj
 };
 
 export const subtractDaysFromObojimaDate = (date: ObojimaDate, daysToSubtract: number): ObojimaDate => {
-  let { year, season, phase, day } = date;
+  let { year, season, phase, day, cycle } = date;
   let remainingDays = daysToSubtract;
 
   while (remainingDays > 0) {
@@ -166,21 +166,22 @@ export const subtractDaysFromObojimaDate = (date: ObojimaDate, daysToSubtract: n
     } else {
       // Move to previous phase
       remainingDays -= day;
-      
-      const prevPhaseResult = getPreviousPhase(season, phase);
+
+      const prevPhaseResult = getPreviousPhase(season, phase, cycle);
       season = prevPhaseResult.season;
       phase = prevPhaseResult.phase;
-      
-      if (season === 'Winter' && phase === 'Waning Moon' && prevPhaseResult.newYear) {
+      cycle = prevPhaseResult.cycle;
+
+      if (prevPhaseResult.newYear) {
         year--;
       }
-      
+
       const prevPhase = MOON_PHASES.find(p => p.name === phase);
       day = prevPhase!.days;
     }
   }
 
-  return { year, season, phase, day };
+  return { year, season, phase, day, cycle };
 };
 
 const getNextPhase = (currentSeason: Season, currentPhase: MoonPhase, currentCycle: number): { season: Season; phase: MoonPhase; cycle: number; newYear: boolean } => {
@@ -227,32 +228,46 @@ const getNextPhase = (currentSeason: Season, currentPhase: MoonPhase, currentCyc
   }
 };
 
-const getPreviousPhase = (currentSeason: Season, currentPhase: MoonPhase): { season: Season; phase: MoonPhase; newYear: boolean } => {
+const getPreviousPhase = (currentSeason: Season, currentPhase: MoonPhase, currentCycle: number): { season: Season; phase: MoonPhase; cycle: number; newYear: boolean } => {
   const phaseIndex = MOON_PHASES.findIndex(p => p.name === currentPhase);
   const seasonIndex = SEASONS.findIndex(s => s.name === currentSeason);
-  
+
   if (phaseIndex > 0) {
-    // Previous phase in same season
+    // Previous phase in same cycle
     return {
       season: currentSeason,
       phase: MOON_PHASES[phaseIndex - 1].name,
+      cycle: currentCycle,
       newYear: false
     };
   } else {
-    // Last phase of previous season
-    if (seasonIndex > 0) {
+    // End of cycle - move to previous cycle or season
+    if (currentCycle > 1) {
+      // Previous cycle in same season
       return {
-        season: SEASONS[seasonIndex - 1].name,
+        season: currentSeason,
         phase: MOON_PHASES[MOON_PHASES.length - 1].name,
+        cycle: currentCycle - 1,
         newYear: false
       };
     } else {
-      // Previous year
-      return {
-        season: SEASONS[SEASONS.length - 1].name,
-        phase: MOON_PHASES[MOON_PHASES.length - 1].name,
-        newYear: true
-      };
+      // Previous season
+      if (seasonIndex > 0) {
+        return {
+          season: SEASONS[seasonIndex - 1].name,
+          phase: MOON_PHASES[MOON_PHASES.length - 1].name,
+          cycle: CYCLES_PER_SEASON,
+          newYear: false
+        };
+      } else {
+        // Previous year
+        return {
+          season: SEASONS[SEASONS.length - 1].name,
+          phase: MOON_PHASES[MOON_PHASES.length - 1].name,
+          cycle: CYCLES_PER_SEASON,
+          newYear: true
+        };
+      }
     }
   }
 };
@@ -326,11 +341,69 @@ export const isValidObojimaDate = (date: ObojimaDate): boolean => {
   if (!SEASONS.some(s => s.name === date.season)) return false;
   if (!MOON_PHASES.some(p => p.name === date.phase)) return false;
   if (date.cycle && (date.cycle < 1 || date.cycle > 3)) return false;
-  
+
   const phase = MOON_PHASES.find(p => p.name === date.phase);
   if (!phase) return false;
-  
+
   return date.day >= 1 && date.day <= phase.days;
+};
+
+/**
+ * Type guard to check if an unknown value is a valid ObojimaDate
+ */
+export const isObojimaDate = (value: unknown): value is ObojimaDate => {
+  if (!value || typeof value !== 'object') return false;
+
+  const obj = value as Record<string, unknown>;
+
+  // Check required properties exist and have correct types
+  if (typeof obj.year !== 'number' || obj.year < 1) return false;
+  if (typeof obj.season !== 'string' || !SEASONS.some(s => s.name === obj.season)) return false;
+  if (typeof obj.phase !== 'string' || !MOON_PHASES.some(p => p.name === obj.phase)) return false;
+  if (typeof obj.day !== 'number' || obj.day < 1) return false;
+  if (typeof obj.cycle !== 'number' || obj.cycle < 1 || obj.cycle > CYCLES_PER_SEASON) return false;
+
+  // Validate day is within phase bounds
+  const phase = MOON_PHASES.find(p => p.name === obj.phase);
+  if (!phase || obj.day > phase.days) return false;
+
+  return true;
+};
+
+/**
+ * Safely parse and validate an ObojimaDate from unknown data
+ * Returns a valid ObojimaDate or null if invalid
+ */
+export const parseObojimaDate = (value: unknown): ObojimaDate | null => {
+  if (isObojimaDate(value)) {
+    return value;
+  }
+  return null;
+};
+
+/**
+ * Create a safe ObojimaDate with fallback to defaults for invalid data
+ * Always returns a valid ObojimaDate, logging warnings in development
+ */
+export const safeObojimaDate = (value: unknown, fallback?: ObojimaDate): ObojimaDate => {
+  const defaultDate: ObojimaDate = fallback || {
+    year: 1,
+    season: 'Spring',
+    phase: 'New Moon',
+    day: 1,
+    cycle: 1
+  };
+
+  if (isObojimaDate(value)) {
+    return value;
+  }
+
+  // Log warning in development
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('Invalid ObojimaDate data, using fallback:', { value, fallback: defaultDate });
+  }
+
+  return defaultDate;
 };
 
 // Calculate phases between two Obojima dates

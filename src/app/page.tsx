@@ -17,12 +17,21 @@ import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
 import LocalSetupPage from './local-setup/page';
 import { syncService } from '@/services/sync';
+import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('potions');
-  
-  // Add Obojima calendar state here - this will be passed to both calendar and downtime tracker
-  const [currentObojimaDate, setCurrentObojimaDate] = useState({ year: 1, season: 'Spring', phase: 'New Moon', day: 1, cycle: 1 });
+
+  /**
+   * Obojima calendar date state - strictly typed as ObojimaDate
+   * This ensures type safety across all date operations and prevents
+   * malformed date objects from breaking the application.
+   * Fallback behavior: Invalid dates are replaced with a safe default
+   * and warnings are logged in development mode.
+   */
+  const [currentObojimaDate, setCurrentObojimaDate] = useState<ObojimaDate>(
+    createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+  );
   const [calendarSyncStatus, setCalendarSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
   // Load saved date from settings with sync after component mounts
@@ -43,16 +52,12 @@ export default function Home() {
     try {
       const result = await syncService.getSettings();
       if (result.success && result.data && result.data.currentObojimaDate) {
-        const savedDate = result.data.currentObojimaDate;
-        // Ensure all properties exist for backward compatibility
-        const dateWithDefaults = {
-          year: savedDate.year || 1,
-          season: savedDate.season || 'Spring',
-          phase: savedDate.phase || 'New Moon',
-          day: savedDate.day || 1,
-          cycle: savedDate.cycle || 1
-        };
-        setCurrentObojimaDate(dateWithDefaults);
+        // Use type guard to validate server data
+        const validDate = safeObojimaDate(
+          result.data.currentObojimaDate,
+          createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+        );
+        setCurrentObojimaDate(validDate);
         setCalendarSyncStatus('idle');
       } else {
         // Fall back to localStorage for migration
@@ -60,16 +65,17 @@ export default function Home() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            // Ensure cycle property exists for backward compatibility
-            if (!parsed.cycle) {
-              parsed.cycle = 1;
-            }
-            setCurrentObojimaDate(parsed);
-            // Migrate to sync
-            await syncService.saveSetting('currentObojimaDate', parsed);
+            const validDate = safeObojimaDate(
+              parsed,
+              createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+            );
+            setCurrentObojimaDate(validDate);
+
+            // Migrate validated date to sync
+            await syncService.saveSetting('currentObojimaDate', validDate);
             setCalendarSyncStatus('idle');
           } catch {
-            // Keep default value
+            // JSON parse failed, keep default value
             setCalendarSyncStatus('error');
           }
         } else {
@@ -79,44 +85,45 @@ export default function Home() {
     } catch (error) {
       console.error('Error loading calendar date:', error);
       setCalendarSyncStatus('error');
+
       // Fall back to localStorage
       const saved = localStorage.getItem('obojima-current-date');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (!parsed.cycle) {
-            parsed.cycle = 1;
-          }
-          setCurrentObojimaDate(parsed);
+          const validDate = safeObojimaDate(
+            parsed,
+            createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+          );
+          setCurrentObojimaDate(validDate);
         } catch {
-          // Keep default value
+          // Keep current default value if localStorage is corrupted
         }
       }
     }
   };
 
-  // Save Obojima date to settings with sync when it changes
-  const handleObojimaDateChange = async (newDate: any, skipEventIds?: string[]) => {
-    setCurrentObojimaDate(newDate);
-    
+  /**
+   * Save Obojima date to settings with sync when it changes
+   * Validates incoming date and ensures type safety
+   */
+  const handleObojimaDateChange = async (newDate: ObojimaDate, skipEventIds?: string[]) => {
+    // Validate the incoming date using type guard
+    const validDate = safeObojimaDate(newDate, currentObojimaDate);
+    setCurrentObojimaDate(validDate);
+
     try {
-      const result = await syncService.saveSetting('currentObojimaDate', {
-        year: newDate.year,
-        season: newDate.season,
-        phase: newDate.phase,
-        day: newDate.day,
-        cycle: newDate.cycle
-      });
-      
+      const result = await syncService.saveSetting('currentObojimaDate', validDate);
+
       if (!result.success) {
         console.warn('Calendar date saved locally but sync failed');
       }
     } catch (error) {
       console.error('Error syncing calendar date:', error);
     }
-    
-    // Always save to localStorage as backup
-    localStorage.setItem('obojima-current-date', JSON.stringify(newDate));
+
+    // Always save validated date to localStorage as backup
+    localStorage.setItem('obojima-current-date', JSON.stringify(validDate));
   };
 
   const renderPage = () => {

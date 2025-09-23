@@ -7,12 +7,202 @@ export interface SyncResult<T> {
   error?: string;
 }
 
+export interface BatchResult<T> {
+  success: boolean;
+  successCount: number;
+  failureCount: number;
+  errors: BatchItemError<T>[];
+  duration: number;
+}
+
+export interface BatchItemError<T> {
+  item: T;
+  error: string;
+  index: number;
+}
+
 export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types';
+
+// Concurrency and batching configuration
+const BATCH_SIZE = 10;
+const MAX_CONCURRENCY = 5;
+
+/**
+ * Semaphore for controlling concurrency
+ */
+class Semaphore {
+  private permits: number;
+  private queue: (() => void)[] = [];
+
+  constructor(permits: number) {
+    this.permits = permits;
+  }
+
+  async acquire<T>(operation: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const tryAcquire = () => {
+        if (this.permits > 0) {
+          this.permits--;
+          operation()
+            .then(resolve)
+            .catch(reject)
+            .finally(() => {
+              this.permits++;
+              if (this.queue.length > 0) {
+                const next = this.queue.shift()!;
+                next();
+              }
+            });
+        } else {
+          this.queue.push(tryAcquire);
+        }
+      };
+
+      tryAcquire();
+    });
+  }
+}
 
 class SyncService {
   private cache: Map<string, any> = new Map();
   private syncInterval: NodeJS.Timeout | null = null;
   private syncCallbacks: Map<string, (() => void)[]> = new Map();
+
+  /**
+   * Execute operations with bounded concurrency and batching
+   * Maintains ordering guarantee: deletes before saves
+   * @param items Array of items to process
+   * @param operation Function to execute for each item
+   * @param operationType Type of operation for logging
+   * @returns BatchResult with success/failure details
+   */
+  private async executeBatched<T>(
+    items: T[],
+    operation: (item: T) => Promise<void>,
+    operationType: string
+  ): Promise<BatchResult<T>> {
+    const startTime = performance.now();
+    const errors: BatchItemError<T>[] = [];
+    let successCount = 0;
+
+    // Log batch start
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Batch ${operationType}: Processing ${items.length} items with concurrency ${MAX_CONCURRENCY}`);
+    }
+
+    // Create semaphore for concurrency control
+    const semaphore = new Semaphore(MAX_CONCURRENCY);
+
+    // Process items in batches with concurrency control
+    const batches = this.chunkArray(items, BATCH_SIZE);
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+
+      // Process batch items concurrently
+      const batchPromises = batch.map(async (item, itemIndex) => {
+        const globalIndex = batchIndex * BATCH_SIZE + itemIndex;
+
+        return semaphore.acquire(async () => {
+          try {
+            await operation(item);
+            successCount++;
+          } catch (error) {
+            errors.push({
+              item,
+              error: error instanceof Error ? error.message : String(error),
+              index: globalIndex
+            });
+          }
+        });
+      });
+
+      // Wait for current batch to complete before proceeding
+      await Promise.all(batchPromises);
+    }
+
+    const duration = performance.now() - startTime;
+
+    // Log batch completion
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Batch ${operationType} completed: ${successCount} succeeded, ${errors.length} failed in ${duration.toFixed(2)}ms`);
+      if (errors.length > 0) {
+        console.warn(`Batch ${operationType} errors:`, errors.map(e => ({ index: e.index, error: e.error })));
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      successCount,
+      failureCount: errors.length,
+      errors,
+      duration
+    };
+  }
+
+  /**
+   * Helper to chunk array into smaller batches
+   */
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+  }
+
+  /**
+   * Convert BatchResult to legacy SyncResult for backward compatibility
+   * Provides "best-effort" semantics for UI components
+   */
+  batchResultToSyncResult<T>(batchResult: BatchResult<T>): SyncResult<void> {
+    if (batchResult.success) {
+      return { success: true };
+    }
+
+    // If some items succeeded, it's a partial success
+    if (batchResult.successCount > 0) {
+      const errorSummary = batchResult.errors.length > 0 ?
+        `${batchResult.failureCount} of ${batchResult.successCount + batchResult.failureCount} items failed` :
+        'Some operations failed';
+
+      return {
+        success: false,
+        error: errorSummary
+      };
+    }
+
+    // Complete failure
+    const firstError = batchResult.errors[0]?.error || 'Unknown error';
+    return {
+      success: false,
+      error: `Batch operation failed: ${firstError}`
+    };
+  }
+
+  /**
+   * Log batch result summary for telemetry and debugging
+   */
+  private logBatchResult<T>(operation: string, result: BatchResult<T>): void {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Batch ${operation} summary:`, {
+        success: result.success,
+        total: result.successCount + result.failureCount,
+        succeeded: result.successCount,
+        failed: result.failureCount,
+        duration: `${result.duration.toFixed(2)}ms`,
+        avgTimePerItem: result.successCount > 0 ?
+          `${(result.duration / (result.successCount + result.failureCount)).toFixed(2)}ms` : 'N/A'
+      });
+
+      if (result.errors.length > 0) {
+        console.warn(`Batch ${operation} failures:`, result.errors.slice(0, 5)); // Log first 5 errors
+        if (result.errors.length > 5) {
+          console.warn(`... and ${result.errors.length - 5} more errors`);
+        }
+      }
+    }
+  }
 
   // Generic data fetching
   async getData(dataType: DataType): Promise<SyncResult<any[]>> {
@@ -271,37 +461,77 @@ class SyncService {
     this.syncCallbacks.get(dataType)?.push(callback);
   }
 
+  // Overloads for startSync method
+  startSync(callback: () => void, interval?: number): void;
+  startSync(dataTypes: DataType[], onUpdate?: () => void, interval?: number): () => void;
+
   // Start polling for updates with support for multiple data types
-  startSync(dataTypes: DataType[] | (() => void), onUpdate?: () => void, interval = 5000) {
+  startSync(dataTypes: DataType[] | (() => void), onUpdate?: (() => void) | number, interval = 5000): void | (() => void) {
     this.stopSync();
-    
+
     // Handle backward compatibility
     if (typeof dataTypes === 'function') {
       // Old API: startSync(callback, interval)
       const callback = dataTypes;
-      const oldInterval = onUpdate as number || interval;
-      callback();
-      this.syncInterval = setInterval(callback, oldInterval);
+      const oldInterval = typeof onUpdate === 'number' ? onUpdate : interval;
+
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in sync callback (initial):', error);
+      }
+
+      this.syncInterval = setInterval(() => {
+        try {
+          callback();
+        } catch (error) {
+          console.error('Error in sync callback (polling):', error);
+        }
+      }, oldInterval);
       return;
     }
-    
-    // New API: startSync(['characters', 'sessions'], callback, interval)
+
+    // New API: startSync(['characters', 'sessions'], callback?, interval)
     const types = dataTypes as DataType[];
-    const callback = onUpdate!;
-    
-    // Initial sync
-    callback();
-    
-    // Poll for updates
-    this.syncInterval = setInterval(() => {
-      callback();
-      
-      // Trigger specific callbacks for each data type
+    const callback = typeof onUpdate === 'function' ? onUpdate : undefined;
+
+    // Helper function to safely call the callback
+    const safeCallCallback = () => {
+      if (callback) {
+        try {
+          callback();
+        } catch (error) {
+          console.error('Error in sync callback:', error);
+        }
+      }
+    };
+
+    // Helper function to trigger specific data type callbacks
+    const triggerDataTypeCallbacks = () => {
       types.forEach(dataType => {
         const callbacks = this.syncCallbacks.get(dataType) || [];
-        callbacks.forEach(cb => cb());
+        callbacks.forEach(cb => {
+          try {
+            cb();
+          } catch (error) {
+            console.error(`Error in data type callback for ${dataType}:`, error);
+          }
+        });
       });
+    };
+
+    // Initial sync
+    safeCallCallback();
+    triggerDataTypeCallbacks();
+
+    // Poll for updates
+    this.syncInterval = setInterval(() => {
+      safeCallCallback();
+      triggerDataTypeCallbacks();
     }, interval);
+
+    // Return stop function for convenience
+    return () => this.stopSync();
   }
 
   stopSync() {
@@ -428,53 +658,126 @@ class SyncService {
     }
   }
 
-  // Helper method to save data with localStorage backup
-  async saveWithFallback(dataType: DataType, localStorageKey: string, items: any[]): Promise<void> {
+  /**
+   * Save data with localStorage backup and batched server operations
+   * Ensures ordering: deletes before saves
+   * @param dataType Type of data being saved
+   * @param localStorageKey Key for localStorage backup
+   * @param items Items to save
+   * @returns Structured result with partial failure handling
+   */
+  async saveWithFallback(dataType: DataType, localStorageKey: string, items: any[]): Promise<BatchResult<any>> {
     try {
       // Save to localStorage immediately for offline support
       localStorage.setItem(localStorageKey, JSON.stringify(items));
-      
+
       // In demo mode, skip server sync entirely
       if (IS_DEMO_MODE || !API_BASE) {
         console.log(`Demo mode: ${dataType} saved to localStorage only`);
-        return;
+        return {
+          success: true,
+          successCount: items.length,
+          failureCount: 0,
+          errors: [],
+          duration: 0
+        };
       }
-      
+
       // For user-potions and user-magic-items, we need special handling to avoid duplicates
+      let result: BatchResult<any>;
       if (dataType === 'user-potions' || dataType === 'user-magic-items') {
-        // First, get all existing items from the server
-        const existingResult = await this.getData(dataType);
-        const existingItems = existingResult.data || [];
-        
-        // Create a map of existing items by ID
-        const existingMap = new Map(existingItems.map(item => [item.id, true]));
-        
-        // Delete items that are no longer in the items array
-        for (const existing of existingItems) {
-          if (!items.find(item => item.id === existing.id)) {
-            await this.deleteData(dataType, existing.id);
-          }
-        }
-        
-        // Save each item (create or update based on whether it exists)
-        for (const item of items) {
-          if (item.id && existingMap.has(item.id)) {
-            // Update existing
-            await this.saveData(dataType, item);
-          } else {
-            // Create new
-            await this.saveData(dataType, item);
-          }
-        }
+        result = await this.saveWithDuplicateHandling(dataType, items);
       } else {
-        // Original behavior for other data types
-        for (const item of items) {
-          await this.saveData(dataType, item);
-        }
+        // Standard batch save for other data types
+        result = await this.executeBatched(
+          items,
+          async (item) => {
+            await this.saveData(dataType, item);
+          },
+          `save-${dataType}`
+        );
       }
+
+      // Log batch result for telemetry
+      this.logBatchResult(`saveWithFallback-${dataType}`, result);
+
+      return result;
     } catch (error) {
       console.error(`Error saving ${dataType}:`, error);
-      throw new Error(`Error saving data. Data saved locally but may not sync to other devices.`);
+      // Return partial success result even on localStorage failure
+      return {
+        success: false,
+        successCount: 0,
+        failureCount: items.length,
+        errors: items.map((item, index) => ({
+          item,
+          error: error instanceof Error ? error.message : String(error),
+          index
+        })),
+        duration: 0
+      };
+    }
+  }
+
+  /**
+   * Handle save operations for data types that need duplicate checking
+   * Maintains ordering: deletes before saves
+   */
+  private async saveWithDuplicateHandling(dataType: DataType, items: any[]): Promise<BatchResult<any>> {
+    const startTime = performance.now();
+
+    // First, get all existing items from the server
+    const existingResult = await this.getData(dataType);
+    const existingItems = existingResult.data || [];
+
+    // Create a map of existing items by ID
+    const existingMap = new Map(existingItems.map(item => [item.id, true]));
+
+    // Phase 1: Delete items that are no longer in the items array (ordering guarantee)
+    const itemsToDelete = existingItems.filter(existing =>
+      !items.find(item => item.id === existing.id)
+    );
+
+    const deleteResult = await this.executeBatched(
+      itemsToDelete,
+      async (item) => {
+        await this.deleteData(dataType, item.id);
+      },
+      `delete-${dataType}`
+    );
+
+    // Phase 2: Save/update items (after deletes complete)
+    const saveResult = await this.executeBatched(
+      items,
+      async (item) => {
+        await this.saveData(dataType, item);
+      },
+      `save-${dataType}`
+    );
+
+    // Combine results
+    const totalDuration = performance.now() - startTime;
+    const totalErrors = [...deleteResult.errors, ...saveResult.errors];
+
+    return {
+      success: deleteResult.success && saveResult.success,
+      successCount: deleteResult.successCount + saveResult.successCount,
+      failureCount: deleteResult.failureCount + saveResult.failureCount,
+      errors: totalErrors,
+      duration: totalDuration
+    };
+  }
+
+  /**
+   * Legacy wrapper for saveWithFallback that maintains backward compatibility
+   * Throws on failure for existing error handling patterns
+   */
+  async saveWithFallbackLegacy(dataType: DataType, localStorageKey: string, items: any[]): Promise<void> {
+    const result = await this.saveWithFallback(dataType, localStorageKey, items);
+
+    if (!result.success) {
+      const syncResult = this.batchResultToSyncResult(result);
+      throw new Error(syncResult.error || 'Batch operation failed');
     }
   }
 }

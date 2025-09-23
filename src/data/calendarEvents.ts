@@ -1,4 +1,4 @@
-import { ObojimaDate, formatObojimaDate, parseObojimaDate, obojimaDateToJSDate } from './obojimaCalendar';
+import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate } from './obojimaCalendar';
 
 export interface CalendarEvent {
   id: string;

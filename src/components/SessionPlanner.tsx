@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
-import { formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
+import { ObojimaDate, formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
 import { syncService } from '@/services/sync';
 import { 
   PlusIcon, 
@@ -25,7 +25,13 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
-export default function SessionPlanner({ onPageChange, currentGameDate, onGameDateChange }: { onPageChange?: (page: string) => void; currentGameDate?: any; onGameDateChange?: (newDate: any) => void }) {
+interface SessionPlannerProps {
+  onPageChange?: (page: string) => void;
+  currentGameDate?: ObojimaDate;
+  onGameDateChange?: (newDate: ObojimaDate) => void;
+}
+
+export default function SessionPlanner({ onPageChange, currentGameDate, onGameDateChange }: SessionPlannerProps) {
   const [sessions, setSessions] = useState<GameSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null);
   const [isCreating, setIsCreating] = useState(false);
