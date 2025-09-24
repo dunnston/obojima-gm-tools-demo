@@ -120,17 +120,19 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   const saveActivity = async (activity: SpecificDowntimeActivity) => {
     try {
       await syncService.saveDowntimeActivity(activity);
-      
-      // Update local state
-      const updatedActivities = activities.map(a => a.id === activity.id ? activity : a);
-      const finalActivities = updatedActivities.some(a => a.id === activity.id) 
-        ? updatedActivities 
-        : [...activities, activity];
-      
-      setActivities(finalActivities);
-      
-      // Update localStorage as backup
-      localStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
+
+      // Update local state using functional updater and persist from the freshly computed array
+      // to avoid race conditions with rapid consecutive saves
+      setActivities(prev => {
+        const updatedActivities = prev.map(a => a.id === activity.id ? activity : a);
+        const finalActivities = updatedActivities.some(a => a.id === activity.id)
+          ? updatedActivities
+          : [...prev, activity];
+
+        // Persist from the freshly computed array returned by functional updater
+        localStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
+        return finalActivities;
+      });
     } catch (error) {
       console.error('Error saving downtime activity:', error);
       alert(t('downtime.errorSaving'));

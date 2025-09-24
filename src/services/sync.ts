@@ -722,6 +722,13 @@ class SyncService {
   /**
    * Handle save operations for data types that need duplicate checking
    * Maintains ordering: deletes before saves
+   *
+   * Duplicate policy: Items are considered unique by ID.
+   * - Deletes server items not present in the local items array
+   * - Updates existing items with matching IDs
+   * - Creates new items without existing IDs
+   * This ensures idempotent operations where repeated saves with the same
+   * items array result in the same server state.
    */
   private async saveWithDuplicateHandling(dataType: DataType, items: any[]): Promise<BatchResult<any>> {
     const startTime = performance.now();
@@ -729,9 +736,6 @@ class SyncService {
     // First, get all existing items from the server
     const existingResult = await this.getData(dataType);
     const existingItems = existingResult.data || [];
-
-    // Create a map of existing items by ID
-    const existingMap = new Map(existingItems.map(item => [item.id, true]));
 
     // Phase 1: Delete items that are no longer in the items array (ordering guarantee)
     const itemsToDelete = existingItems.filter(existing =>

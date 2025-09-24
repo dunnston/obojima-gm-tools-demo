@@ -123,7 +123,9 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         const daysDifference = daysBetweenObojimaDate(currentGameDate, latestSessionDate);
         if (daysDifference !== 0) {
           // Silently align the world date to the latest session date
-          console.log(`Auto-aligning world date from ${formatObojimaDate(currentGameDate)} to latest session ${formatObojimaDate(latestSessionDate)}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Auto-aligning world date from ${formatObojimaDate(currentGameDate)} to latest session ${formatObojimaDate(latestSessionDate)}`);
+          }
           onGameDateChange(latestSessionDate);
         }
       }
@@ -134,14 +136,15 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const saveSession = async (session: GameSession) => {
     try {
       await syncService.saveSession(session);
-      // Update local state
+      // Update local state using functional updater and persist from the freshly computed array
+      // to avoid race conditions with debounced saves
       setSessions(prev => {
         const filtered = prev.filter(s => s.id !== session.id);
-        return [...filtered, session];
+        const updatedSessions = [...filtered, session];
+        // Persist from the freshly computed array returned by functional updater
+        localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+        return updatedSessions;
       });
-      // Update localStorage as backup
-      const allSessions = sessions.map(s => s.id === session.id ? session : s);
-      localStorage.setItem('obojima-sessions', JSON.stringify(allSessions));
     } catch (error) {
       console.error('Error saving session:', error);
       alert(t('sessions.errorSaving'));
@@ -245,8 +248,10 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
           message = `The world date will advance from ${formatObojimaDate(currentGameDate)} to ${formatObojimaDate(targetWorldDate)} to match your latest session.\n\nThis represents ${Math.abs(daysDifference)} days passing in the game world.`;
         }
 
-        console.log(`Advancing world date from ${formatObojimaDate(currentGameDate)} to ${formatObojimaDate(targetWorldDate)}`);
-        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Advancing world date from ${formatObojimaDate(currentGameDate)} to ${formatObojimaDate(targetWorldDate)}`);
+        }
+
         // Update the world date to the latest session date
         await onGameDateChange(targetWorldDate);
         
@@ -343,7 +348,9 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
               const daysDifference = daysBetweenObojimaDate(currentGameDate, newLatestDate);
               if (daysDifference !== 0) {
                 const message = `After deleting that session, the world date is now ${formatObojimaDate(newLatestDate)} (matching your latest remaining session).\n\nThe world calendar will be adjusted to match.`;
-                console.log(`Realigning world date to latest remaining session: ${formatObojimaDate(newLatestDate)}`);
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`Realigning world date to latest remaining session: ${formatObojimaDate(newLatestDate)}`);
+                }
                 await onGameDateChange?.(newLatestDate);
                 alert(message);
               }
