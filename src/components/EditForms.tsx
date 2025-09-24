@@ -195,7 +195,7 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Price (gold)
+                Price (Gold Flowers)
               </label>
               <input
                 type="number"
@@ -433,7 +433,7 @@ export function IngredientEditForm({ ingredient, onSave, onCancel }: IngredientE
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Price (gold)
+                Price (Gold Flowers)
               </label>
               <input
                 type="number"
@@ -1248,7 +1248,7 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
             {/* Price */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Price (gold)
+                Price (Gold Flowers)
               </label>
               <input
                 type="number"

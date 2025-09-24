@@ -593,7 +593,7 @@
       "activation": "Activation"
     },
     "buy": "Acheter pour",
-    "gold": "or",
+    "gold": "Fleurs d'Or",
     "searchPlaceholder": "Rechercher des potions...",
     "addToCart": "Ajouter au Panier",
     "removeFromCart": "Retirer du Panier",
@@ -993,6 +993,6 @@
       }
     },
     "objectiveCount": "objectifs",
-    "goldAbbrev": "po"
+    "goldAbbrev": "fo"
   }
 }

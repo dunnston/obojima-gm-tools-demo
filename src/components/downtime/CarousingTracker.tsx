@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CarousingActivity, calculateDaysElapsed, formatDowntimeDate, formatDowntimeObojimaDate } from '@/data/downtime';
+import { SimpleCurrencyDisplay } from '@/components/CurrencyDisplay';
 import {
   MusicalNoteIcon,
   CurrencyDollarIcon,
@@ -187,7 +188,9 @@ export default function CarousingTracker({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-slate-700/50 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white">{activity.fundsSpent} gp</div>
+            <div className="flex justify-center">
+              <SimpleCurrencyDisplay goldValue={activity.fundsSpent} size="lg" className="text-white font-bold" />
+            </div>
             <div className="text-sm text-slate-400">Funds Spent</div>
           </div>
           

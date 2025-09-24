@@ -269,7 +269,7 @@
       "activation": "Activation"
     },
     "buy": "Buy for",
-    "gold": "gold",
+    "gold": "Gold Flowers",
     "searchPlaceholder": "Search potions...",
     "addToCart": "Add to Cart",
     "removeFromCart": "Remove from Cart",
@@ -669,7 +669,7 @@
       }
     },
     "objectiveCount": "objectives",
-    "goldAbbrev": "gp"
+    "goldAbbrev": "gf"
   },
   "settings": {
     "title": "Settings",

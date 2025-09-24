@@ -6,6 +6,8 @@ import { Quest, QuestStatus, updateQuest } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
+import { formatGoldValue, CURRENCY_IMAGES } from '@/data/obojimaCurrency';
+import { SimpleCurrencyDisplay } from '@/components/CurrencyDisplay';
 
 export default function QuestLog() {
   const { t } = useTranslation();
@@ -331,7 +333,20 @@ export default function QuestLog() {
                               <span className="text-2xl">
                                 {reward.type === 'magic-item' ? '✨' :
                                  reward.type === 'potion' ? '🧪' :
-                                 reward.type === 'gold' ? '💰' :
+                                 reward.type === 'gold' ? (
+                                   <img
+                                     src={CURRENCY_IMAGES.goldFlower}
+                                     alt="Gold Flower"
+                                     className="h-6 w-6"
+                                     onError={(e) => {
+                                       const target = e.target as HTMLImageElement;
+                                       const span = document.createElement('span');
+                                       span.textContent = '🌻';
+                                       span.className = 'text-xl';
+                                       target.parentNode?.replaceChild(span, target);
+                                     }}
+                                   />
+                                 ) :
                                  reward.type === 'ingredient' ? '🌿' : '📦'}
                               </span>
                               <div className="flex-1">
@@ -344,8 +359,8 @@ export default function QuestLog() {
                                 {reward.description && (
                                   <div className="text-sm text-slate-400">{reward.description}</div>
                                 )}
-                                {reward.value && (
-                                  <div className="text-sm text-emerald-400">{reward.value} {t('quests.goldAbbrev')}</div>
+                                {reward.value && reward.type === 'gold' && (
+                                  <SimpleCurrencyDisplay goldValue={reward.value} size="sm" className="text-emerald-400" />
                                 )}
                               </div>
                             </div>

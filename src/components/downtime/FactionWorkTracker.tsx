@@ -357,7 +357,7 @@ export default function FactionWorkTracker({
               value={newReward}
               onChange={(e) => setNewReward(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddReward()}
-              placeholder="Add reward (gold, items, favors, etc.)..."
+              placeholder="Add reward (Gold Flowers, items, favors, etc.)..."
               className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
             />
             <button

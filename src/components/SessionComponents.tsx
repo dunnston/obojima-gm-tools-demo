@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { 
-  SessionScene, 
-  SessionNPC, 
-  SessionMusic, 
-  SessionTreasure, 
-  SessionSecretClue 
+import {
+  SessionScene,
+  SessionNPC,
+  SessionMusic,
+  SessionTreasure,
+  SessionSecretClue
 } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { Encounter } from '@/data/creatures';
@@ -14,6 +14,7 @@ import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 import { syncService } from '@/services/sync';
+import { formatGoldValue } from '@/data/obojimaCurrency';
 import { 
   PlusIcon,
   TrashIcon,
@@ -1295,7 +1296,7 @@ function TreasureDetailModal({
                 {treasure.customPrice !== undefined && (
                   <div className="bg-amber-900/20 border border-amber-400/30 rounded-lg p-4 mb-3">
                     <div className="text-sm font-medium text-amber-400 mb-1">Custom Value</div>
-                    <div className="text-white font-bold">{treasure.customPrice} gp</div>
+                    <div className="text-white font-bold">{formatGoldValue(treasure.customPrice)}</div>
                   </div>
                 )}
               </div>

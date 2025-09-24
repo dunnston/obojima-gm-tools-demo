@@ -6,6 +6,7 @@ import { generateVendingMachineInventory, VendingMachineInventory } from '@/util
 import { ArrowPathIcon, SparklesIcon, BeakerIcon, WrenchScrewdriverIcon, CogIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { getPotionImagePath, getIngredientImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
 import { useItemTranslation } from '@/hooks/useItemTranslation';
+import CurrencyDisplay from '@/components/CurrencyDisplay';
 
 export default function VendingMachine() {
   const [inventory, setInventory] = useState<VendingMachineInventory | null>(null);
@@ -366,7 +367,9 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
                   </div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-yellow-400 text-2xl font-bold">💰{item.price || 0}{t('vendingMachine.gold')}</div>
+                  <div className="flex justify-center mb-1">
+                    <CurrencyDisplay goldValue={item.price || 0} size="lg" className="text-yellow-400" />
+                  </div>
                   <div className="text-slate-400 text-sm">{t('vendingMachine.details.price')}</div>
                 </div>
               </div>
@@ -379,7 +382,9 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
                   <div className="text-white font-medium">{item.category}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-yellow-400 text-2xl font-bold">💰{item.price || 0}{t('vendingMachine.gold')}</div>
+                  <div className="flex justify-center mb-1">
+                    <CurrencyDisplay goldValue={item.price || 0} size="lg" className="text-yellow-400" />
+                  </div>
                   <div className="text-slate-400 text-sm">{t('vendingMachine.details.price')}</div>
                 </div>
               </div>
@@ -403,7 +408,9 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
                   </div>
                 )}
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                  <div className="text-yellow-400 text-2xl font-bold">💰{item.price || 0}{t('vendingMachine.gold')}</div>
+                  <div className="flex justify-center mb-1">
+                    <CurrencyDisplay goldValue={item.price || 0} size="lg" className="text-yellow-400" />
+                  </div>
                   <div className="text-slate-400 text-sm">{t('vendingMachine.details.price')}</div>
                 </div>
               </div>
