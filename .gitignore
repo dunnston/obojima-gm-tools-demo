@@ -59,7 +59,7 @@ temp_*.ts
 temp_*.js
 
 # Database files
-data/
+/data/
 *.db
 *.db-shm
 *.db-wal
