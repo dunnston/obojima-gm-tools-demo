@@ -31,7 +31,7 @@ export const DEMO_NPCS: NPC[] = [
   {
     id: 'demo-npc-sword-kid',
     name: 'Kai the Young Swordsman',
-    portrait: '/images/npcs/npc-1758810658793.png', // Young swordsman in blue and red outfit
+    portrait: '/images/npcs/npc-1758810486643.png', // Young swordsman with sword and green cape
     details: 'An eager young warrior training to become a knight. Full of enthusiasm but still learning the ways of combat.',
     location: 'Training Grounds',
     occupation: 'Knight Apprentice',
