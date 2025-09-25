@@ -63,7 +63,7 @@ export const DEMO_COMPANIONS: Companion[] = [
     quirk: 'Hums or sings constantly',
     companion_type_id: 'spirit-monkey',
     spirit_form: 'Monkey Spirit',
-    image: '/images/companions/companion-1758808674246.png', // Monkey character image
+    image: '/images/companions/companion-1758810434845.png', // Monkey character image
     created_at: new Date('2024-01-01T00:00:00.000Z'),
     updated_at: new Date('2024-01-01T00:00:00.000Z')
   },
