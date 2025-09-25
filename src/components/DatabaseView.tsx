@@ -505,13 +505,19 @@ export default function DatabaseView() {
       }
     } else if (type === 'companion') {
       // All companions are custom (user-created)
-      setModifiedCompanions(prev => prev.filter(c => c.id !== item.id));
-      
-      // Sync deletion to server
+
+      // Sync deletion to server first
       try {
-        await syncService.deleteCompanion(item.id);
+        const result = await syncService.deleteCompanion(item.id);
+        if (result.success) {
+          setModifiedCompanions(prev => prev.filter(c => c.id !== item.id));
+        } else {
+          console.error('Failed to delete companion from server:', result.error);
+          alert('Failed to delete companion. Please try again.');
+        }
       } catch (error) {
         console.error('Error syncing companion deletion:', error);
+        alert('Failed to delete companion. Please try again.');
       }
     }
   };

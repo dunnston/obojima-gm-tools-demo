@@ -2193,6 +2193,7 @@ export function CompanionEditForm({ companion, companionTypes, onSave, onCancel 
       }
 
       onSave({
+        ...companion,
         ...formData,
         image: imageUrl
       });
