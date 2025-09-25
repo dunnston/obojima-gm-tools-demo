@@ -15,7 +15,7 @@ export interface DemoSprite {
 
 // Demo sprites using existing Vista assets
 export const DEMO_SPRITES: DemoSprite[] = [
-  // Characters
+  // Player Character Classes
   {
     name: 'Warrior',
     imagePath: '/images/vista/token-portraits/warrior.png',
@@ -48,6 +48,64 @@ export const DEMO_SPRITES: DemoSprite[] = [
     imagePath: '/images/vista/token-portraits/cleric.png',
     width: 100,
     height: 120,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+
+  // Demo NPCs
+  {
+    name: 'Elara the Archer',
+    imagePath: '/images/vista/Portraits/NPCs/Girl.png',
+    width: 100,
+    height: 120,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+  {
+    name: 'Lord Aldric',
+    imagePath: '/images/vista/Portraits/NPCs/noble.png',
+    width: 100,
+    height: 120,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+  {
+    name: 'Kai the Young Swordsman',
+    imagePath: '/images/vista/Portraits/NPCs/noble.png',
+    width: 100,
+    height: 120,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+  {
+    name: 'Sally the Merchant',
+    imagePath: '/images/vista/Portraits/NPCs/Girl.png',
+    width: 100,
+    height: 120,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+
+  // Demo Companions
+  {
+    name: 'Billy',
+    imagePath: '/images/companions/companion-1758808343757.png',
+    width: 80,
+    height: 100,
+    anchorX: 0.5,
+    anchorY: 0.9,
+    category: 'character'
+  },
+  {
+    name: 'Glovey',
+    imagePath: '/images/companions/companion-1758808674246.png',
+    width: 80,
+    height: 100,
     anchorX: 0.5,
     anchorY: 0.9,
     category: 'character'

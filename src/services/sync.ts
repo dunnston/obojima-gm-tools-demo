@@ -1,6 +1,9 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
+// Import demo data
+import { DEMO_NPCS, DEMO_COMPANIONS, mergeWithDemoData, shouldUseDemoData } from '@/data/demoData';
+
 export interface SyncResult<T> {
   success: boolean;
   data?: T;
@@ -369,7 +372,16 @@ class SyncService {
   }
 
   async getCompanions(): Promise<SyncResult<any[]>> {
-    return this.getData('companions');
+    const result = await this.getData('companions');
+
+    // In demo mode or when appropriate, merge with demo data
+    if (shouldUseDemoData()) {
+      const userData = result.success ? (result.data || []) : [];
+      const mergedData = mergeWithDemoData(userData, DEMO_COMPANIONS);
+      return { success: true, data: mergedData };
+    }
+
+    return result;
   }
 
   async saveCompanion(companion: any): Promise<SyncResult<void>> {
@@ -381,7 +393,16 @@ class SyncService {
   }
 
   async getNpcs(): Promise<SyncResult<any[]>> {
-    return this.getData('npcs');
+    const result = await this.getData('npcs');
+
+    // In demo mode or when appropriate, merge with demo data
+    if (shouldUseDemoData()) {
+      const userData = result.success ? (result.data || []) : [];
+      const mergedData = mergeWithDemoData(userData, DEMO_NPCS);
+      return { success: true, data: mergedData };
+    }
+
+    return result;
   }
 
   async saveNpc(npc: any): Promise<SyncResult<void>> {
