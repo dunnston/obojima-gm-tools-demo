@@ -4,12 +4,12 @@
 import { NPC } from './npcs';
 import { Companion } from './companions';
 
-// Demo NPCs based on user's local setup (using available portrait images)
+// Demo NPCs with unique portrait images
 export const DEMO_NPCS: NPC[] = [
   {
     id: 'demo-npc-archer',
     name: 'Elara the Archer',
-    portrait: '/images/vista/Portraits/NPCs/Girl.png', // Using available Girl image as archer
+    portrait: '/images/npcs/npc-1758810675529.png', // Archer with bow and green hood
     details: 'A skilled ranger from the northern forests. She knows every trail and hidden path through the wilderness.',
     location: 'Forest Outpost',
     occupation: 'Ranger',
@@ -20,7 +20,7 @@ export const DEMO_NPCS: NPC[] = [
   {
     id: 'demo-npc-noble',
     name: 'Lord Aldric',
-    portrait: '/images/vista/Portraits/NPCs/noble.png',
+    portrait: '/images/vista/Portraits/NPCs/noble.png', // Noble portrait
     details: 'A wealthy noble from the capital city. He has connections throughout the kingdom and can open doors that others cannot.',
     location: 'Royal Palace',
     occupation: 'Noble',
@@ -31,7 +31,7 @@ export const DEMO_NPCS: NPC[] = [
   {
     id: 'demo-npc-sword-kid',
     name: 'Kai the Young Swordsman',
-    portrait: '/images/vista/Portraits/NPCs/noble.png', // Using noble image as young swordsman
+    portrait: '/images/npcs/npc-1758810658793.png', // Young swordsman in blue and red outfit
     details: 'An eager young warrior training to become a knight. Full of enthusiasm but still learning the ways of combat.',
     location: 'Training Grounds',
     occupation: 'Knight Apprentice',
@@ -42,7 +42,7 @@ export const DEMO_NPCS: NPC[] = [
   {
     id: 'demo-npc-sally',
     name: 'Sally the Merchant',
-    portrait: '/images/vista/Portraits/NPCs/Girl.png',
+    portrait: '/images/vista/Portraits/NPCs/Girl.png', // Girl portrait for merchant
     details: 'A friendly shopkeeper who knows the value of everything and has connections with traders across the realm.',
     location: 'Market District',
     occupation: 'Merchant',
@@ -52,7 +52,7 @@ export const DEMO_NPCS: NPC[] = [
   }
 ];
 
-// Demo Companions based on user's local setup
+// Demo Companions with correct images
 export const DEMO_COMPANIONS: Companion[] = [
   {
     id: 'demo-companion-billy',
@@ -61,9 +61,9 @@ export const DEMO_COMPANIONS: Companion[] = [
     desire: 'Affection from others',
     disposition: 'Friendly',
     quirk: 'Hums or sings constantly',
-    companion_type_id: 'spirit-bear', // Assuming a bear-type companion
-    spirit_form: 'Bear Spirit',
-    image: '/images/companions/companion-1758808343757.png',
+    companion_type_id: 'spirit-glove',
+    spirit_form: 'Glove Spirit',
+    image: '/images/companions/companion-1758810442596.png', // Glove character image
     created_at: new Date('2024-01-01T00:00:00.000Z'),
     updated_at: new Date('2024-01-01T00:00:00.000Z')
   },
@@ -74,9 +74,9 @@ export const DEMO_COMPANIONS: Companion[] = [
     desire: 'New possessions',
     disposition: 'Curious',
     quirk: 'Always wants to be touching someone or something',
-    companion_type_id: 'spirit-monkey', // Assuming a monkey-type companion
+    companion_type_id: 'spirit-monkey',
     spirit_form: 'Monkey Spirit',
-    image: '/images/companions/companion-1758808674246.png',
+    image: '/images/companions/companion-1758808674246.png', // Monkey character image
     created_at: new Date('2024-01-01T00:00:00.000Z'),
     updated_at: new Date('2024-01-01T00:00:00.000Z')
   }
