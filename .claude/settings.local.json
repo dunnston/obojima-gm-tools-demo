@@ -8,7 +8,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx jest:*)",
       "Bash(npm run build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
