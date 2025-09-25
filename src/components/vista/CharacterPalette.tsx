@@ -79,18 +79,15 @@ export default function CharacterPalette({
         console.log('Failed to load NPCs or no data');
       }
 
-      // Load Companions
+      // Load Companions using syncService (which includes demo data)
       console.log('Attempting to load companions...');
-      const companionsResponse = await fetch('/api/companions');
-      if (companionsResponse.ok) {
-        const companionsData = await companionsResponse.json();
-        console.log('Companions result:', companionsData);
-        // Extract the companions array from the response object
-        const companionsArray = companionsData.companions || companionsData || [];
-        console.log('Setting companions array:', companionsArray);
-        setCompanions(companionsArray);
+      const companionsResult = await syncService.getCompanions();
+      console.log('Companions result:', companionsResult);
+      if (companionsResult.success && companionsResult.data) {
+        console.log('Setting companions:', companionsResult.data);
+        setCompanions(companionsResult.data);
       } else {
-        console.log('Failed to load companions');
+        console.log('Failed to load companions or no data');
       }
 
       setSyncStatus('idle');
