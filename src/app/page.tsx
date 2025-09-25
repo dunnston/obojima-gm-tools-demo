@@ -15,6 +15,7 @@ import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
+import VistaEditor from '@/components/VistaEditor';
 import LocalSetupPage from './local-setup/page';
 import { syncService } from '@/services/sync';
 import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
@@ -140,6 +141,8 @@ export default function Home() {
         return <QuestLog />;
       case 'encounters':
         return <EncounterCreator />;
+      case 'vista':
+        return <VistaEditor />;
       case 'vending':
         return <VendingMachine />;
       case 'database':

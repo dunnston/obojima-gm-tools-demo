@@ -1,6 +1,7 @@
 {
   "navigation": {
     "encounters": "Rencontres",
+    "vistaEditor": "Éditeur de Scène",
     "initiativeTracker": "Suivi d'Initiative",
     "playerCharacters": "Personnages Joueurs",
     "sessionPlanner": "Planificateur de Session",

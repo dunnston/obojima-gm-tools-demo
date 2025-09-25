@@ -4,12 +4,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
+      "Bash(git pull:*)",
       "Bash(npx tsx:*)",
       "Bash(npx tsc:*)",
       "Bash(npx jest:*)",
       "Bash(npm run build:*)",
       "Bash(node:*)",
-      "Bash(git pull:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
