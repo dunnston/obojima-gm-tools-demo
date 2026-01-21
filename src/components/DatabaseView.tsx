@@ -623,22 +623,31 @@ export default function DatabaseView() {
         console.error('Error syncing potion:', error);
       }
     } else if (editingType === 'creature') {
-      setModifiedCreatures(prev => {
+      const updatedCreatures = (() => {
         // Check if this is a new item (original editing item had empty name)
         const isNewItem = editingItem?.name === '';
-        
+
         if (isNewItem) {
           // For new items, just add to the list if name is provided
           if (updatedItem.name && updatedItem.name.trim()) {
-            return [...prev, updatedItem];
+            return [...modifiedCreatures, updatedItem];
           }
-          return prev;
+          return modifiedCreatures;
         } else {
           // For existing items, replace the existing one using the original name
-          const filtered = prev.filter(item => item.name !== editingItem.name);
+          const filtered = modifiedCreatures.filter(item => item.name !== editingItem.name);
           return [...filtered, updatedItem];
         }
-      });
+      })();
+
+      setModifiedCreatures(updatedCreatures);
+
+      // Sync to server
+      try {
+        await saveUserCreatures(updatedCreatures);
+      } catch (error) {
+        console.error('Error syncing creature:', error);
+      }
     } else if (editingType === 'magicItem') {
       const updatedItems = (() => {
         // Check if this is a new item (original editing item had empty name)
@@ -697,27 +706,36 @@ export default function DatabaseView() {
         console.error('Error syncing NPC:', error);
       }
     } else if (editingType === 'companionType') {
-      setModifiedCompanionTypes(prev => {
+      const updatedCompanionTypes = (() => {
         // Check if this is a new item (original editing item had empty id)
         const isNewItem = !editingItem?.id;
-        
+
         if (isNewItem) {
           // Generate unique ID for new companion type
           updatedItem.id = `companion_type_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           updatedItem.created_at = new Date();
           updatedItem.updated_at = new Date();
-          
+
           if (updatedItem.name && updatedItem.name.trim()) {
-            return [...prev, updatedItem];
+            return [...modifiedCompanionTypes, updatedItem];
           }
-          return prev;
+          return modifiedCompanionTypes;
         } else {
           // For existing items, replace the existing one
           updatedItem.updated_at = new Date();
-          const filtered = prev.filter(item => item.id !== updatedItem.id);
+          const filtered = modifiedCompanionTypes.filter(item => item.id !== updatedItem.id);
           return [...filtered, updatedItem];
         }
-      });
+      })();
+
+      setModifiedCompanionTypes(updatedCompanionTypes);
+
+      // Sync to server
+      try {
+        await saveUserCompanionTypes(updatedCompanionTypes);
+      } catch (error) {
+        console.error('Error syncing companion type:', error);
+      }
     } else if (editingType === 'companion') {
       setModifiedCompanions(prev => {
         // Check if this is a new item (original editing item had empty id)

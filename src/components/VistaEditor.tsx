@@ -36,6 +36,7 @@ import CharacterPalette from './vista/CharacterPalette';
 import BackgroundSelector from './vista/BackgroundSelector';
 import BackgroundPicker from './vista/BackgroundPicker';
 import SceneManager from './vista/SceneManager';
+import ParallaxSceneBuilder from './vista/ParallaxSceneBuilder';
 import {
   PlayIcon,
   StopIcon,
@@ -100,6 +101,7 @@ export default function VistaEditor({
   const [showDepthIndicators, setShowDepthIndicators] = useState(false);
   const [isEditingSceneName, setIsEditingSceneName] = useState(false);
   const [editingSceneName, setEditingSceneName] = useState('');
+  const [showSceneBuilder, setShowSceneBuilder] = useState(false);
 
   // Viewport and canvas state
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
@@ -769,6 +771,13 @@ export default function VistaEditor({
                   >
                     Background
                   </button>
+                  <button
+                    onClick={() => setShowSceneBuilder(true)}
+                    className="p-1.5 rounded text-sm bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                    title="Open Scene Builder"
+                  >
+                    Builder
+                  </button>
                 </div>
                 <div className="text-sm text-gray-600">
                   Zoom: {Math.round(viewport.zoom * 100)}%
@@ -912,6 +921,22 @@ export default function VistaEditor({
                 readOnly={readOnly}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scene Builder Modal */}
+      {showSceneBuilder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full h-full max-w-none max-h-none m-4 overflow-hidden flex flex-col">
+            <ParallaxSceneBuilder
+              onSceneComplete={(scene) => {
+                console.log('Scene completed:', scene);
+                setShowSceneBuilder(false);
+                // TODO: Import scene into current Vista system
+              }}
+              onBack={() => setShowSceneBuilder(false)}
+            />
           </div>
         </div>
       )}

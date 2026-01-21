@@ -85,13 +85,30 @@ export default function EncounterCreator() {
     }
   };
 
-  // Load encounters on mount
+  // Load encounters on mount and refresh creatures when window gains focus
   useEffect(() => {
     loadEncounters();
     loadCreatures();
 
-    // Note: Auto-sync disabled to prevent conflicts with other components
-    // Users can manually refresh using the refresh button
+    // Auto-refresh creatures when window gains focus (e.g., after editing in Database tab)
+    const handleFocus = () => {
+      loadCreatures();
+    };
+
+    // Also refresh on visibility change (for tab switches)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadCreatures();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Filter creatures based on search term

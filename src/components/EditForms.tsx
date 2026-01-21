@@ -688,7 +688,12 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
       swim: creature.speed?.swim || '',
       climb: creature.speed?.climb || '',
       burrow: creature.speed?.burrow || ''
-    }
+    },
+    traits: creature.traits || [],
+    actions: creature.actions || [],
+    bonus_actions: creature.bonus_actions || [],
+    reactions: creature.reactions || [],
+    legendary_actions: creature.legendary_actions || []
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -716,9 +721,129 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
     event.preventDefault();
   };
 
+  // Trait helpers
+  const addTrait = () => {
+    setFormData(prev => ({
+      ...prev,
+      traits: [...prev.traits, { name: '', description: '' }]
+    }));
+  };
+
+  const updateTrait = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      traits: prev.traits.map((trait: any, i: number) =>
+        i === index ? { ...trait, [field]: value } : trait
+      )
+    }));
+  };
+
+  const removeTrait = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      traits: prev.traits.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  // Action helpers
+  const addAction = () => {
+    setFormData(prev => ({
+      ...prev,
+      actions: [...prev.actions, { name: '', description: '' }]
+    }));
+  };
+
+  const updateAction = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      actions: prev.actions.map((action: any, i: number) =>
+        i === index ? { ...action, [field]: value } : action
+      )
+    }));
+  };
+
+  const removeAction = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      actions: prev.actions.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  // Bonus Action helpers
+  const addBonusAction = () => {
+    setFormData(prev => ({
+      ...prev,
+      bonus_actions: [...prev.bonus_actions, { name: '', description: '' }]
+    }));
+  };
+
+  const updateBonusAction = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      bonus_actions: prev.bonus_actions.map((action: any, i: number) =>
+        i === index ? { ...action, [field]: value } : action
+      )
+    }));
+  };
+
+  const removeBonusAction = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      bonus_actions: prev.bonus_actions.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  // Reaction helpers
+  const addReaction = () => {
+    setFormData(prev => ({
+      ...prev,
+      reactions: [...prev.reactions, { name: '', description: '' }]
+    }));
+  };
+
+  const updateReaction = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      reactions: prev.reactions.map((reaction: any, i: number) =>
+        i === index ? { ...reaction, [field]: value } : reaction
+      )
+    }));
+  };
+
+  const removeReaction = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      reactions: prev.reactions.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  // Legendary Action helpers
+  const addLegendaryAction = () => {
+    setFormData(prev => ({
+      ...prev,
+      legendary_actions: [...prev.legendary_actions, { name: '', description: '' }]
+    }));
+  };
+
+  const updateLegendaryAction = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      legendary_actions: prev.legendary_actions.map((action: any, i: number) =>
+        i === index ? { ...action, [field]: value } : action
+      )
+    }));
+  };
+
+  const removeLegendaryAction = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      legendary_actions: prev.legendary_actions.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       alert('Creature name is required');
       return;
@@ -752,7 +877,14 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
       Object.entries(formData.speed).filter(([_, value]) => value.trim() !== '')
     );
     updatedCreature.speed = cleanedSpeed;
-    
+
+    // Clean up empty traits and actions (filter out entries with no name)
+    updatedCreature.traits = formData.traits.filter((t: any) => t.name.trim() !== '');
+    updatedCreature.actions = formData.actions.filter((a: any) => a.name.trim() !== '');
+    updatedCreature.bonus_actions = formData.bonus_actions.filter((a: any) => a.name.trim() !== '');
+    updatedCreature.reactions = formData.reactions.filter((r: any) => r.name.trim() !== '');
+    updatedCreature.legendary_actions = formData.legendary_actions.filter((a: any) => a.name.trim() !== '');
+
     onSave(updatedCreature);
   };
 
@@ -1009,14 +1141,254 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
                   Preview
                 </label>
                 <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-800">
-                  <img 
-                    src={previewUrl} 
+                  <img
+                    src={previewUrl}
                     alt="Preview"
                     className="w-full h-full object-cover"
                   />
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Traits Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Traits
+              </label>
+              <button
+                type="button"
+                onClick={addTrait}
+                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded transition-colors"
+              >
+                Add Trait
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.traits.map((trait: any, index: number) => (
+                <div key={index} className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Trait Name"
+                      value={trait.name}
+                      onChange={(e) => updateTrait(index, 'name', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeTrait(index)}
+                      className="px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Trait Description"
+                    value={trait.description}
+                    onChange={(e) => updateTrait(index, 'description', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
+                    rows={2}
+                  />
+                </div>
+              ))}
+              {formData.traits.length === 0 && (
+                <p className="text-sm text-slate-500 italic">No traits added yet. Click "Add Trait" to add one.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Actions Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Actions
+              </label>
+              <button
+                type="button"
+                onClick={addAction}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+              >
+                Add Action
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.actions.map((action: any, index: number) => (
+                <div key={index} className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Action Name"
+                      value={action.name}
+                      onChange={(e) => updateAction(index, 'name', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAction(index)}
+                      className="px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Action Description"
+                    value={action.description}
+                    onChange={(e) => updateAction(index, 'description', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 resize-none"
+                    rows={2}
+                  />
+                </div>
+              ))}
+              {formData.actions.length === 0 && (
+                <p className="text-sm text-slate-500 italic">No actions added yet. Click "Add Action" to add one.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Bonus Actions Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Bonus Actions
+              </label>
+              <button
+                type="button"
+                onClick={addBonusAction}
+                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors"
+              >
+                Add Bonus Action
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.bonus_actions.map((action: any, index: number) => (
+                <div key={index} className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Bonus Action Name"
+                      value={action.name}
+                      onChange={(e) => updateBonusAction(index, 'name', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeBonusAction(index)}
+                      className="px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Bonus Action Description"
+                    value={action.description}
+                    onChange={(e) => updateBonusAction(index, 'description', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 resize-none"
+                    rows={2}
+                  />
+                </div>
+              ))}
+              {formData.bonus_actions.length === 0 && (
+                <p className="text-sm text-slate-500 italic">No bonus actions added yet. Click "Add Bonus Action" to add one.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Reactions Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Reactions
+              </label>
+              <button
+                type="button"
+                onClick={addReaction}
+                className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+              >
+                Add Reaction
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.reactions.map((reaction: any, index: number) => (
+                <div key={index} className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Reaction Name"
+                      value={reaction.name}
+                      onChange={(e) => updateReaction(index, 'name', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-orange-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeReaction(index)}
+                      className="px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Reaction Description"
+                    value={reaction.description}
+                    onChange={(e) => updateReaction(index, 'description', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-orange-400 resize-none"
+                    rows={2}
+                  />
+                </div>
+              ))}
+              {formData.reactions.length === 0 && (
+                <p className="text-sm text-slate-500 italic">No reactions added yet. Click "Add Reaction" to add one.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Legendary Actions Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Legendary Actions
+              </label>
+              <button
+                type="button"
+                onClick={addLegendaryAction}
+                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
+              >
+                Add Legendary Action
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.legendary_actions.map((action: any, index: number) => (
+                <div key={index} className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Legendary Action Name"
+                      value={action.name}
+                      onChange={(e) => updateLegendaryAction(index, 'name', e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-purple-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeLegendaryAction(index)}
+                      className="px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Legendary Action Description"
+                    value={action.description}
+                    onChange={(e) => updateLegendaryAction(index, 'description', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-purple-400 resize-none"
+                    rows={2}
+                  />
+                </div>
+              ))}
+              {formData.legendary_actions.length === 0 && (
+                <p className="text-sm text-slate-500 italic">No legendary actions added yet. Click "Add Legendary Action" to add one.</p>
+              )}
+            </div>
           </div>
 
           {/* Form Actions */}
