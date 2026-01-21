@@ -538,6 +538,26 @@
       "noItemsFound": "Aucun objet trouvé",
       "itemsExcluded": "{count} objet{plural} exclu{plural}",
       "wondrousItems": "Objets Merveilleux"
+    },
+    "backupRestore": {
+      "title": "Sauvegarde & Restauration",
+      "subtitle": "Sauvegarde & Restauration des Données",
+      "description": "Créez des sauvegardes de vos données avant une mise à jour, ou restaurez à partir d'une sauvegarde précédente",
+      "createBackup": "Créer une Sauvegarde",
+      "createBackupDescription": "Téléchargez un fichier de sauvegarde contenant tous vos personnages, sessions, quêtes, rencontres et autres données. Enregistrez ce fichier avant de mettre à jour l'application.",
+      "downloadBackup": "Télécharger la Sauvegarde",
+      "creating": "Création de la sauvegarde...",
+      "backupSuccess": "Sauvegarde téléchargée avec succès !",
+      "backupError": "Échec de la création de la sauvegarde. Veuillez réessayer.",
+      "restoreBackup": "Restaurer à partir d'une Sauvegarde",
+      "restoreBackupDescription": "Téléversez un fichier de sauvegarde précédemment téléchargé pour restaurer vos données. Cela remplacera toutes les données actuelles.",
+      "uploadBackup": "Téléverser le Fichier de Sauvegarde",
+      "restoring": "Restauration des données...",
+      "restoreSuccess": "{{count}} enregistrements restaurés avec succès ! Actualisation de la page...",
+      "restoreError": "Échec de la restauration de la sauvegarde. Veuillez vérifier le fichier et réessayer.",
+      "confirmRestore": "Êtes-vous sûr de vouloir restaurer à partir de cette sauvegarde ? Cela REMPLACERA toutes vos données actuelles par les données de la sauvegarde. Cette action ne peut pas être annulée.",
+      "warningTitle": "Important :",
+      "warningText": "La restauration à partir d'une sauvegarde remplacera TOUTES les données existantes. Créez d'abord une sauvegarde de vos données actuelles si vous souhaitez les conserver."
     }
   },
   "database": {

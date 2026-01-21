@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
@@ -11,7 +11,7 @@ import { magicItems } from '@/data/magicItems';
 export default function Settings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
-  const [activeTab, setActiveTab] = useState<'vendingMachine'>('vendingMachine');
+  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore'>('vendingMachine');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
   // Load settings with sync on component mount
@@ -92,7 +92,7 @@ export default function Settings() {
 
       {/* Settings Navigation */}
       <div className="flex justify-center">
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-1 border border-white/10">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-1 border border-white/10 flex gap-1">
           <button
             onClick={() => setActiveTab('vendingMachine')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
@@ -104,16 +104,30 @@ export default function Settings() {
             <BuildingStorefrontIcon className="h-5 w-5" />
             {t('settings.vendingMachine.title')}
           </button>
+          <button
+            onClick={() => setActiveTab('backupRestore')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === 'backupRestore'
+                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <ArchiveBoxIcon className="h-5 w-5" />
+            {t('settings.backupRestore.title')}
+          </button>
         </div>
       </div>
 
       {/* Settings Content */}
       <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
         {activeTab === 'vendingMachine' && (
-          <VendingMachineSettings 
-            settings={settings.vendingMachine} 
+          <VendingMachineSettings
+            settings={settings.vendingMachine}
             onUpdate={updateVendingMachineSettings}
           />
+        )}
+        {activeTab === 'backupRestore' && (
+          <BackupRestoreSettings />
         )}
       </div>
 
@@ -125,6 +139,197 @@ export default function Settings() {
         >
           {t('settings.resetAllSettings')}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function BackupRestoreSettings() {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [backupStatus, setBackupStatus] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
+  const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restoring' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState<string>('');
+
+  const handleCreateBackup = async () => {
+    setBackupStatus('creating');
+    setStatusMessage('');
+
+    try {
+      const response = await fetch('/api/backup');
+      if (!response.ok) {
+        throw new Error('Failed to create backup');
+      }
+
+      const backupData = await response.json();
+
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `obojima-backup-${timestamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setBackupStatus('success');
+      setStatusMessage(t('settings.backupRestore.backupSuccess'));
+    } catch (error) {
+      console.error('Backup error:', error);
+      setBackupStatus('error');
+      setStatusMessage(t('settings.backupRestore.backupError'));
+    }
+  };
+
+  const handleRestoreClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Confirm before restore
+    if (!confirm(t('settings.backupRestore.confirmRestore'))) {
+      event.target.value = '';
+      return;
+    }
+
+    setRestoreStatus('restoring');
+    setStatusMessage('');
+
+    try {
+      const fileContent = await file.text();
+      const backupData = JSON.parse(fileContent);
+
+      // Validate it's a backup file
+      if (!backupData.version || !backupData.data) {
+        throw new Error('Invalid backup file format');
+      }
+
+      const response = await fetch('/api/restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(backupData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to restore backup');
+      }
+
+      const result = await response.json();
+      setRestoreStatus('success');
+      setStatusMessage(t('settings.backupRestore.restoreSuccess', { count: result.totalRestored }));
+
+      // Refresh the page after a brief delay to load restored data
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      console.error('Restore error:', error);
+      setRestoreStatus('error');
+      setStatusMessage(t('settings.backupRestore.restoreError'));
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">{t('settings.backupRestore.subtitle')}</h2>
+        <p className="text-slate-400">{t('settings.backupRestore.description')}</p>
+      </div>
+
+      {/* Status Message */}
+      {statusMessage && (
+        <div className={`p-4 rounded-lg text-center ${
+          backupStatus === 'success' || restoreStatus === 'success'
+            ? 'bg-green-600/20 text-green-400 border border-green-600/30'
+            : backupStatus === 'error' || restoreStatus === 'error'
+            ? 'bg-red-600/20 text-red-400 border border-red-600/30'
+            : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
+        }`}>
+          {statusMessage}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Create Backup */}
+        <div className="bg-slate-700/30 rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <CloudArrowDownIcon className="h-8 w-8 text-blue-400" />
+            <h3 className="text-xl font-semibold text-white">{t('settings.backupRestore.createBackup')}</h3>
+          </div>
+          <p className="text-slate-400 text-sm">
+            {t('settings.backupRestore.createBackupDescription')}
+          </p>
+          <button
+            onClick={handleCreateBackup}
+            disabled={backupStatus === 'creating'}
+            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            {backupStatus === 'creating' ? (
+              <>
+                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                {t('settings.backupRestore.creating')}
+              </>
+            ) : (
+              <>
+                <CloudArrowDownIcon className="h-5 w-5" />
+                {t('settings.backupRestore.downloadBackup')}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Restore Backup */}
+        <div className="bg-slate-700/30 rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <CloudArrowUpIcon className="h-8 w-8 text-amber-400" />
+            <h3 className="text-xl font-semibold text-white">{t('settings.backupRestore.restoreBackup')}</h3>
+          </div>
+          <p className="text-slate-400 text-sm">
+            {t('settings.backupRestore.restoreBackupDescription')}
+          </p>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            className="hidden"
+          />
+          <button
+            onClick={handleRestoreClick}
+            disabled={restoreStatus === 'restoring'}
+            className="w-full px-6 py-3 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            {restoreStatus === 'restoring' ? (
+              <>
+                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                {t('settings.backupRestore.restoring')}
+              </>
+            ) : (
+              <>
+                <CloudArrowUpIcon className="h-5 w-5" />
+                {t('settings.backupRestore.uploadBackup')}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Warning */}
+      <div className="bg-amber-600/10 border border-amber-600/30 rounded-lg p-4">
+        <p className="text-amber-400 text-sm">
+          <strong>{t('settings.backupRestore.warningTitle')}</strong> {t('settings.backupRestore.warningText')}
+        </p>
       </div>
     </div>
   );

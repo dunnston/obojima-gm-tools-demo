@@ -693,6 +693,26 @@
       "noItemsFound": "No items found",
       "itemsExcluded": "{count} item{plural} excluded",
       "wondrousItems": "Wondrous Items"
+    },
+    "backupRestore": {
+      "title": "Backup & Restore",
+      "subtitle": "Data Backup & Restore",
+      "description": "Create backups of your data before updating, or restore from a previous backup",
+      "createBackup": "Create Backup",
+      "createBackupDescription": "Download a backup file containing all your characters, sessions, quests, encounters, and other data. Save this file before updating the app.",
+      "downloadBackup": "Download Backup",
+      "creating": "Creating backup...",
+      "backupSuccess": "Backup downloaded successfully!",
+      "backupError": "Failed to create backup. Please try again.",
+      "restoreBackup": "Restore from Backup",
+      "restoreBackupDescription": "Upload a previously downloaded backup file to restore your data. This will replace all current data.",
+      "uploadBackup": "Upload Backup File",
+      "restoring": "Restoring data...",
+      "restoreSuccess": "Successfully restored {{count}} records! Refreshing page...",
+      "restoreError": "Failed to restore backup. Please check the file and try again.",
+      "confirmRestore": "Are you sure you want to restore from this backup? This will REPLACE all your current data with the backup data. This action cannot be undone.",
+      "warningTitle": "Important:",
+      "warningText": "Restoring from a backup will replace ALL existing data. Create a backup of your current data first if you want to keep it."
     }
   }
 }
