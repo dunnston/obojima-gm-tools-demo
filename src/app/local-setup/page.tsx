@@ -13,8 +13,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 // GitHub Release URL
-const WINDOWS_INSTALLER_URL = 'https://github.com/dunnston/obojima-gm-tools-demo/releases/download/v0.1.1/Obojima.GM.Tools_0.1.1_x64-setup.exe';
-const WINDOWS_MSI_URL = 'https://github.com/dunnston/obojima-gm-tools-demo/releases/download/v0.1.1/Obojima.GM.Tools_0.1.1_x64_en-US.msi';
+const WINDOWS_INSTALLER_URL = 'https://github.com/dunnston/obojima-gm-tools-demo/releases/download/v0.1.3/Obojima.GM.Tools_0.1.3_x64-setup.exe';
+const WINDOWS_MSI_URL = 'https://github.com/dunnston/obojima-gm-tools-demo/releases/download/v0.1.3/Obojima.GM.Tools_0.1.3_x64_en-US.msi';
 
 export default function LocalSetupPage() {
   const [activeTab, setActiveTab] = useState<'windows' | 'mac' | 'linux' | 'developer'>('windows');
@@ -64,7 +64,7 @@ export default function LocalSetupPage() {
             </div>
 
             <div className="text-sm text-emerald-200/80">
-              Version 0.1.0 | Windows 10/11 (64-bit) | ~160 MB
+              Version 0.1.3 | Windows 10/11 (64-bit) | ~160 MB
             </div>
           </div>
         </div>

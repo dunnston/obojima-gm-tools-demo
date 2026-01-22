@@ -22,7 +22,7 @@ interface UpdaterContextValue {
 
 const UpdaterContext = createContext<UpdaterContextValue | null>(null);
 
-const CURRENT_VERSION = '0.1.1';
+const CURRENT_VERSION = '0.1.3';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const INITIAL_CHECK_DELAY_MS = 5000; // 5 seconds after app start
 
