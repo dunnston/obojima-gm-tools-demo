@@ -386,7 +386,7 @@ function BackupRestoreSettings() {
   );
 }
 
-const FALLBACK_VERSION = '0.1.3';
+const FALLBACK_VERSION = '0.1.4';
 
 function UpdatesSettings() {
   const updater = useUpdater();
