@@ -804,9 +804,9 @@ class SyncService {
         };
       }
 
-      // For user-potions and user-magic-items, we need special handling to avoid duplicates
+      // For user content types, we need special handling to avoid duplicates and properly sync deletions
       let result: BatchResult<any>;
-      if (dataType === 'user-potions' || dataType === 'user-magic-items') {
+      if (dataType === 'user-potions' || dataType === 'user-magic-items' || dataType === 'user-creatures' || dataType === 'user-ingredients' || dataType === 'user-companion-types') {
         result = await this.saveWithDuplicateHandling(dataType, items);
       } else {
         // Standard batch save for other data types

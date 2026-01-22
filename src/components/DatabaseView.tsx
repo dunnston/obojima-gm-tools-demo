@@ -52,6 +52,32 @@ export default function DatabaseView() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
+  // Migration helper to ensure all items have unique IDs
+  const migrateCreaturesWithIds = (creatures: any[]): any[] => {
+    const seenIds = new Set<string>();
+    return creatures.map((creature, index) => {
+      // Generate ID if missing or if it's a duplicate
+      let id = creature.id;
+      if (!id || seenIds.has(id)) {
+        id = `creature-${creature.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'unknown'}-${Date.now()}-${index}`;
+      }
+      seenIds.add(id);
+      return { ...creature, id };
+    });
+  };
+
+  const migrateMagicItemsWithIds = (items: any[]): any[] => {
+    const seenIds = new Set<string>();
+    return items.map((item, index) => {
+      let id = item.id;
+      if (!id || seenIds.has(id)) {
+        id = `magic-item-${item.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'unknown'}-${Date.now()}-${index}`;
+      }
+      seenIds.add(id);
+      return { ...item, id };
+    });
+  };
+
   // Load all user-generated data with sync
   const loadAllUserData = async () => {
     setSyncStatus('syncing');
@@ -78,10 +104,24 @@ export default function DatabaseView() {
       console.log('Loaded potion data from sync:', potionData);
       console.log('LocalStorage modifiedPotions:', localStorage.getItem('modifiedPotions'));
 
+      // Migrate data to ensure all items have unique IDs
+      const migratedCreatures = migrateCreaturesWithIds(creatureData);
+      const migratedMagicItems = migrateMagicItemsWithIds(magicItemData);
+
+      // If migration added IDs, save the migrated data back
+      if (JSON.stringify(migratedCreatures) !== JSON.stringify(creatureData)) {
+        console.log('Migrating creatures with new IDs...');
+        await saveUserCreatures(migratedCreatures);
+      }
+      if (JSON.stringify(migratedMagicItems) !== JSON.stringify(magicItemData)) {
+        console.log('Migrating magic items with new IDs...');
+        await saveUserMagicItems(migratedMagicItems);
+      }
+
       setModifiedPotions(potionData);
       setModifiedIngredients(ingredientData);
-      setModifiedCreatures(creatureData);
-      setModifiedMagicItems(magicItemData);
+      setModifiedCreatures(migratedCreatures);
+      setModifiedMagicItems(migratedMagicItems);
       setModifiedNPCs(npcData);
       setModifiedCompanionTypes(companionTypeData);
       setModifiedCompanions(companionData);
@@ -402,13 +442,18 @@ export default function DatabaseView() {
   ];
 
   // Apply modifications to creatures and add new ones
+  // Combine base creatures with user-created creatures
+  // User creatures (modifiedCreatures) are completely separate from base creatures
+  // Base creatures get stable IDs based on their names
+  const baseCreaturesWithIds = allBaseCreatures.map(creature => ({
+    ...creature,
+    id: creature.id || `creature-base-${creature.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+  }));
+
+  // Combine: base creatures + all user-created creatures (which already have unique IDs from migration)
   const currentCreatures = [
-    ...allBaseCreatures.map(creature => {
-      const modified = modifiedCreatures.find(c => c.name === creature.name);
-      return modified || creature;
-    }),
-    // Add completely new creatures that don't exist in base data
-    ...modifiedCreatures.filter(modified => !allBaseCreatures.find(original => original.name === modified.name))
+    ...baseCreaturesWithIds,
+    ...modifiedCreatures
   ];
 
   // Apply modifications to magic items and add new ones
@@ -464,28 +509,64 @@ export default function DatabaseView() {
       // Only allow deleting custom ingredients (not in original data)
       const isCustomItem = !ingredients.find(original => `ingredient-${original.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}` === item.id);
       if (isCustomItem) {
-        setModifiedIngredients(prev => prev.filter(i => i.id !== item.id));
+        // Update local state
+        const updatedIngredients = modifiedIngredients.filter(i => i.id !== item.id);
+        setModifiedIngredients(updatedIngredients);
+
+        // Sync deletion to server
+        try {
+          await saveUserIngredients(updatedIngredients);
+        } catch (error) {
+          console.error('Error syncing ingredient deletion:', error);
+        }
       }
     } else if (type === 'potion') {
       // Only allow deleting custom potions (not in original data)
       const originalPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
       const isCustomItem = !originalPotions.find(original => original.number === item.number);
       if (isCustomItem) {
-        setModifiedPotions(prev => prev.filter(p => p.number !== item.number));
+        // Update local state
+        const updatedPotions = modifiedPotions.filter(p => p.number !== item.number);
+        setModifiedPotions(updatedPotions);
+
+        // Sync deletion to server
+        try {
+          await saveUserPotions(updatedPotions);
+        } catch (error) {
+          console.error('Error syncing potion deletion:', error);
+        }
       }
     } else if (type === 'creature') {
-      // Only allow deleting custom creatures (not in original data or imported data)  
+      // Only allow deleting custom creatures (not in original data or imported data)
       const importedCreatures = getImportedCreatures();
       const allBaseCreatures = [...creatures, ...importedCreatures];
       const isCustomItem = !allBaseCreatures.find(original => original.name === item.name);
-      if (isCustomItem) {
-        setModifiedCreatures(prev => prev.filter(c => c.name !== item.name));
+      if (isCustomItem && item.id) {
+        // Update local state - filter by ID only to avoid removing same-named creatures
+        const updatedCreatures = modifiedCreatures.filter(c => c.id !== item.id);
+        setModifiedCreatures(updatedCreatures);
+
+        // Sync deletion to server
+        try {
+          await saveUserCreatures(updatedCreatures);
+        } catch (error) {
+          console.error('Error syncing creature deletion:', error);
+        }
       }
     } else if (type === 'magicItem') {
       // Only allow deleting custom magic items (not in original data)
       const isCustomItem = !magicItems.find(original => original.name === item.name);
-      if (isCustomItem) {
-        setModifiedMagicItems(prev => prev.filter(m => m.name !== item.name));
+      if (isCustomItem && item.id) {
+        // Update local state - filter by ID only to avoid removing same-named items
+        const updatedMagicItems = modifiedMagicItems.filter(m => m.id !== item.id);
+        setModifiedMagicItems(updatedMagicItems);
+
+        // Sync deletion to server
+        try {
+          await saveUserMagicItems(updatedMagicItems);
+        } catch (error) {
+          console.error('Error syncing magic item deletion:', error);
+        }
       }
     } else if (type === 'npc') {
       // All NPCs are custom (user-created)
@@ -501,7 +582,16 @@ export default function DatabaseView() {
       // Only allow deleting custom companion types (not in original data)
       const isCustomItem = !companionTypes.find(original => original.id === item.id);
       if (isCustomItem) {
-        setModifiedCompanionTypes(prev => prev.filter(ct => ct.id !== item.id));
+        // Update local state
+        const updatedCompanionTypes = modifiedCompanionTypes.filter(ct => ct.id !== item.id);
+        setModifiedCompanionTypes(updatedCompanionTypes);
+
+        // Sync deletion to server
+        try {
+          await saveUserCompanionTypes(updatedCompanionTypes);
+        } catch (error) {
+          console.error('Error syncing companion type deletion:', error);
+        }
       }
     } else if (type === 'companion') {
       // All companions are custom (user-created)
@@ -628,14 +718,18 @@ export default function DatabaseView() {
         const isNewItem = editingItem?.name === '';
 
         if (isNewItem) {
+          // Generate unique ID for new creature
+          updatedItem.id = `creature-${updatedItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+
           // For new items, just add to the list if name is provided
           if (updatedItem.name && updatedItem.name.trim()) {
             return [...modifiedCreatures, updatedItem];
           }
           return modifiedCreatures;
         } else {
-          // For existing items, replace the existing one using the original name
-          const filtered = modifiedCreatures.filter(item => item.name !== editingItem.name);
+          // For existing items, preserve the original ID and replace using ID only
+          updatedItem.id = editingItem.id || `creature-${editingItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+          const filtered = modifiedCreatures.filter(item => item.id !== editingItem.id);
           return [...filtered, updatedItem];
         }
       })();
@@ -654,9 +748,9 @@ export default function DatabaseView() {
         const isNewItem = editingItem?.name === '';
         
         if (isNewItem) {
-          // For new items, generate ID and add to the list if name is provided
+          // For new items, generate unique ID and add to the list if name is provided
           if (updatedItem.name && updatedItem.name.trim()) {
-            updatedItem.id = `magic-item-${updatedItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+            updatedItem.id = `magic-item-${updatedItem.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
             return [...modifiedMagicItems, updatedItem];
           }
           return modifiedMagicItems;
@@ -1391,8 +1485,8 @@ function IngredientsTab({ ingredients, onEdit, onAdd, onDelete, isCustomItem }: 
 
       {/* Ingredients List */}
       <div className="space-y-4">
-        {filteredIngredients.map((ingredient) => (
-          <div key={ingredient.name} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200">
+        {filteredIngredients.map((ingredient, index) => (
+          <div key={ingredient.id || `${ingredient.name}-${index}`} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0">
@@ -1613,8 +1707,8 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
 
       {/* Creatures Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCreatures.map((creature) => (
-          <div key={creature.name} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200">
+        {filteredCreatures.map((creature, index) => (
+          <div key={creature.id || `${creature.name}-${index}`} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200">
             <div className="space-y-3">
               {/* Creature Image */}
               <div className="w-full h-32 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden">
@@ -1961,9 +2055,9 @@ function MagicItemsTab({ magicItems, onEdit, onAdd, onDelete, isCustomItem }: { 
 
       {/* Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredMagicItems.map((item) => (
+        {filteredMagicItems.map((item, index) => (
           <div
-            key={item.name}
+            key={item.id || `${item.name}-${index}`}
             className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-200"
           >
             {/* Magic Item Image */}
