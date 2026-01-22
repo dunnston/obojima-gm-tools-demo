@@ -22,7 +22,7 @@ interface UpdaterContextValue {
 
 const UpdaterContext = createContext<UpdaterContextValue | null>(null);
 
-const CURRENT_VERSION = '0.1.3';
+const FALLBACK_VERSION = '0.1.3'; // Fallback for non-Tauri environments
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const INITIAL_CHECK_DELAY_MS = 5000; // 5 seconds after app start
 
@@ -34,6 +34,23 @@ export function UpdaterProvider({ children }: UpdaterProviderProps) {
   const updater = useUpdater();
   const [showModal, setShowModal] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState(FALLBACK_VERSION);
+
+  // Get version from Tauri on mount
+  useEffect(() => {
+    async function fetchVersion() {
+      if (isTauriEnvironment()) {
+        try {
+          const { getVersion } = await import('@tauri-apps/api/app');
+          const version = await getVersion();
+          setCurrentVersion(version);
+        } catch (error) {
+          console.error('Failed to get app version:', error);
+        }
+      }
+    }
+    fetchVersion();
+  }, []);
 
   // Check for updates on mount (with delay) and periodically
   useEffect(() => {
@@ -73,7 +90,7 @@ export function UpdaterProvider({ children }: UpdaterProviderProps) {
   }, []);
 
   const contextValue: UpdaterContextValue = {
-    currentVersion: CURRENT_VERSION,
+    currentVersion,
     updateAvailable: updater.updateAvailable,
     updateInfo: updater.updateInfo,
     isChecking: updater.isChecking,
@@ -102,7 +119,7 @@ export function UpdaterProvider({ children }: UpdaterProviderProps) {
       {/* Update modal */}
       {showModal && (
         <UpdateModal
-          currentVersion={CURRENT_VERSION}
+          currentVersion={currentVersion}
           updateInfo={updater.updateInfo}
           isDownloading={updater.isDownloading}
           downloadProgress={updater.downloadProgress}
