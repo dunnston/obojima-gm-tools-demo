@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Ingredient } from '@/data/ingredients';
-import Image from 'next/image';
 import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useItemTranslation } from '@/hooks/useItemTranslation';
+import { getIngredientImagePath } from '@/utils/imageUtils';
 
 interface SearchableDropdownProps {
   ingredients: Ingredient[];
@@ -80,17 +80,21 @@ export default function SearchableDropdown({
         <div className="relative group">
           <div className="bg-gradient-to-br from-emerald-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl border border-white/20 p-4 transition-all duration-200">
             <div className="flex items-center gap-3">
-              {selectedIngredient.imageUrl && (
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10">
-                  <Image
-                    src={selectedIngredient.imageUrl}
-                    alt={selectedIngredient.name}
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+                <img
+                  src={getIngredientImagePath(selectedIngredient.name)}
+                  alt={selectedIngredient.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    const parent = img.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<span class="text-2xl">🌿</span>';
+                    }
+                  }}
+                />
+              </div>
               <div className="flex-1">
                 <h3 className="font-medium text-white">{translateIngredientName(selectedIngredient.name)}</h3>
                 <div className="flex gap-2 text-xs mt-1">
@@ -152,17 +156,21 @@ export default function SearchableDropdown({
                   className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0"
                 >
                   <div className="flex items-center gap-3">
-                    {ingredient.imageUrl && (
-                      <div className="w-8 h-8 rounded-md overflow-hidden bg-white/10 flex-shrink-0">
-                        <Image
-                          src={ingredient.imageUrl}
-                          alt={ingredient.name}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
+                    <div className="w-8 h-8 rounded-md overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center">
+                      <img
+                        src={getIngredientImagePath(ingredient.name)}
+                        alt={ingredient.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<span class="text-lg">🌿</span>';
+                          }
+                        }}
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-white font-medium truncate">{translateIngredientName(ingredient.name)}</span>
