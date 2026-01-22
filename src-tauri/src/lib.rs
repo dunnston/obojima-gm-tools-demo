@@ -1,4 +1,5 @@
 use tauri_plugin_sql::{Migration, MigrationKind};
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -91,6 +92,16 @@ pub fn run() {
                 .add_migrations("sqlite:obojima.db", migrations)
                 .build(),
         )
+        .setup(|app| {
+            // Enable devtools in debug builds or when ENABLE_DEVTOOLS env var is set
+            #[cfg(any(debug_assertions, feature = "devtools"))]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
+                }
+            }
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

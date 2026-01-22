@@ -1,36 +1,60 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Component, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { isTauriEnvironment } from '@/lib/storage';
-import { useUpdater } from '@/hooks/useUpdater';
 import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 import { syncService } from '@/services/sync';
+import { useUpdater } from '@/hooks/useUpdater';
+
+// Error boundary for UpdatesSettings to prevent errors from breaking the entire Settings component
+class UpdatesErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[UpdatesSettings] Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">Updates</h2>
+            <p className="text-slate-400">Check for and install application updates</p>
+          </div>
+          <div className="bg-amber-600/10 border border-amber-600/30 rounded-lg p-4">
+            <p className="text-amber-400 text-sm">
+              <strong>Error loading updates:</strong> {this.state.error?.message || 'Unknown error'}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Settings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
   const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates'>('vendingMachine');
-  const [isTauri, setIsTauri] = useState(false);
-
-  // Check if running in Tauri - with delay to ensure window is ready
-  useEffect(() => {
-    const checkTauri = () => {
-      const detected = isTauriEnvironment();
-      console.log('Tauri environment detected:', detected, '__TAURI__' in window, '__TAURI_INTERNALS__' in window);
-      setIsTauri(detected);
-    };
-
-    // Check immediately and after a short delay (for hydration)
-    checkTauri();
-    const timer = setTimeout(checkTauri, 100);
-    return () => clearTimeout(timer);
-  }, []);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+
+  // Debug: Log when Settings component renders
+  useEffect(() => {
+    console.log('[Settings] Component mounted - all 3 tabs should render');
+  }, []);
 
   // Load settings with sync on component mount
   useEffect(() => {
@@ -133,19 +157,17 @@ export default function Settings() {
             <ArchiveBoxIcon className="h-5 w-5" />
             {t('settings.backupRestore.title')}
           </button>
-          {isTauri && (
-            <button
-              onClick={() => setActiveTab('updates')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                activeTab === 'updates'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <ArrowDownTrayIcon className="h-5 w-5" />
-              Updates
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('updates')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === 'updates'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Updates
+          </button>
         </div>
       </div>
 
@@ -160,8 +182,10 @@ export default function Settings() {
         {activeTab === 'backupRestore' && (
           <BackupRestoreSettings />
         )}
-        {activeTab === 'updates' && isTauri && (
-          <UpdatesSettings />
+        {activeTab === 'updates' && (
+          <UpdatesErrorBoundary>
+            <UpdatesSettings />
+          </UpdatesErrorBoundary>
         )}
       </div>
 
@@ -366,10 +390,79 @@ const CURRENT_VERSION = '0.1.0';
 
 function UpdatesSettings() {
   const updater = useUpdater();
+  const [isTauri, setIsTauri] = useState(false);
+  const [tauriChecked, setTauriChecked] = useState(false);
+
+  // Check for Tauri environment
+  useEffect(() => {
+    const checkTauri = () => {
+      if (typeof window === 'undefined') return false;
+      return '__TAURI_IPC__' in window || '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
+    };
+
+    // Check multiple times to ensure Tauri has initialized
+    let attempts = 0;
+    const check = () => {
+      if (checkTauri()) {
+        setIsTauri(true);
+        setTauriChecked(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (check()) return;
+
+    const interval = setInterval(() => {
+      attempts++;
+      if (check() || attempts >= 20) {
+        setTauriChecked(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCheckForUpdates = async () => {
     await updater.checkForUpdate();
   };
+
+  // Show loading state while checking for Tauri
+  if (!tauriChecked) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Updates</h2>
+          <p className="text-slate-400">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message for web users
+  if (!isTauri) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Updates</h2>
+          <p className="text-slate-400">Check for and install application updates</p>
+        </div>
+
+        <div className="bg-slate-700/30 rounded-xl p-6 text-center">
+          <p className="text-sm text-slate-400 mb-1">Current Version</p>
+          <p className="text-3xl font-mono text-white">v{CURRENT_VERSION}</p>
+        </div>
+
+        <div className="bg-blue-600/10 border border-blue-600/30 rounded-lg p-4">
+          <p className="text-blue-400 text-sm">
+            <strong>Desktop App Required:</strong> Automatic updates are only available in the desktop application.
+            Download the desktop app from GitHub to receive automatic updates.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
