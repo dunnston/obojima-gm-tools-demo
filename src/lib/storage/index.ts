@@ -8,8 +8,10 @@ let sqliteStorageAdapter: StorageAdapter | null = null;
 let tauriStorageAdapter: StorageAdapter | null = null;
 
 // Check if we're in Tauri environment (only works on client)
+// Tauri 2.x uses __TAURI_INTERNALS__, Tauri 1.x uses __TAURI__
 export function isTauriEnvironment(): boolean {
-  return typeof window !== 'undefined' && '__TAURI__' in window;
+  if (typeof window === 'undefined') return false;
+  return '__TAURI__' in window || '__TAURI_INTERNALS__' in window;
 }
 
 export function getStorageAdapter(): StorageAdapter {

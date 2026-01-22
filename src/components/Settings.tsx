@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { isTauriEnvironment } from '@/lib/storage';
+import { useUpdater } from '@/hooks/useUpdater';
 import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
@@ -12,7 +14,22 @@ import { syncService } from '@/services/sync';
 export default function Settings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
-  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore'>('vendingMachine');
+  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates'>('vendingMachine');
+  const [isTauri, setIsTauri] = useState(false);
+
+  // Check if running in Tauri - with delay to ensure window is ready
+  useEffect(() => {
+    const checkTauri = () => {
+      const detected = isTauriEnvironment();
+      console.log('Tauri environment detected:', detected, '__TAURI__' in window, '__TAURI_INTERNALS__' in window);
+      setIsTauri(detected);
+    };
+
+    // Check immediately and after a short delay (for hydration)
+    checkTauri();
+    const timer = setTimeout(checkTauri, 100);
+    return () => clearTimeout(timer);
+  }, []);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
   // Load settings with sync on component mount
@@ -116,6 +133,19 @@ export default function Settings() {
             <ArchiveBoxIcon className="h-5 w-5" />
             {t('settings.backupRestore.title')}
           </button>
+          {isTauri && (
+            <button
+              onClick={() => setActiveTab('updates')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                activeTab === 'updates'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              Updates
+            </button>
+          )}
         </div>
       </div>
 
@@ -129,6 +159,9 @@ export default function Settings() {
         )}
         {activeTab === 'backupRestore' && (
           <BackupRestoreSettings />
+        )}
+        {activeTab === 'updates' && isTauri && (
+          <UpdatesSettings />
         )}
       </div>
 
@@ -323,6 +356,124 @@ function BackupRestoreSettings() {
       <div className="bg-amber-600/10 border border-amber-600/30 rounded-lg p-4">
         <p className="text-amber-400 text-sm">
           <strong>{t('settings.backupRestore.warningTitle')}</strong> {t('settings.backupRestore.warningText')}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const CURRENT_VERSION = '0.1.0';
+
+function UpdatesSettings() {
+  const updater = useUpdater();
+
+  const handleCheckForUpdates = async () => {
+    await updater.checkForUpdate();
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Updates</h2>
+        <p className="text-slate-400">Check for and install application updates</p>
+      </div>
+
+      {/* Current Version */}
+      <div className="bg-slate-700/30 rounded-xl p-6 text-center">
+        <p className="text-sm text-slate-400 mb-1">Current Version</p>
+        <p className="text-3xl font-mono text-white">v{CURRENT_VERSION}</p>
+      </div>
+
+      {/* Update Status */}
+      {updater.updateAvailable && updater.updateInfo && (
+        <div className="bg-emerald-600/10 border border-emerald-600/30 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <ArrowDownTrayIcon className="h-6 w-6 text-emerald-400" />
+            <div>
+              <p className="font-medium text-emerald-400">Update Available!</p>
+              <p className="text-sm text-slate-300">Version {updater.updateInfo.version} is ready to download.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Up to date message */}
+      {updater.isUpToDate && !updater.updateAvailable && (
+        <div className="bg-emerald-600/10 border border-emerald-600/30 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+            <div>
+              <p className="font-medium text-emerald-400">You're up to date!</p>
+              <p className="text-sm text-slate-300">
+                Obojima GM Tools v{CURRENT_VERSION} is the latest version.
+                {updater.lastChecked && (
+                  <span className="text-slate-400"> Last checked: {updater.lastChecked.toLocaleString()}</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {updater.error && (
+        <div className="bg-amber-600/10 border border-amber-600/30 rounded-lg p-4">
+          <p className="text-amber-400 text-sm">{updater.error}</p>
+        </div>
+      )}
+
+      {/* Check for Updates */}
+      <div className="space-y-4">
+        <button
+          onClick={handleCheckForUpdates}
+          disabled={updater.isChecking}
+          className="w-full px-6 py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600/50 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-3"
+        >
+          {updater.isChecking ? (
+            <>
+              <ArrowPathIcon className="h-5 w-5 animate-spin" />
+              Checking for updates...
+            </>
+          ) : (
+            <>
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              Check for Updates
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Download Progress */}
+      {updater.isDownloading && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-400">Downloading update...</span>
+            <span className="text-emerald-400">{updater.downloadProgress}%</span>
+          </div>
+          <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-300"
+              style={{ width: `${updater.downloadProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Install Update Button */}
+      {updater.updateAvailable && !updater.isDownloading && (
+        <button
+          onClick={updater.downloadAndInstall}
+          className="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-3"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+          Download and Install Update
+        </button>
+      )}
+
+      {/* Info */}
+      <div className="bg-slate-700/30 rounded-lg p-4">
+        <p className="text-slate-400 text-sm">
+          Updates are checked automatically when the app starts and every 6 hours.
+          We recommend creating a backup before updating.
         </p>
       </div>
     </div>

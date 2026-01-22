@@ -3,6 +3,17 @@
   "productName": "Obojima GM Tools",
   "version": "0.1.0",
   "identifier": "com.obojima.gmtools",
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQyODgzN0UxRDI3NEU5NjIKUldSaTZYVFM0VGVJUXZ1ZTZnRnhXU1BHQzhpRmtaR2dJV2FMNzh0TDB2RkhRV0FpQ2NxOVBuTkEK",
+      "endpoints": [
+        "https://github.com/dunnston/obojima-gm-tools/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:3000",

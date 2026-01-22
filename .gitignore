@@ -113,3 +113,17 @@ src-tauri/target/
 *.AppImage
 *.deb
 *.rpm
+
+# Tauri signing keys - NEVER commit these!
+*.key
+*.key.pub
+~/.tauri/
+~\.tauri\
+
+# Claude Code local instructions - not needed on GitHub
+CLAUDE.md
+RELEASE.md
+
+# Local development notes - not needed on GitHub
+Tauri conversion*
+release_notes*
