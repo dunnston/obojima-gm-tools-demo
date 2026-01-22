@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { creatures, Encounter } from '@/data/creatures';
+import { creatures, Creature, Encounter } from '@/data/creatures';
 import { PlayerCharacter } from '@/data/characters';
+import { getImportedCreatures } from '@/utils/creatureImport';
+import { syncService } from '@/services/sync';
 import { getCreatureImagePath } from '@/utils/imageUtils';
 import { 
   UserPlusIcon, 
@@ -39,10 +41,45 @@ export default function InitiativeTracker() {
   const [round, setRound] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'player' | 'creature'>('player');
+  const [availableCreatures, setAvailableCreatures] = useState<Creature[]>(creatures);
   const { t } = useTranslation();
 
-  // Check for pending encounter on mount
+  // Load creatures from all sources (database + static + imported)
+  const loadCreatures = async () => {
+    try {
+      // Load modified creatures from sync service
+      const savedCreatures = await syncService.syncWithFallback('user-creatures', 'modifiedCreatures');
+
+      // Combine original creatures with imported creatures
+      const importedCreatures = getImportedCreatures();
+      const allBaseCreatures = [
+        ...creatures,
+        ...importedCreatures.filter(imported => !creatures.find(original => original.name === imported.name))
+      ];
+
+      // Apply modifications to creatures and add new ones
+      const allCreatures = [
+        ...allBaseCreatures.map(creature => {
+          const modified = savedCreatures?.find((c: any) => c.name === creature.name);
+          return modified || creature;
+        }),
+        // Add completely new creatures that don't exist in base data
+        ...(savedCreatures?.filter((modified: any) =>
+          !allBaseCreatures.find(original => original.name === modified.name)) || [])
+      ];
+
+      setAvailableCreatures(allCreatures);
+    } catch (error) {
+      console.error('Error loading creatures:', error);
+      // Fallback to base creatures if loading fails
+      setAvailableCreatures(creatures);
+    }
+  };
+
+  // Load creatures and check for pending encounter on mount
   useEffect(() => {
+    loadCreatures();
+
     const pendingEncounterData = localStorage.getItem('pendingEncounter');
     if (pendingEncounterData) {
       try {
@@ -53,6 +90,26 @@ export default function InitiativeTracker() {
         console.error('Error loading pending encounter:', error);
       }
     }
+
+    // Auto-refresh creatures when window gains focus (e.g., after editing in Database tab)
+    const handleFocus = () => {
+      loadCreatures();
+    };
+
+    // Also refresh on visibility change (for tab switches)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadCreatures();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Sort participants by initiative (descending)
@@ -476,6 +533,7 @@ export default function InitiativeTracker() {
           type={addType}
           onAdd={addParticipant}
           onClose={() => setShowAddModal(false)}
+          availableCreatures={availableCreatures}
         />
       )}
     </div>
@@ -973,14 +1031,16 @@ function CreatureDetails({
 }
 
 // Add Participant Modal Component
-function AddParticipantModal({ 
-  type, 
-  onAdd, 
-  onClose 
-}: { 
+function AddParticipantModal({
+  type,
+  onAdd,
+  onClose,
+  availableCreatures
+}: {
   type: 'player' | 'creature';
   onAdd: (participant: Omit<CombatParticipant, 'id'>) => void;
   onClose: () => void;
+  availableCreatures: Creature[];
 }) {
   const [initiative, setInitiative] = useState(0);
   const [selectedCreature, setSelectedCreature] = useState<any>(null);
@@ -1011,7 +1071,7 @@ function AddParticipantModal({
     }
   }, [type]);
 
-  const filteredCreatures = creatures.filter(c => 
+  const filteredCreatures = availableCreatures.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -1185,7 +1245,7 @@ function AddParticipantModal({
                         }}
                       />
                       <span className="text-white">{creature.name}</span>
-                      <span className="text-slate-400 text-sm ml-auto">CR {creature.cr}</span>
+                      <span className="text-slate-400 text-sm ml-auto">CR {creature.challenge_rating}</span>
                     </div>
                   </button>
                 ))}
@@ -1195,7 +1255,7 @@ function AddParticipantModal({
                 <div className="bg-slate-700/50 rounded-lg p-3">
                   <div className="text-white font-semibold">{selectedCreature.name}</div>
                   <div className="text-sm text-slate-400">
-                    AC {selectedCreature.ac} • HP {selectedCreature.hp} • CR {selectedCreature.cr}
+                    AC {selectedCreature.armor_class} • HP {selectedCreature.hit_points} • CR {selectedCreature.challenge_rating}
                   </div>
                 </div>
               )}
