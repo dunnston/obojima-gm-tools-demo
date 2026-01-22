@@ -472,33 +472,23 @@ export function MusicManager({
       const fileExtension = file.name.split('.').pop();
       const uniqueFilename = `${file.name.replace(/\.[^/.]+$/, '')}-${timestamp}-${randomId}.${fileExtension}`;
 
-      // Upload the file to the server
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('filename', uniqueFilename);
+      // Upload the file using sync service
+      const result = await syncService.uploadFile(file, 'audio', uniqueFilename);
 
-      const response = await fetch('/api/upload-audio', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Upload failed: ${response.statusText}${errorData.details ? ` - ${errorData.details}` : ''}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      const result = await response.json();
-      
       const newMusic: SessionMusic = {
         id: `music-${Date.now()}-${Math.random()}`,
         name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
         filename: uniqueFilename,
-        url: result.path, // Use the server path instead of blob URL
+        url: result.data?.path || `/audio/${uniqueFilename}`, // Use the server path
         tags: []
       };
 
       onAdd(newMusic);
-      console.log('Audio file uploaded successfully:', result);
+      console.log('Audio file uploaded successfully:', result.data?.path);
       
     } catch (error) {
       console.error('Error uploading audio file:', error);

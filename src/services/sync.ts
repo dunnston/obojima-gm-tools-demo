@@ -4,6 +4,32 @@ const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 // Import demo data
 import { DEMO_NPCS, DEMO_COMPANIONS, mergeWithDemoData, shouldUseDemoData } from '@/data/demoData';
 
+// Import Tauri storage adapter
+import { getStorageAdapter, isTauriEnvironment } from '@/lib/storage';
+
+// Check if we're in Tauri environment
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && isTauriEnvironment();
+}
+
+// Map data types to table names for storage adapter
+const DATA_TYPE_TO_TABLE: Record<DataType, string> = {
+  'characters': 'characters',
+  'sessions': 'sessions',
+  'quests': 'quests',
+  'encounters': 'encounters',
+  'downtime': 'downtime_activities',
+  'companions': 'companions',
+  'npcs': 'npcs',
+  'settings': 'settings',
+  'user-potions': 'user_potions',
+  'user-ingredients': 'user_ingredients',
+  'user-creatures': 'user_creatures',
+  'user-magic-items': 'user_magic_items',
+  'user-companion-types': 'user_companion_types',
+  'calendar-events': 'calendar_events',
+};
+
 export interface SyncResult<T> {
   success: boolean;
   data?: T;
@@ -24,7 +50,7 @@ export interface BatchItemError<T> {
   index: number;
 }
 
-export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types';
+export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types' | 'calendar-events';
 
 // Concurrency and batching configuration
 const BATCH_SIZE = 10;
@@ -210,13 +236,22 @@ class SyncService {
   // Generic data fetching
   async getData(dataType: DataType): Promise<SyncResult<any[]>> {
     try {
+      // In Tauri mode, use storage adapter directly
+      if (isTauri()) {
+        const storage = getStorageAdapter();
+        const tableName = DATA_TYPE_TO_TABLE[dataType];
+        const items = await storage.getAll(tableName);
+        this.cache.set(dataType, items);
+        return { success: true, data: items };
+      }
+
       const response = await fetch(`${API_BASE}/api/${dataType}`);
       if (!response.ok) throw new Error('Failed to fetch');
-      
+
       const data = await response.json();
       const dataKey = Object.keys(data)[0]; // e.g., 'characters', 'sessions', etc.
       const items = data[dataKey] || [];
-      
+
       this.cache.set(dataType, items);
       return { success: true, data: items };
     } catch (error) {
@@ -233,12 +268,25 @@ class SyncService {
   // Generic data saving
   async saveData(dataType: DataType, item: any): Promise<SyncResult<void>> {
     try {
+      // In Tauri mode, use storage adapter directly
+      if (isTauri()) {
+        const storage = getStorageAdapter();
+        const tableName = DATA_TYPE_TO_TABLE[dataType];
+        const existing = await storage.get(tableName, item.id);
+        if (existing) {
+          await storage.update(tableName, item.id, item);
+        } else {
+          await storage.create(tableName, item.id, item);
+        }
+        return { success: true };
+      }
+
       const response = await fetch(`${API_BASE}/api/${dataType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
       });
-      
+
       if (!response.ok) throw new Error('Failed to save');
       return { success: true };
     } catch (error) {
@@ -250,10 +298,18 @@ class SyncService {
   // Generic data deletion
   async deleteData(dataType: DataType, id: string): Promise<SyncResult<void>> {
     try {
+      // In Tauri mode, use storage adapter directly
+      if (isTauri()) {
+        const storage = getStorageAdapter();
+        const tableName = DATA_TYPE_TO_TABLE[dataType];
+        await storage.delete(tableName, id);
+        return { success: true };
+      }
+
       const response = await fetch(`${API_BASE}/api/${dataType}?id=${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) throw new Error('Failed to delete');
       return { success: true };
     } catch (error) {
@@ -264,16 +320,35 @@ class SyncService {
 
   // Settings-specific methods (since they work differently)
   async getSettings(): Promise<SyncResult<any>> {
+    // In Tauri mode, use storage adapter directly
+    if (isTauri()) {
+      try {
+        const storage = getStorageAdapter();
+        const settings = await storage.getAll('settings');
+        const settingsMap: Record<string, any> = {};
+        settings.forEach((s: any) => {
+          if (s.key) {
+            settingsMap[s.key] = s.value || s;
+          }
+        });
+        this.cache.set('settings', settingsMap);
+        return { success: true, data: settingsMap };
+      } catch (error) {
+        console.error('Tauri settings sync error:', error);
+        return { success: false, error: 'Failed to sync settings' };
+      }
+    }
+
     // In demo mode, skip server requests entirely
     if (IS_DEMO_MODE || !API_BASE) {
       console.log('Demo mode: Loading settings from localStorage only');
       return { success: false, error: 'Demo mode - no server sync' };
     }
-    
+
     try {
       const response = await fetch(`${API_BASE}/api/settings`);
       if (!response.ok) throw new Error('Failed to fetch');
-      
+
       const data = await response.json();
       this.cache.set('settings', data.settings);
       return { success: true, data: data.settings };
@@ -288,19 +363,31 @@ class SyncService {
   }
 
   async saveSetting(key: string, value: any): Promise<SyncResult<void>> {
+    // In Tauri mode, use storage adapter directly
+    if (isTauri()) {
+      try {
+        const storage = getStorageAdapter();
+        await storage.setSetting(key, value);
+        return { success: true };
+      } catch (error) {
+        console.error('Tauri settings save error:', error);
+        return { success: false, error: 'Failed to save setting' };
+      }
+    }
+
     // In demo mode, skip server requests entirely
     if (IS_DEMO_MODE || !API_BASE) {
       console.log('Demo mode: Settings saved to localStorage only');
       return { success: true };
     }
-    
+
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to save');
       return { success: true };
     } catch (error) {
@@ -472,6 +559,19 @@ class SyncService {
 
   async deleteUserCompanionType(id: string): Promise<SyncResult<void>> {
     return this.deleteData('user-companion-types', id);
+  }
+
+  // Calendar events methods
+  async getCalendarEvents(): Promise<SyncResult<any[]>> {
+    return this.getData('calendar-events');
+  }
+
+  async saveCalendarEvent(event: any): Promise<SyncResult<void>> {
+    return this.saveData('calendar-events', event);
+  }
+
+  async deleteCalendarEvent(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('calendar-events', id);
   }
 
   // Register callbacks for specific data types
@@ -804,6 +904,237 @@ class SyncService {
       const syncResult = this.batchResultToSyncResult(result);
       throw new Error(syncResult.error || 'Batch operation failed');
     }
+  }
+
+  // Backup tables for export
+  private readonly BACKUP_TABLES = [
+    'characters',
+    'sessions',
+    'quests',
+    'downtime_activities',
+    'companions',
+    'npcs',
+    'encounters',
+    'user_potions',
+    'user_ingredients',
+    'user_creatures',
+    'user_magic_items',
+    'user_companion_types',
+    'calendar_events',
+  ];
+
+  /**
+   * Create a backup of all data
+   * Works in both Tauri mode (using storage adapter) and web mode (using API)
+   */
+  async createBackup(): Promise<SyncResult<any>> {
+    if (isTauri()) {
+      try {
+        const storage = getStorageAdapter();
+        const backup: Record<string, any[]> = {};
+
+        // Export all tables
+        for (const table of this.BACKUP_TABLES) {
+          try {
+            const rows = await storage.getAll(table);
+            backup[table] = rows.map((row: any) => ({
+              id: row.id,
+              data: JSON.stringify(row),
+              updated_at: row._lastUpdated
+            }));
+          } catch (error) {
+            console.error(`Error exporting ${table}:`, error);
+            backup[table] = [];
+          }
+        }
+
+        // Export settings separately
+        try {
+          const settings = await storage.getAll('settings');
+          backup['settings'] = settings.map((s: any) => ({
+            key: s.key || s.id,
+            value: JSON.stringify(s.value || s),
+            updated_at: s._lastUpdated
+          }));
+        } catch (error) {
+          console.error('Error exporting settings:', error);
+          backup['settings'] = [];
+        }
+
+        const exportData = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          appName: 'Obojima GM Tools',
+          data: backup
+        };
+
+        return { success: true, data: exportData };
+      } catch (error) {
+        console.error('Backup error:', error);
+        return { success: false, error: 'Failed to create backup' };
+      }
+    }
+
+    // Web mode - use API
+    try {
+      const response = await fetch(`${API_BASE}/api/backup`);
+      if (!response.ok) throw new Error('Failed to create backup');
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Backup error:', error);
+      return { success: false, error: 'Failed to create backup' };
+    }
+  }
+
+  /**
+   * Restore data from a backup
+   * Works in both Tauri mode (using storage adapter) and web mode (using API)
+   */
+  async restoreBackup(backupData: any): Promise<SyncResult<{ restoredTables: string[] }>> {
+    if (!backupData.version || !backupData.data) {
+      return { success: false, error: 'Invalid backup file format' };
+    }
+
+    if (isTauri()) {
+      try {
+        const storage = getStorageAdapter();
+        const restoredTables: string[] = [];
+
+        // Restore all tables
+        for (const table of this.BACKUP_TABLES) {
+          const tableData = backupData.data[table];
+          if (tableData && Array.isArray(tableData)) {
+            for (const row of tableData) {
+              try {
+                const parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+                const existing = await storage.get(table, row.id);
+                if (existing) {
+                  await storage.update(table, row.id, parsedData);
+                } else {
+                  await storage.create(table, row.id, parsedData);
+                }
+              } catch (error) {
+                console.error(`Error restoring item in ${table}:`, error);
+              }
+            }
+            restoredTables.push(table);
+          }
+        }
+
+        // Restore settings
+        const settingsData = backupData.data['settings'];
+        if (settingsData && Array.isArray(settingsData)) {
+          for (const setting of settingsData) {
+            try {
+              const value = typeof setting.value === 'string' ? JSON.parse(setting.value) : setting.value;
+              await storage.setSetting(setting.key, value);
+            } catch (error) {
+              console.error(`Error restoring setting ${setting.key}:`, error);
+            }
+          }
+          restoredTables.push('settings');
+        }
+
+        return { success: true, data: { restoredTables } };
+      } catch (error) {
+        console.error('Restore error:', error);
+        return { success: false, error: 'Failed to restore backup' };
+      }
+    }
+
+    // Web mode - use API
+    try {
+      const response = await fetch(`${API_BASE}/api/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backupData),
+      });
+
+      if (!response.ok) throw new Error('Failed to restore backup');
+      const result = await response.json();
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('Restore error:', error);
+      return { success: false, error: 'Failed to restore backup' };
+    }
+  }
+
+  /**
+   * Upload a file (image or audio)
+   * In Tauri mode, uses Tauri's filesystem. In web mode, uses API.
+   */
+  async uploadFile(file: File, subfolder: string, filename: string): Promise<SyncResult<{ path: string }>> {
+    // Determine the base path for the file type
+    const isAudio = subfolder === 'audio' || file.type.startsWith('audio/');
+    const basePath = isAudio ? '/audio' : '/images';
+
+    if (isTauri()) {
+      try {
+        // For Tauri, we'll store in the app's data directory
+        // The file will be stored as a base64 data URL in the database
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Store the data URL in settings keyed by the path
+        const storage = getStorageAdapter();
+        const path = isAudio ? `${basePath}/${filename}` : `${basePath}/${subfolder}/${filename}`;
+        await storage.setSetting(`uploaded_file:${path}`, dataUrl);
+
+        return { success: true, data: { path } };
+      } catch (error) {
+        console.error('File upload error:', error);
+        return { success: false, error: 'Failed to upload file' };
+      }
+    }
+
+    // Web mode - use API
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', filename);
+      if (!isAudio) {
+        formData.append('subfolder', subfolder);
+      }
+
+      const apiEndpoint = isAudio ? `${API_BASE}/api/upload-audio` : `${API_BASE}/api/upload-image`;
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload file');
+      }
+
+      const result = await response.json();
+      return { success: true, data: { path: result.path } };
+    } catch (error) {
+      console.error('File upload error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to upload file' };
+    }
+  }
+
+  /**
+   * Get an uploaded file's data URL (Tauri mode only)
+   */
+  async getUploadedFile(path: string): Promise<string | null> {
+    if (isTauri()) {
+      try {
+        const storage = getStorageAdapter();
+        const dataUrl = await storage.getSetting(`uploaded_file:${path}`);
+        return dataUrl || null;
+      } catch (error) {
+        console.error('Error getting uploaded file:', error);
+        return null;
+      }
+    }
+    return null;
   }
 }
 

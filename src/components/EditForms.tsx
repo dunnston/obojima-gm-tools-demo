@@ -3,32 +3,18 @@
 import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile, addLocalMagicItemFile } from '@/utils/imageMapping';
+import { syncService } from '@/services/sync';
 
 // File copying utility function
 async function copyFileToPublicDirectory(file: File, filename: string, subfolder: string): Promise<void> {
   try {
-    // For Next.js client-side, we need to use an API route to handle file uploads
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('filename', filename);
-    formData.append('subfolder', subfolder);
+    const result = await syncService.uploadFile(file, subfolder, filename);
 
-    const response = await fetch('/api/upload-image', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      // If it's a demo mode error, show a more user-friendly message
-      if (response.status === 403 && result.error) {
-        throw new Error(result.error);
-      }
-      throw new Error(`Upload failed: ${response.statusText}`);
+    if (!result.success) {
+      throw new Error(result.error || 'Upload failed');
     }
 
-    console.log('File uploaded successfully:', result);
+    console.log('File uploaded successfully:', result.data?.path);
   } catch (error: any) {
     console.error('Error copying file:', error);
     // Show the actual error message to the user
@@ -1769,31 +1755,17 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop() || 'jpg';
     const filename = `npc-${timestamp}.${fileExt}`;
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('filename', filename);
-    formData.append('subfolder', 'npcs');
 
     try {
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
+      const result = await syncService.uploadFile(file, 'npcs', filename);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // If it's a demo mode error, show the specific message
-        if (response.status === 403 && data.error) {
-          throw new Error(data.error);
-        }
-        throw new Error('Upload failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
-      
+
       setEditedNPC((prev: any) => ({
         ...prev,
-        portrait: data.path
+        portrait: result.data?.path
       }));
       
       setUploadProgress(100);

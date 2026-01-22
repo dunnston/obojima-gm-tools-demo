@@ -45,27 +45,18 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
   useEffect(() => {
     const loadCalendarEvents = async () => {
       try {
-        const response = await fetch('/api/calendar-events');
-        if (response.ok) {
-          const eventsData = await response.json();
-          // Calendar events API returns the array directly
-          const events: CalendarEvent[] = Array.isArray(eventsData) ? eventsData : eventsData.events || [];
-          // Ensure events is an array
-          if (Array.isArray(events)) {
-            setCalendarEvents(events);
-            
-            // Find events linked to this quest
-            if (quest) {
-              const questLinkedEvents = events.filter(event => event.questId === quest.id);
-              setLinkedEvents(questLinkedEvents);
-            }
-          } else {
-            console.warn('Calendar events data is not an array:', eventsData);
-            setCalendarEvents([]);
-            setLinkedEvents([]);
+        const result = await syncService.getCalendarEvents();
+        if (result.success && result.data) {
+          const events: CalendarEvent[] = result.data;
+          setCalendarEvents(events);
+
+          // Find events linked to this quest
+          if (quest) {
+            const questLinkedEvents = events.filter(event => event.questId === quest.id);
+            setLinkedEvents(questLinkedEvents);
           }
         } else {
-          console.error('Failed to fetch calendar events:', response.status, response.statusText);
+          console.warn('Failed to load calendar events:', result.error);
           setCalendarEvents([]);
           setLinkedEvents([]);
         }
@@ -141,13 +132,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
           questTitle: quest.title
         };
 
-        const response = await fetch('/api/calendar-events', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedEvent)
-        });
+        const result = await syncService.saveCalendarEvent(updatedEvent);
 
-        if (response.ok) {
+        if (result.success) {
           setLinkedEvents(prev => [...prev, updatedEvent]);
           setCalendarEvents(prev => prev.filter(e => e.id !== event.id));
           setShowEventSearch(false);
@@ -171,13 +158,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
         questTitle: undefined
       };
 
-      const response = await fetch('/api/calendar-events', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedEvent)
-      });
+      const result = await syncService.saveCalendarEvent(updatedEvent);
 
-      if (response.ok) {
+      if (result.success) {
         setLinkedEvents(prev => prev.filter(e => e.id !== event.id));
         setCalendarEvents(prev => [...prev, updatedEvent]);
       }

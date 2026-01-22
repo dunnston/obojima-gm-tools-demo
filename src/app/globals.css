@@ -1,4 +1,7 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+
+/* Only scan source code files, not data directories */
+@source "../**/*.{js,ts,jsx,tsx}";
 
 :root {
   --background: #0f172a;

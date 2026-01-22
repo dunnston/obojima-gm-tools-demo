@@ -7,6 +7,7 @@ import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSe
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
+import { syncService } from '@/services/sync';
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -156,12 +157,12 @@ function BackupRestoreSettings() {
     setStatusMessage('');
 
     try {
-      const response = await fetch('/api/backup');
-      if (!response.ok) {
-        throw new Error('Failed to create backup');
+      const result = await syncService.createBackup();
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to create backup');
       }
 
-      const backupData = await response.json();
+      const backupData = result.data;
 
       // Create and download the file
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -210,21 +211,14 @@ function BackupRestoreSettings() {
         throw new Error('Invalid backup file format');
       }
 
-      const response = await fetch('/api/restore', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(backupData),
-      });
+      const result = await syncService.restoreBackup(backupData);
 
-      if (!response.ok) {
-        throw new Error('Failed to restore backup');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to restore backup');
       }
 
-      const result = await response.json();
       setRestoreStatus('success');
-      setStatusMessage(t('settings.backupRestore.restoreSuccess', { count: result.totalRestored }));
+      setStatusMessage(t('settings.backupRestore.restoreSuccess', { count: result.data?.restoredTables?.length || 0 }));
 
       // Refresh the page after a brief delay to load restored data
       setTimeout(() => {

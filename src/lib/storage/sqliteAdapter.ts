@@ -1,11 +1,18 @@
 import { StorageAdapter } from './types';
-import db from '../db-wrapper';
+
+// Dynamically get db to avoid bundling better-sqlite3 for client
+function getDb() {
+  // Use a variable to hide the path from static analysis
+  const dbPath = '../db-wrapper';
+  return require(dbPath).default;
+}
 
 export class SQLiteAdapter implements StorageAdapter {
   async getAll(table: string): Promise<any[]> {
     try {
+      const db = getDb();
       if (!db) return [];
-      
+
       const stmt = db.prepare(`SELECT * FROM ${table} ORDER BY updated_at DESC`);
       const rows = stmt.all();
       
@@ -22,13 +29,14 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async get(table: string, id: string): Promise<any | null> {
     try {
+      const db = getDb();
       if (!db) return null;
-      
+
       const stmt = db.prepare(`SELECT * FROM ${table} WHERE id = ?`);
       const row = stmt.get(id) as any;
-      
+
       if (!row) return null;
-      
+
       return {
         id: row.id,
         ...JSON.parse(row.data),
@@ -42,13 +50,14 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async create(table: string, id: string, data: any): Promise<void> {
     try {
+      const db = getDb();
       if (!db) return;
-      
+
       const stmt = db.prepare(`
-        INSERT INTO ${table} (id, data, updated_at) 
+        INSERT INTO ${table} (id, data, updated_at)
         VALUES (?, ?, CURRENT_TIMESTAMP)
       `);
-      
+
       const { id: _, ...dataWithoutId } = data;
       stmt.run(id, JSON.stringify(dataWithoutId));
     } catch (error) {
@@ -59,14 +68,15 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async update(table: string, id: string, data: any): Promise<void> {
     try {
+      const db = getDb();
       if (!db) return;
-      
+
       const stmt = db.prepare(`
-        UPDATE ${table} 
-        SET data = ?, updated_at = CURRENT_TIMESTAMP 
+        UPDATE ${table}
+        SET data = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `);
-      
+
       const { id: _, ...dataWithoutId } = data;
       stmt.run(JSON.stringify(dataWithoutId), id);
     } catch (error) {
@@ -77,8 +87,9 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async delete(table: string, id: string): Promise<void> {
     try {
+      const db = getDb();
       if (!db) return;
-      
+
       const stmt = db.prepare(`DELETE FROM ${table} WHERE id = ?`);
       stmt.run(id);
     } catch (error) {
@@ -89,13 +100,14 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async getSetting(key: string): Promise<any | null> {
     try {
+      const db = getDb();
       if (!db) return null;
-      
+
       const stmt = db.prepare('SELECT value FROM settings WHERE key = ?');
       const row = stmt.get(key) as any;
-      
+
       if (!row) return null;
-      
+
       return JSON.parse(row.value);
     } catch (error) {
       console.error(`Error fetching setting ${key}:`, error);
@@ -105,13 +117,14 @@ export class SQLiteAdapter implements StorageAdapter {
 
   async setSetting(key: string, value: any): Promise<void> {
     try {
+      const db = getDb();
       if (!db) return;
-      
+
       const stmt = db.prepare(`
-        INSERT OR REPLACE INTO settings (key, value, updated_at) 
+        INSERT OR REPLACE INTO settings (key, value, updated_at)
         VALUES (?, ?, CURRENT_TIMESTAMP)
       `);
-      
+
       stmt.run(key, JSON.stringify(value));
     } catch (error) {
       console.error(`Error saving setting ${key}:`, error);

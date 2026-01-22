@@ -16,8 +16,8 @@ import {
   formatObojimaDate
 } from '@/data/obojimaCalendar';
 import { Quest } from '@/data/quests';
-import { 
-  XMarkIcon, 
+import {
+  XMarkIcon,
   MagnifyingGlassIcon,
   CalendarDaysIcon,
   MapPinIcon,
@@ -25,6 +25,7 @@ import {
   BookOpenIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { syncService } from '@/services/sync';
 
 interface CalendarEventModalProps {
   event?: CalendarEvent;
@@ -60,20 +61,11 @@ export default function CalendarEventModal({
   useEffect(() => {
     const loadQuests = async () => {
       try {
-        const response = await fetch('/api/quests');
-        if (response.ok) {
-          const questData = await response.json();
-          // The quests API returns { quests: [...] }, so we need to extract the quests array
-          const questsArray = questData.quests || questData;
-          // Ensure questsArray is an array
-          if (Array.isArray(questsArray)) {
-            setQuests(questsArray);
-          } else {
-            console.warn('Quest data is not an array:', questData);
-            setQuests([]);
-          }
+        const result = await syncService.getQuests();
+        if (result.success && result.data) {
+          setQuests(result.data);
         } else {
-          console.error('Failed to fetch quests:', response.status, response.statusText);
+          console.warn('Failed to load quests:', result.error);
           setQuests([]);
         }
       } catch (error) {

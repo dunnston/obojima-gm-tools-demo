@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayerCharacter, CharacterFormData, DND_CLASSES, createEmptyCharacter, formDataToCharacter } from '@/data/characters';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { syncService } from '@/services/sync';
 
 interface CharacterFormProps {
   character?: PlayerCharacter;
@@ -49,23 +50,13 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
   // File upload utility function
   const copyFileToPublicDirectory = async (file: File, filename: string): Promise<void> => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('filename', filename);
-      formData.append('subfolder', 'characters');
+      const result = await syncService.uploadFile(file, 'characters', filename);
 
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Upload failed: ${response.statusText}${errorData.details ? ` - ${errorData.details}` : ''}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      const result = await response.json();
-      console.log('Character portrait uploaded successfully:', result);
+      console.log('Character portrait uploaded successfully:', result.data?.path);
     } catch (error) {
       console.error('Error uploading character portrait:', error);
       throw error;

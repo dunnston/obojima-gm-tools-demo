@@ -11,7 +11,7 @@ export interface StorageAdapter {
   setSetting(key: string, value: any): Promise<void>;
 }
 
-export type StorageTable = 
+export type StorageTable =
   | 'characters'
   | 'sessions'
   | 'quests'
@@ -23,4 +23,6 @@ export type StorageTable =
   | 'user_ingredients'
   | 'user_creatures'
   | 'user_magic_items'
-  | 'user_companion_types';
+  | 'user_companion_types'
+  | 'calendar_events'
+  | 'settings';

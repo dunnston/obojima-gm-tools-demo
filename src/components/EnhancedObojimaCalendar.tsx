@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
+import {
   ObojimaDate,
   addDaysToObojimaDate,
   formatObojimaDate
 } from '@/data/obojimaCalendar';
-import { 
-  CalendarEvent, 
+import {
+  CalendarEvent,
   getEventsForDate,
   getEventsBetweenDates,
   isSameObojimaDate,
@@ -25,6 +25,7 @@ import ObojimaCalendar from './ObojimaCalendar';
 import CalendarGridView from './CalendarGridView';
 import CalendarEventModal from './CalendarEventModal';
 import CalendarEventDetailsModal from './CalendarEventDetailsModal';
+import { syncService } from '@/services/sync';
 
 interface EnhancedObojimaCalendarProps {
   currentDate: ObojimaDate;
@@ -52,17 +53,16 @@ export default function EnhancedObojimaCalendar({
   // Load calendar events
   const loadEvents = async () => {
     try {
-      const response = await fetch('/api/calendar-events');
-      if (response.ok) {
-        const eventData: CalendarEvent[] = await response.json();
+      const result = await syncService.getCalendarEvents();
+      if (result.success && result.data) {
         // Parse dates properly
-        const parsedEvents = eventData.map(event => ({
+        const parsedEvents = result.data.map((event: CalendarEvent) => ({
           ...event,
           createdAt: new Date(event.createdAt),
           updatedAt: new Date(event.updatedAt)
         }));
         setEvents(parsedEvents);
-        
+
         // Check for current day events
         const todayEvents = getEventsForDate(parsedEvents, currentDate, showDmOnly);
         if (todayEvents.length > 0) {
@@ -128,23 +128,17 @@ export default function EnhancedObojimaCalendar({
 
   const handleSaveEvent = async (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const response = selectedEvent 
-        ? await fetch('/api/calendar-events', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...eventData, id: selectedEvent.id })
-          })
-        : await fetch('/api/calendar-events', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(eventData)
-          });
+      const eventToSave = selectedEvent
+        ? { ...eventData, id: selectedEvent.id }
+        : { ...eventData, id: `event-${Date.now()}` };
 
-      if (response.ok) {
+      const result = await syncService.saveCalendarEvent(eventToSave);
+
+      if (result.success) {
         await loadEvents();
         setShowEventModal(false);
       } else {
-        throw new Error('Failed to save event');
+        throw new Error(result.error || 'Failed to save event');
       }
     } catch (error) {
       console.error('Error saving event:', error);
@@ -156,16 +150,14 @@ export default function EnhancedObojimaCalendar({
     if (!selectedEvent) return;
 
     try {
-      const response = await fetch(`/api/calendar-events?id=${selectedEvent.id}`, {
-        method: 'DELETE'
-      });
+      const result = await syncService.deleteCalendarEvent(selectedEvent.id);
 
-      if (response.ok) {
+      if (result.success) {
         await loadEvents();
         setShowEventDetails(false);
         setSelectedEvent(null);
       } else {
-        throw new Error('Failed to delete event');
+        throw new Error(result.error || 'Failed to delete event');
       }
     } catch (error) {
       console.error('Error deleting event:', error);

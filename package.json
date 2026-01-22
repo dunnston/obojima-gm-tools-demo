@@ -16,11 +16,16 @@
     "backup-creatures": "node scripts/simple-backup.js",
     "prepare-public": "node scripts/prepare-public-release-simple.js",
     "restore-full-creatures": "node scripts/restore-full-creatures.js",
-    "build-public": "npm run prepare-public && npm run build"
+    "build-public": "npm run prepare-public && npm run build",
+    "tauri": "tauri",
+    "tauri:dev": "cross-env TAURI_BUILD=true tauri dev",
+    "tauri:build": "cross-env TAURI_BUILD=true tauri build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",
     "@heroicons/react": "^2.2.0",
+    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/plugin-sql": "^2.3.1",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.2.0",
     "csv-parser": "^3.2.0",
@@ -34,6 +39,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tauri-apps/cli": "^2.9.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

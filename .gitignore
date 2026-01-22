@@ -104,3 +104,12 @@ public/images/characters/*
 # NPC images - keep folder structure but ignore personal images
 public/images/npcs/*
 !public/images/npcs/.gitkeep
+
+# Tauri build artifacts
+src-tauri/target/
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
