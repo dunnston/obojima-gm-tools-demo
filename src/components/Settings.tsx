@@ -386,14 +386,15 @@ function BackupRestoreSettings() {
   );
 }
 
-const CURRENT_VERSION = '0.1.1';
+const FALLBACK_VERSION = '0.1.3';
 
 function UpdatesSettings() {
   const updater = useUpdater();
   const [isTauri, setIsTauri] = useState(false);
   const [tauriChecked, setTauriChecked] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState(FALLBACK_VERSION);
 
-  // Check for Tauri environment
+  // Check for Tauri environment and get version
   useEffect(() => {
     const checkTauri = () => {
       if (typeof window === 'undefined') return false;
@@ -402,26 +403,37 @@ function UpdatesSettings() {
 
     // Check multiple times to ensure Tauri has initialized
     let attempts = 0;
-    const check = () => {
+    const check = async () => {
       if (checkTauri()) {
         setIsTauri(true);
         setTauriChecked(true);
+        // Get version from Tauri
+        try {
+          const { getVersion } = await import('@tauri-apps/api/app');
+          const version = await getVersion();
+          setCurrentVersion(version);
+        } catch (error) {
+          console.error('Failed to get app version:', error);
+        }
         return true;
       }
       return false;
     };
 
-    if (check()) return;
+    check().then(found => {
+      if (found) return;
 
-    const interval = setInterval(() => {
-      attempts++;
-      if (check() || attempts >= 20) {
-        setTauriChecked(true);
-        clearInterval(interval);
-      }
-    }, 100);
+      const interval = setInterval(async () => {
+        attempts++;
+        const found = await check();
+        if (found || attempts >= 20) {
+          setTauriChecked(true);
+          clearInterval(interval);
+        }
+      }, 100);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    });
   }, []);
 
   const handleCheckForUpdates = async () => {
@@ -451,7 +463,7 @@ function UpdatesSettings() {
 
         <div className="bg-slate-700/30 rounded-xl p-6 text-center">
           <p className="text-sm text-slate-400 mb-1">Current Version</p>
-          <p className="text-3xl font-mono text-white">v{CURRENT_VERSION}</p>
+          <p className="text-3xl font-mono text-white">v{currentVersion}</p>
         </div>
 
         <div className="bg-blue-600/10 border border-blue-600/30 rounded-lg p-4">
@@ -474,7 +486,7 @@ function UpdatesSettings() {
       {/* Current Version */}
       <div className="bg-slate-700/30 rounded-xl p-6 text-center">
         <p className="text-sm text-slate-400 mb-1">Current Version</p>
-        <p className="text-3xl font-mono text-white">v{CURRENT_VERSION}</p>
+        <p className="text-3xl font-mono text-white">v{currentVersion}</p>
       </div>
 
       {/* Update Status */}
@@ -498,7 +510,7 @@ function UpdatesSettings() {
             <div>
               <p className="font-medium text-emerald-400">You're up to date!</p>
               <p className="text-sm text-slate-300">
-                Obojima GM Tools v{CURRENT_VERSION} is the latest version.
+                Obojima GM Tools v{currentVersion} is the latest version.
                 {updater.lastChecked && (
                   <span className="text-slate-400"> Last checked: {updater.lastChecked.toLocaleString()}</span>
                 )}
