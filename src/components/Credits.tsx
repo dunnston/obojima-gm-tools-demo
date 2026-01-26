@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpenIcon, HeartIcon, CodeBracketIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, HeartIcon, CodeBracketIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 export default function Credits() {
   return (
@@ -133,6 +133,44 @@ export default function Credits() {
                     <li>• Combat and initiative systems</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Disclosure */}
+          <div className="bg-gradient-to-br from-cyan-900/30 to-teal-900/30 backdrop-blur-xl rounded-2xl p-8 border border-cyan-500/20 shadow-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <SparklesIcon className="h-8 w-8 text-cyan-400" />
+              <h2 className="text-2xl font-bold text-white">AI Disclosure</h2>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-slate-300">
+                In the interest of transparency, the following AI tools were used during development:
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-slate-800/30 rounded-xl p-4 border border-cyan-500/20">
+                  <h3 className="text-lg font-semibold text-cyan-400 mb-2">Development Tools</h3>
+                  <ul className="space-y-1 text-slate-300 text-sm">
+                    <li>• Claude Code - AI coding assistant</li>
+                    <li>• Cursor - AI-powered code editor</li>
+                  </ul>
+                </div>
+
+                <div className="bg-slate-800/30 rounded-xl p-4 border border-cyan-500/20">
+                  <h3 className="text-lg font-semibold text-cyan-400 mb-2">Graphics</h3>
+                  <ul className="space-y-1 text-slate-300 text-sm">
+                    <li>• ChatGPT - Application icon generation</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-slate-800/40 rounded-lg p-4 border border-cyan-500/10 mt-4">
+                <p className="text-sm text-cyan-200">
+                  <strong>Note:</strong> No AI-generated content exists within the application itself.
+                  All game data, descriptions, and lore are sourced from the official Obojima materials by 1985 Games.
+                </p>
               </div>
             </div>
           </div>
