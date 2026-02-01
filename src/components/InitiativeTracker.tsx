@@ -34,6 +34,8 @@ interface CombatParticipant {
   characterData?: PlayerCharacter;
 }
 
+const INITIATIVE_STORAGE_KEY = 'obojima-initiative-state';
+
 export default function InitiativeTracker() {
   const [participants, setParticipants] = useState<CombatParticipant[]>([]);
   const [combatStarted, setCombatStarted] = useState(false);
@@ -42,6 +44,7 @@ export default function InitiativeTracker() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'player' | 'creature'>('player');
   const [availableCreatures, setAvailableCreatures] = useState<Creature[]>(creatures);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { t } = useTranslation();
 
   // Load creatures from all sources (database + static + imported)
@@ -75,6 +78,42 @@ export default function InitiativeTracker() {
       setAvailableCreatures(creatures);
     }
   };
+
+  // Load saved initiative state on mount
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(INITIATIVE_STORAGE_KEY);
+      if (savedState) {
+        const { participants: savedParticipants, combatStarted: savedCombatStarted, currentTurn: savedCurrentTurn, round: savedRound } = JSON.parse(savedState);
+        if (savedParticipants && savedParticipants.length > 0) {
+          setParticipants(savedParticipants);
+          setCombatStarted(savedCombatStarted || false);
+          setCurrentTurn(savedCurrentTurn || 0);
+          setRound(savedRound || 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved initiative state:', error);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save initiative state whenever it changes
+  useEffect(() => {
+    if (!isInitialized) return; // Don't save during initial load
+
+    try {
+      const stateToSave = {
+        participants,
+        combatStarted,
+        currentTurn,
+        round
+      };
+      localStorage.setItem(INITIATIVE_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving initiative state:', error);
+    }
+  }, [participants, combatStarted, currentTurn, round, isInitialized]);
 
   // Load creatures and check for pending encounter on mount
   useEffect(() => {
@@ -202,6 +241,9 @@ export default function InitiativeTracker() {
     setCombatStarted(false);
     setCurrentTurn(0);
     setRound(1);
+    setParticipants([]);
+    // Clear saved state when combat ends
+    localStorage.removeItem(INITIATIVE_STORAGE_KEY);
   };
 
   const loadEncounterAndPlayers = (encounterId: string, playerIds: string[]) => {
@@ -1070,6 +1112,14 @@ function AddParticipantModal({
       }
     }
   }, [type]);
+
+  // Auto-populate HP when a character is selected
+  useEffect(() => {
+    if (selectedCharacter && type === 'player') {
+      setHp(selectedCharacter.hitPoints || 10);
+      setMaxHp(selectedCharacter.maxHitPoints || 10);
+    }
+  }, [selectedCharacter, type]);
 
   const filteredCreatures = availableCreatures.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())

@@ -102,9 +102,9 @@ export default function VendingMachine() {
             <BeakerIcon className="h-6 w-6 text-green-400" />
             <h2 className="text-xl font-semibold text-white">{t('vendingMachine.sections.ingredients')} ({inventory.ingredients.length})</h2>
             <span className="text-sm text-slate-400">
-              {inventory.ingredients.filter(i => i.rarity === 'Common').length} Commune • {' '}
-              {inventory.ingredients.filter(i => i.rarity === 'Uncommon').length} Peu commune • {' '}
-              {inventory.ingredients.filter(i => i.rarity === 'Rare').length} Rare
+              {inventory.ingredients.filter(i => i.rarity === 'Common').length} {t('vendingMachine.rarities.common')} • {' '}
+              {inventory.ingredients.filter(i => i.rarity === 'Uncommon').length} {t('vendingMachine.rarities.uncommon')} • {' '}
+              {inventory.ingredients.filter(i => i.rarity === 'Rare').length} {t('vendingMachine.rarities.rare')}
             </span>
           </div>
         
@@ -143,9 +143,9 @@ export default function VendingMachine() {
             <WrenchScrewdriverIcon className="h-6 w-6 text-orange-400" />
             <h2 className="text-xl font-semibold text-white">{t('vendingMachine.sections.potions')} ({inventory.potions.length})</h2>
             <span className="text-sm text-slate-400">
-              {inventory.potions.filter(p => p.rarity === 'Common').length} Commune • {' '}
-              {inventory.potions.filter(p => p.rarity === 'Uncommon').length} Peu commune • {' '}
-              {inventory.potions.filter(p => p.rarity === 'Rare').length} Rare
+              {inventory.potions.filter(p => p.rarity === 'Common').length} {t('vendingMachine.rarities.common')} • {' '}
+              {inventory.potions.filter(p => p.rarity === 'Uncommon').length} {t('vendingMachine.rarities.uncommon')} • {' '}
+              {inventory.potions.filter(p => p.rarity === 'Rare').length} {t('vendingMachine.rarities.rare')}
             </span>
           </div>
         
@@ -184,9 +184,9 @@ export default function VendingMachine() {
             <SparklesIcon className="h-6 w-6 text-purple-400" />
             <h2 className="text-xl font-semibold text-white">{t('vendingMachine.sections.magicItems')} ({inventory.magicItems.length})</h2>
             <span className="text-sm text-slate-400">
-              {inventory.magicItems.filter(item => item.type === 'Wondrous Item' || item.type === 'Ring').length} Merveilleux • {' '}
-              {inventory.magicItems.filter(item => item.type.includes('Weapon')).length} Armes • {' '}
-              {inventory.magicItems.filter(item => item.rarity === 'Rare' || item.rarity === 'Very Rare' || item.rarity === 'Legendary').length} Rare+
+              {inventory.magicItems.filter(item => item.type === 'Wondrous Item' || item.type === 'Ring').length} {t('vendingMachine.itemTypes.wondrous')} • {' '}
+              {inventory.magicItems.filter(item => item.type.includes('Weapon')).length} {t('vendingMachine.itemTypes.weapons')} • {' '}
+              {inventory.magicItems.filter(item => item.rarity === 'Rare' || item.rarity === 'Very Rare' || item.rarity === 'Legendary').length} {t('vendingMachine.itemTypes.rarePlus')}
             </span>
           </div>
         

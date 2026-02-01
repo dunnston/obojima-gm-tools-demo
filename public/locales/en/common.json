@@ -281,8 +281,20 @@
     "categories": {
       "all": "All Potions",
       "combat": "Combat",
-      "utility": "Utility", 
+      "utility": "Utility",
       "whimsy": "Whimsy"
+    },
+    "rarities": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "rare": "Rare",
+      "veryRare": "Very Rare",
+      "legendary": "Legendary"
+    },
+    "itemTypes": {
+      "wondrous": "Wondrous",
+      "weapons": "Weapons",
+      "rarePlus": "Rare+"
     }
   },
   "encounters": {

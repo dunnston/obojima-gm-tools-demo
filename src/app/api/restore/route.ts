@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { getValidTableNames, isValidTableName } from '@/lib/utils/tableValidator';
+import { logger } from '@/lib/utils/logger';
 
-const TABLES = [
-  'characters',
-  'sessions',
-  'quests',
-  'downtime_activities',
-  'companions',
-  'npcs',
-  'encounters',
-  'user_potions',
-  'user_ingredients',
-  'user_creatures',
-  'user_magic_items',
-  'user_companion_types',
-  'calendar_events',
-];
+// Use validated table names from the central validator
+const TABLES = getValidTableNames().filter(t => t !== 'settings');
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,18 +15,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid backup format' }, { status: 400 });
     }
 
-    const results: Record<string, number> = {};
-    let totalRestored = 0;
+    // Use a transaction to ensure atomicity - if anything fails, all changes are rolled back
+    const restoreTransaction = db.transaction(() => {
+      const results: Record<string, number> = {};
+      let totalRestored = 0;
 
-    // Restore each table
-    for (const table of TABLES) {
-      const tableData = backupData.data[table];
-      if (!tableData || !Array.isArray(tableData)) {
-        results[table] = 0;
-        continue;
-      }
+      // Restore each table
+      for (const table of TABLES) {
+        // Double-check table name is valid (defense in depth)
+        if (!isValidTableName(table)) {
+          logger.warn(`Skipping invalid table name: ${table}`);
+          results[table] = 0;
+          continue;
+        }
 
-      try {
+        const tableData = backupData.data[table];
+        if (!tableData || !Array.isArray(tableData)) {
+          results[table] = 0;
+          continue;
+        }
+
         // Clear existing data
         const deleteStmt = db.prepare(`DELETE FROM ${table}`);
         deleteStmt.run();
@@ -50,6 +47,10 @@ export async function POST(request: NextRequest) {
 
         let count = 0;
         for (const row of tableData) {
+          if (!row.id || row.data === undefined) {
+            logger.warn(`Skipping invalid row in ${table}`);
+            continue;
+          }
           insertStmt.run(
             row.id,
             row.data,
@@ -60,16 +61,11 @@ export async function POST(request: NextRequest) {
 
         results[table] = count;
         totalRestored += count;
-      } catch (error) {
-        console.error(`Error restoring ${table}:`, error);
-        results[table] = 0;
       }
-    }
 
-    // Restore settings (different structure)
-    const settingsData = backupData.data['settings'];
-    if (settingsData && Array.isArray(settingsData)) {
-      try {
+      // Restore settings (different structure)
+      const settingsData = backupData.data['settings'];
+      if (settingsData && Array.isArray(settingsData)) {
         // Clear existing settings
         const deleteSettingsStmt = db.prepare('DELETE FROM settings');
         deleteSettingsStmt.run();
@@ -82,6 +78,10 @@ export async function POST(request: NextRequest) {
 
         let settingsCount = 0;
         for (const row of settingsData) {
+          if (!row.key || row.value === undefined) {
+            logger.warn('Skipping invalid settings row');
+            continue;
+          }
           insertSettingsStmt.run(
             row.key,
             row.value,
@@ -92,11 +92,13 @@ export async function POST(request: NextRequest) {
 
         results['settings'] = settingsCount;
         totalRestored += settingsCount;
-      } catch (error) {
-        console.error('Error restoring settings:', error);
-        results['settings'] = 0;
       }
-    }
+
+      return { results, totalRestored };
+    });
+
+    // Execute the transaction - automatically rolls back on error
+    const { results, totalRestored } = restoreTransaction();
 
     return NextResponse.json({
       success: true,
@@ -105,7 +107,10 @@ export async function POST(request: NextRequest) {
       message: `Successfully restored ${totalRestored} records`
     });
   } catch (error) {
-    console.error('Restore error:', error);
-    return NextResponse.json({ error: 'Failed to restore backup' }, { status: 500 });
+    logger.error('Restore error:', error);
+    return NextResponse.json(
+      { error: 'Failed to restore backup. No changes were made to your data.' },
+      { status: 500 }
+    );
   }
 }

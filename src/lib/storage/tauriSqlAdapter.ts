@@ -1,5 +1,8 @@
 import { StorageAdapter } from './types';
 import Database from '@tauri-apps/plugin-sql';
+import { validateTableName } from '@/lib/utils/tableValidator';
+import { safeJsonParseOrDefault, safeJsonStringify } from '@/lib/utils/safeJson';
+import { logger } from '@/lib/utils/logger';
 
 let db: Database | null = null;
 
@@ -13,83 +16,127 @@ async function getDb(): Promise<Database> {
 export class TauriSQLAdapter implements StorageAdapter {
   async getAll(table: string): Promise<any[]> {
     try {
+      // Validate table name to prevent SQL injection
+      const validTable = validateTableName(table);
+
       const database = await getDb();
       const rows = await database.select<Array<{ id: string; data: string; updated_at: string }>>(
-        `SELECT * FROM ${table} ORDER BY updated_at DESC`
+        `SELECT * FROM ${validTable} ORDER BY updated_at DESC`
       );
 
-      return rows.map((row) => ({
-        id: row.id,
-        ...JSON.parse(row.data),
-        _lastUpdated: row.updated_at
-      }));
+      // Handle null/undefined rows
+      if (!rows || !Array.isArray(rows)) {
+        logger.warn(`Invalid rows returned for table ${table}`);
+        return [];
+      }
+
+      return rows
+        .map((row) => {
+          if (!row || !row.data) {
+            logger.warn(`Skipping invalid row in ${table}:`, row?.id);
+            return null;
+          }
+
+          const parsedData = safeJsonParseOrDefault(row.data, {});
+          return {
+            id: row.id,
+            ...parsedData,
+            _lastUpdated: row.updated_at
+          };
+        })
+        .filter(Boolean);
     } catch (error) {
-      console.error(`Error fetching from ${table}:`, error);
+      logger.error(`Error fetching from ${table}:`, error);
       return [];
     }
   }
 
   async get(table: string, id: string): Promise<any | null> {
     try {
+      // Validate table name to prevent SQL injection
+      const validTable = validateTableName(table);
+
       const database = await getDb();
       const rows = await database.select<Array<{ id: string; data: string; updated_at: string }>>(
-        `SELECT * FROM ${table} WHERE id = $1`,
+        `SELECT * FROM ${validTable} WHERE id = $1`,
         [id]
       );
 
-      if (rows.length === 0) return null;
+      if (!rows || rows.length === 0) return null;
 
       const row = rows[0];
+      if (!row || !row.data) return null;
+
+      const parsedData = safeJsonParseOrDefault(row.data, {});
       return {
         id: row.id,
-        ...JSON.parse(row.data),
+        ...parsedData,
         _lastUpdated: row.updated_at
       };
     } catch (error) {
-      console.error(`Error fetching ${id} from ${table}:`, error);
+      logger.error(`Error fetching ${id} from ${table}:`, error);
       return null;
     }
   }
 
   async create(table: string, id: string, data: any): Promise<void> {
     try {
+      // Validate table name to prevent SQL injection
+      const validTable = validateTableName(table);
+
       const database = await getDb();
       const { id: _, ...dataWithoutId } = data;
 
+      const jsonData = safeJsonStringify(dataWithoutId);
+      if (jsonData === null) {
+        throw new Error('Failed to serialize data');
+      }
+
       await database.execute(
-        `INSERT INTO ${table} (id, data, updated_at) VALUES ($1, $2, datetime('now'))`,
-        [id, JSON.stringify(dataWithoutId)]
+        `INSERT INTO ${validTable} (id, data, updated_at) VALUES ($1, $2, datetime('now'))`,
+        [id, jsonData]
       );
     } catch (error) {
-      console.error(`Error creating in ${table}:`, error);
+      logger.error(`Error creating in ${table}:`, error);
       throw error;
     }
   }
 
   async update(table: string, id: string, data: any): Promise<void> {
     try {
+      // Validate table name to prevent SQL injection
+      const validTable = validateTableName(table);
+
       const database = await getDb();
       const { id: _, ...dataWithoutId } = data;
 
+      const jsonData = safeJsonStringify(dataWithoutId);
+      if (jsonData === null) {
+        throw new Error('Failed to serialize data');
+      }
+
       await database.execute(
-        `UPDATE ${table} SET data = $1, updated_at = datetime('now') WHERE id = $2`,
-        [JSON.stringify(dataWithoutId), id]
+        `UPDATE ${validTable} SET data = $1, updated_at = datetime('now') WHERE id = $2`,
+        [jsonData, id]
       );
     } catch (error) {
-      console.error(`Error updating in ${table}:`, error);
+      logger.error(`Error updating in ${table}:`, error);
       throw error;
     }
   }
 
   async delete(table: string, id: string): Promise<void> {
     try {
+      // Validate table name to prevent SQL injection
+      const validTable = validateTableName(table);
+
       const database = await getDb();
       await database.execute(
-        `DELETE FROM ${table} WHERE id = $1`,
+        `DELETE FROM ${validTable} WHERE id = $1`,
         [id]
       );
     } catch (error) {
-      console.error(`Error deleting from ${table}:`, error);
+      logger.error(`Error deleting from ${table}:`, error);
       throw error;
     }
   }
@@ -102,11 +149,14 @@ export class TauriSQLAdapter implements StorageAdapter {
         [key]
       );
 
-      if (rows.length === 0) return null;
+      if (!rows || rows.length === 0) return null;
 
-      return JSON.parse(rows[0].value);
+      const row = rows[0];
+      if (!row || !row.value) return null;
+
+      return safeJsonParseOrDefault(row.value, null);
     } catch (error) {
-      console.error(`Error fetching setting ${key}:`, error);
+      logger.error(`Error fetching setting ${key}:`, error);
       return null;
     }
   }
@@ -114,12 +164,18 @@ export class TauriSQLAdapter implements StorageAdapter {
   async setSetting(key: string, value: any): Promise<void> {
     try {
       const database = await getDb();
+
+      const jsonValue = safeJsonStringify(value);
+      if (jsonValue === null) {
+        throw new Error('Failed to serialize setting value');
+      }
+
       await database.execute(
         `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, datetime('now'))`,
-        [key, JSON.stringify(value)]
+        [key, jsonValue]
       );
     } catch (error) {
-      console.error(`Error saving setting ${key}:`, error);
+      logger.error(`Error saving setting ${key}:`, error);
       throw error;
     }
   }
