@@ -4,6 +4,7 @@ import "./globals.css";
 import DemoIndicator from "@/components/DemoIndicator";
 import I18nProvider from "@/components/I18nProvider";
 import UpdaterProvider from "@/components/UpdaterProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <I18nProvider>
           <UpdaterProvider>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
             <DemoIndicator />
           </UpdaterProvider>
         </I18nProvider>

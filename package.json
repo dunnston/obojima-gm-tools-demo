@@ -1,6 +1,6 @@
 {
   "name": "obojima-potions",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -19,7 +19,9 @@
     "build-public": "npm run prepare-public && npm run build",
     "tauri": "tauri",
     "tauri:dev": "cross-env TAURI_BUILD=true tauri dev",
-    "tauri:build": "cross-env TAURI_BUILD=true tauri build"
+    "tauri:build": "cross-env TAURI_BUILD=true tauri build",
+    "version:sync": "node scripts/sync-versions.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",

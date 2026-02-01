@@ -14,6 +14,7 @@ import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 import { syncService } from '@/services/sync';
+import { isTauriEnvironment } from '@/lib/storage';
 import { formatGoldValue } from '@/data/obojimaCurrency';
 import { 
   PlusIcon,
@@ -479,11 +480,20 @@ export function MusicManager({
         throw new Error(result.error || 'Upload failed');
       }
 
+      // In Tauri mode, use the data URL directly for playback
+      // In web mode, use the file path
+      let audioUrl: string;
+      if (isTauriEnvironment() && result.data?.dataUrl) {
+        audioUrl = result.data.dataUrl;
+      } else {
+        audioUrl = result.data?.path || `/audio/${uniqueFilename}`;
+      }
+
       const newMusic: SessionMusic = {
         id: `music-${Date.now()}-${Math.random()}`,
         name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
         filename: uniqueFilename,
-        url: result.data?.path || `/audio/${uniqueFilename}`, // Use the server path
+        url: audioUrl,
         tags: []
       };
 

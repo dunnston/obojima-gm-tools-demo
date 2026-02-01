@@ -7,6 +7,10 @@ import { DEMO_NPCS, DEMO_COMPANIONS, mergeWithDemoData, shouldUseDemoData } from
 // Import Tauri storage adapter
 import { getStorageAdapter, isTauriEnvironment } from '@/lib/storage';
 
+// Import validation utilities
+import { validateFileSize, getMaxFileSizeForType, formatFileSize } from '@/lib/utils/validation';
+import { logger } from '@/lib/utils/logger';
+
 // Check if we're in Tauri environment
 function isTauri(): boolean {
   return typeof window !== 'undefined' && isTauriEnvironment();
@@ -1063,11 +1067,20 @@ class SyncService {
   /**
    * Upload a file (image or audio)
    * In Tauri mode, uses Tauri's filesystem. In web mode, uses API.
+   * In Tauri mode, returns the data URL directly so it can be used for display.
    */
-  async uploadFile(file: File, subfolder: string, filename: string): Promise<SyncResult<{ path: string }>> {
+  async uploadFile(file: File, subfolder: string, filename: string): Promise<SyncResult<{ path: string; dataUrl?: string }>> {
     // Determine the base path for the file type
     const isAudio = subfolder === 'audio' || file.type.startsWith('audio/');
     const basePath = isAudio ? '/audio' : '/images';
+
+    // Validate file size (especially important for Tauri mode where files are stored as base64)
+    const maxSize = getMaxFileSizeForType(file.type);
+    if (!validateFileSize(file.size, maxSize)) {
+      const errorMsg = `File size (${formatFileSize(file.size)}) exceeds maximum allowed (${formatFileSize(maxSize)})`;
+      logger.warn('File upload rejected:', errorMsg);
+      return { success: false, error: errorMsg };
+    }
 
     if (isTauri()) {
       try {
@@ -1085,9 +1098,10 @@ class SyncService {
         const path = isAudio ? `${basePath}/${filename}` : `${basePath}/${subfolder}/${filename}`;
         await storage.setSetting(`uploaded_file:${path}`, dataUrl);
 
-        return { success: true, data: { path } };
+        // Return both path and dataUrl - in Tauri mode, use dataUrl for display
+        return { success: true, data: { path, dataUrl } };
       } catch (error) {
-        console.error('File upload error:', error);
+        logger.error('File upload error (Tauri):', error);
         return { success: false, error: 'Failed to upload file' };
       }
     }
@@ -1115,7 +1129,7 @@ class SyncService {
       const result = await response.json();
       return { success: true, data: { path: result.path } };
     } catch (error) {
-      console.error('File upload error:', error);
+      logger.error('File upload error (Web):', error);
       return { success: false, error: error instanceof Error ? error.message : 'Failed to upload file' };
     }
   }

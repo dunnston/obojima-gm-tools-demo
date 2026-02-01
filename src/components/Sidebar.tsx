@@ -18,8 +18,7 @@ import {
   DocumentTextIcon,
   InformationCircleIcon,
   CalendarDaysIcon,
-  ComputerDesktopIcon,
-  PhotoIcon
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -39,7 +38,6 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     { id: 'foraging', name: t('navigation.ingredients'), icon: MagnifyingGlassIcon, color: 'text-green-400' },
     { id: 'vending', name: t('vendingMachine.title'), icon: BuildingStorefrontIcon, color: 'text-orange-400' },
     { id: 'encounters', name: t('navigation.encounters'), icon: SparklesIcon, color: 'text-purple-400' },
-    { id: 'vista', name: t('navigation.vistaEditor'), icon: PhotoIcon, color: 'text-teal-400' },
     { id: 'initiative', name: t('navigation.initiativeTracker'), icon: BoltIcon, color: 'text-yellow-400' },
     { id: 'characters', name: t('navigation.playerCharacters'), icon: UserIcon, color: 'text-cyan-400' },
     { id: 'notes', name: t('navigation.sessionPlanner'), icon: BookOpenIcon, color: 'text-blue-400' },

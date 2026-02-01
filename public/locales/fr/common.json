@@ -627,6 +627,18 @@
       "combat": "Combat",
       "utility": "Utilité",
       "whimsy": "Fantaisie"
+    },
+    "rarities": {
+      "common": "Commune",
+      "uncommon": "Peu commune",
+      "rare": "Rare",
+      "veryRare": "Très rare",
+      "legendary": "Légendaire"
+    },
+    "itemTypes": {
+      "wondrous": "Merveilleux",
+      "weapons": "Armes",
+      "rarePlus": "Rare+"
     }
   },
   "encounters": {

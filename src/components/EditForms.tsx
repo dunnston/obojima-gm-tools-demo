@@ -4,24 +4,7 @@ import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile, addLocalMagicItemFile } from '@/utils/imageMapping';
 import { syncService } from '@/services/sync';
-
-// File copying utility function
-async function copyFileToPublicDirectory(file: File, filename: string, subfolder: string): Promise<void> {
-  try {
-    const result = await syncService.uploadFile(file, subfolder, filename);
-
-    if (!result.success) {
-      throw new Error(result.error || 'Upload failed');
-    }
-
-    console.log('File uploaded successfully:', result.data?.path);
-  } catch (error: any) {
-    console.error('Error copying file:', error);
-    // Show the actual error message to the user
-    alert(error.message || 'Failed to upload image. Please try again.');
-    throw error;
-  }
-}
+import { isTauriEnvironment } from '@/lib/storage';
 
 interface PotionEditFormProps {
   potion: any;
@@ -85,13 +68,23 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
         const fileExtension = selectedFile.name.split('.').pop();
         // Use potion ID for filename to ensure persistence when name changes
         const filename = `${updatedPotion.id}.${fileExtension}`;
-        const imagePath = `/images/potions/${filename}`;
-        updatedPotion.imageUrl = imagePath;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'potions');
-        
+
+        const result = await syncService.uploadFile(selectedFile, 'potions', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          updatedPotion.imageUrl = result.data.dataUrl;
+        } else {
+          updatedPotion.imageUrl = result.data?.path || `/images/potions/${filename}`;
+        }
+
         console.log('Potion image saved as:', filename);
-        
+
       } catch (error) {
         console.error('Error handling file upload:', error);
         alert('Error uploading image. Please try again.');
@@ -351,13 +344,23 @@ export function IngredientEditForm({ ingredient, onSave, onCancel }: IngredientE
         const fileExtension = selectedFile.name.split('.').pop();
         // Use ingredient ID for filename to ensure persistence when name changes
         const filename = `${updatedIngredient.id}.${fileExtension}`;
-        const imagePath = `/images/ingredients/${filename}`;
-        updatedIngredient.imageUrl = imagePath;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'ingredients');
-        
+
+        const result = await syncService.uploadFile(selectedFile, 'ingredients', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          updatedIngredient.imageUrl = result.data.dataUrl;
+        } else {
+          updatedIngredient.imageUrl = result.data?.path || `/images/ingredients/${filename}`;
+        }
+
         console.log('Ingredient image saved as:', filename);
-        
+
       } catch (error) {
         console.error('Error handling file upload:', error);
         alert('Error uploading image. Please try again.');
@@ -841,16 +844,26 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
       try {
         const fileExtension = selectedFile.name.split('.').pop();
         const filename = `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
-        const imagePath = `/images/creatures/${filename}`;
-        updatedCreature.imageUrl = imagePath;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'creatures');
-        
+
+        const result = await syncService.uploadFile(selectedFile, 'creatures', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          updatedCreature.imageUrl = result.data.dataUrl;
+        } else {
+          updatedCreature.imageUrl = result.data?.path || `/images/creatures/${filename}`;
+        }
+
         // Register the file with the image mapping system
         addLocalCreatureFile(formData.name, fileExtension || 'jpg');
-        
+
         console.log('Creature image saved as:', filename);
-        
+
       } catch (error) {
         console.error('Error handling file upload:', error);
         alert('Error uploading image. Please try again.');
@@ -1472,23 +1485,33 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
       try {
         const fileExtension = selectedFile.name.split('.').pop();
         const filename = `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
-        const imagePath = `/images/magic-items/${filename}`;
-        updatedMagicItem.imageUrl = imagePath;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'magic-items');
-        
+
+        const result = await syncService.uploadFile(selectedFile, 'magic-items', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          updatedMagicItem.imageUrl = result.data.dataUrl;
+        } else {
+          updatedMagicItem.imageUrl = result.data?.path || `/images/magic-items/${filename}`;
+        }
+
         // Register the file with the image mapping system
         addLocalMagicItemFile(formData.name, fileExtension || 'jpg');
-        
+
         console.log('Magic item image saved as:', filename);
-        
+
       } catch (error) {
         console.error('Error handling file upload:', error);
         alert('Error uploading image. Please try again.');
         return;
       }
     }
-    
+
     onSave(updatedMagicItem);
   };
 
@@ -1763,10 +1786,19 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
         throw new Error(result.error || 'Upload failed');
       }
 
-      setEditedNPC((prev: any) => ({
-        ...prev,
-        portrait: result.data?.path
-      }));
+      // In Tauri mode, use the data URL directly for display
+      // In web mode, use the file path
+      if (isTauriEnvironment() && result.data?.dataUrl) {
+        setEditedNPC((prev: any) => ({
+          ...prev,
+          portrait: result.data.dataUrl
+        }));
+      } else {
+        setEditedNPC((prev: any) => ({
+          ...prev,
+          portrait: result.data?.path
+        }));
+      }
       
       setUploadProgress(100);
     } catch (error: any) {
@@ -2005,17 +2037,28 @@ export function CompanionTypeEditForm({ companionType, onSave, onCancel }: Compa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       let imageUrl = companionType.image || '';
-      
+
       if (selectedFile) {
         const timestamp = Date.now();
         const fileExt = selectedFile.name.split('.').pop();
         const filename = `companion-type-${timestamp}.${fileExt}`;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'companion-types');
-        imageUrl = `/images/companion-types/${filename}`;
+
+        const result = await syncService.uploadFile(selectedFile, 'companion-types', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          imageUrl = result.data.dataUrl;
+        } else {
+          imageUrl = result.data?.path || `/images/companion-types/${filename}`;
+        }
       }
 
       const processedData = {
@@ -2523,17 +2566,28 @@ export function CompanionEditForm({ companion, companionTypes, onSave, onCancel 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       let imageUrl = companion.image || '';
-      
+
       if (selectedFile) {
         const timestamp = Date.now();
         const fileExt = selectedFile.name.split('.').pop();
         const filename = `companion-${timestamp}.${fileExt}`;
-        
-        await copyFileToPublicDirectory(selectedFile, filename, 'companions');
-        imageUrl = `/images/companions/${filename}`;
+
+        const result = await syncService.uploadFile(selectedFile, 'companions', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          imageUrl = result.data.dataUrl;
+        } else {
+          imageUrl = result.data?.path || `/images/companions/${filename}`;
+        }
       }
 
       onSave({

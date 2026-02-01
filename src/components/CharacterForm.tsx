@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { PlayerCharacter, CharacterFormData, DND_CLASSES, createEmptyCharacter, formDataToCharacter } from '@/data/characters';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
+import { isTauriEnvironment } from '@/lib/storage';
 
 interface CharacterFormProps {
   character?: PlayerCharacter;
@@ -47,22 +48,6 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // File upload utility function
-  const copyFileToPublicDirectory = async (file: File, filename: string): Promise<void> => {
-    try {
-      const result = await syncService.uploadFile(file, 'characters', filename);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
-      }
-
-      console.log('Character portrait uploaded successfully:', result.data?.path);
-    } catch (error) {
-      console.error('Error uploading character portrait:', error);
-      throw error;
-    }
-  };
-
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -102,13 +87,23 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
       try {
         const fileExtension = selectedFile.name.split('.').pop();
         const filename = `${formData.characterName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.${fileExtension}`;
-        const imagePath = `/images/characters/${filename}`;
-        updatedFormData.imageUrl = imagePath;
-        
-        await copyFileToPublicDirectory(selectedFile, filename);
-        
+
+        const result = await syncService.uploadFile(selectedFile, 'characters', filename);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        // In Tauri mode, use the data URL directly for display
+        // In web mode, use the file path
+        if (isTauriEnvironment() && result.data?.dataUrl) {
+          updatedFormData.imageUrl = result.data.dataUrl;
+        } else {
+          updatedFormData.imageUrl = result.data?.path || `/images/characters/${filename}`;
+        }
+
         console.log('Character portrait saved as:', filename);
-        
+
       } catch (error) {
         console.error('Error handling file upload:', error);
         alert(t('characters.form.uploadError'));

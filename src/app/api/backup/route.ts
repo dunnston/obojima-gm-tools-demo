@@ -1,21 +1,10 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { getValidTableNames, isValidTableName } from '@/lib/utils/tableValidator';
+import { logger } from '@/lib/utils/logger';
 
-const TABLES = [
-  'characters',
-  'sessions',
-  'quests',
-  'downtime_activities',
-  'companions',
-  'npcs',
-  'encounters',
-  'user_potions',
-  'user_ingredients',
-  'user_creatures',
-  'user_magic_items',
-  'user_companion_types',
-  'calendar_events',
-];
+// Use validated table names from the central validator
+const TABLES = getValidTableNames().filter(t => t !== 'settings');
 
 export async function GET() {
   try {
@@ -23,6 +12,12 @@ export async function GET() {
 
     // Export all tables
     for (const table of TABLES) {
+      // Double-check table name is valid (defense in depth)
+      if (!isValidTableName(table)) {
+        logger.warn(`Skipping invalid table name: ${table}`);
+        continue;
+      }
+
       try {
         const stmt = db.prepare(`SELECT * FROM ${table}`);
         const rows = stmt.all() as any[];
@@ -32,7 +27,7 @@ export async function GET() {
           updated_at: row.updated_at
         }));
       } catch (error) {
-        console.error(`Error exporting ${table}:`, error);
+        logger.error(`Error exporting ${table}:`, error);
         backup[table] = [];
       }
     }
@@ -47,7 +42,7 @@ export async function GET() {
         updated_at: row.updated_at
       }));
     } catch (error) {
-      console.error('Error exporting settings:', error);
+      logger.error('Error exporting settings:', error);
       backup['settings'] = [];
     }
 
@@ -61,7 +56,7 @@ export async function GET() {
 
     return NextResponse.json(exportData);
   } catch (error) {
-    console.error('Backup error:', error);
+    logger.error('Backup error:', error);
     return NextResponse.json({ error: 'Failed to create backup' }, { status: 500 });
   }
 }
