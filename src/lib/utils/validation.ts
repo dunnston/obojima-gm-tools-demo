@@ -53,13 +53,21 @@ export function validateFileSize(
 /**
  * Get the appropriate max file size based on file type.
  * @param mimeType - The MIME type of the file
+ * @param fallbackType - Optional fallback when MIME type is empty or generic ('audio' | 'image')
  * @returns The maximum allowed size in bytes
  */
-export function getMaxFileSizeForType(mimeType: string): number {
+export function getMaxFileSizeForType(mimeType: string, fallbackType?: 'audio' | 'image'): number {
   if (mimeType.startsWith('audio/')) {
     return MAX_AUDIO_SIZE_BYTES;
   }
   if (mimeType.startsWith('image/')) {
+    return MAX_IMAGE_SIZE_BYTES;
+  }
+  // Use fallback type when MIME is empty or generic (e.g., application/octet-stream)
+  if (fallbackType === 'audio') {
+    return MAX_AUDIO_SIZE_BYTES;
+  }
+  if (fallbackType === 'image') {
     return MAX_IMAGE_SIZE_BYTES;
   }
   return MAX_FILE_SIZE_BYTES;

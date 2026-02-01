@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
       `);
 
       for (const [key, value] of Object.entries(data)) {
-        const valueStr = typeof value === 'string' ? value : safeJsonStringify(value);
+        // Always JSON-encode values so safeJsonParseOrDefault can read them correctly
+        const valueStr = safeJsonStringify(value);
         if (valueStr === null) {
           logger.warn(`Skipping settings key ${key}: failed to serialize`);
           continue;

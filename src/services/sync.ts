@@ -1075,7 +1075,8 @@ class SyncService {
     const basePath = isAudio ? '/audio' : '/images';
 
     // Validate file size (especially important for Tauri mode where files are stored as base64)
-    const maxSize = getMaxFileSizeForType(file.type);
+    // Pass fallback type based on subfolder in case MIME type is missing or generic
+    const maxSize = getMaxFileSizeForType(file.type, isAudio ? 'audio' : 'image');
     if (!validateFileSize(file.size, maxSize)) {
       const errorMsg = `File size (${formatFileSize(file.size)}) exceeds maximum allowed (${formatFileSize(maxSize)})`;
       logger.warn('File upload rejected:', errorMsg);
