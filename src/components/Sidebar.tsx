@@ -84,9 +84,9 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
           />
         )}
 
-        <div className="relative h-full bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-r border-white/10 shadow-2xl z-40">
+        <div className="relative h-full flex flex-col bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-r border-white/10 shadow-2xl z-40">
           {/* Header */}
-          <div className="p-6 border-b border-white/10">
+          <div className="p-6 border-b border-white/10 flex-shrink-0">
             <div className={`flex items-center gap-3 ${!isOpen && 'md:justify-center'}`}>
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center shadow-lg">
                 <BeakerIcon className="h-6 w-6 text-white" />
@@ -102,13 +102,13 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
 
           {/* Language Switcher */}
           {isOpen && (
-            <div className="px-6 py-3 border-b border-white/10">
+            <div className="px-6 py-3 border-b border-white/10 flex-shrink-0">
               <LanguageSwitcher />
             </div>
           )}
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          {/* Navigation - scrollable on mobile */}
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPage === item.id;
@@ -138,7 +138,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
           </nav>
 
           {/* Add new section button */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-white/10 flex-shrink-0">
             <button className={`
               w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-white/20 
               text-slate-400 hover:text-white hover:border-white/40 transition-all duration-200
@@ -150,7 +150,7 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
           </div>
 
           {/* Collapse button for desktop */}
-          <div className="hidden md:block p-4">
+          <div className="hidden md:block p-4 flex-shrink-0">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="w-full flex items-center justify-center py-2 text-slate-400 hover:text-white transition-colors duration-200"
