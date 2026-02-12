@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, Component, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, getSettingsWithSync, saveSettingsWithSync } from '@/data/settings';
+import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon, WifiIcon, ClipboardIcon, StopIcon, PlayIcon, ComputerDesktopIcon, LockClosedIcon, LockOpenIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, NetworkSharingSettings as NetworkSharingSettingsType, getSettingsWithSync, saveSettingsWithSync, defaultNetworkSharingSettings } from '@/data/settings';
+import { isTauriEnvironment } from '@/lib/storage';
+import { QRCodeSVG } from 'qrcode.react';
 import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
@@ -48,7 +50,7 @@ class UpdatesErrorBoundary extends Component<{ children: ReactNode }, { hasError
 export default function Settings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
-  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates'>('vendingMachine');
+  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates' | 'networkSharing'>('vendingMachine');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
   // Debug: Log when Settings component renders
@@ -168,6 +170,17 @@ export default function Settings() {
             <ArrowDownTrayIcon className="h-5 w-5" />
             Updates
           </button>
+          <button
+            onClick={() => setActiveTab('networkSharing')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === 'networkSharing'
+                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <WifiIcon className="h-5 w-5" />
+            Network
+          </button>
         </div>
       </div>
 
@@ -186,6 +199,9 @@ export default function Settings() {
           <UpdatesErrorBoundary>
             <UpdatesSettings />
           </UpdatesErrorBoundary>
+        )}
+        {activeTab === 'networkSharing' && (
+          <NetworkSharingSettings />
         )}
       </div>
 
@@ -579,6 +595,420 @@ function UpdatesSettings() {
         <p className="text-slate-400 text-sm">
           Updates are checked automatically when the app starts and every 6 hours.
           We recommend creating a backup before updating.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface ServerInfo {
+  ip: string;
+  port: number;
+  url: string;
+}
+
+interface ServerStatus {
+  running: boolean;
+  info: ServerInfo | null;
+  connected_clients: number;
+}
+
+function NetworkSharingSettings() {
+  const [isTauri, setIsTauri] = useState(false);
+  const [tauriChecked, setTauriChecked] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [port, setPort] = useState(3001);
+  const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(true);
+
+  // PIN protection state
+  const [pinEnabled, setPinEnabled] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+
+  // Check for Tauri environment
+  useEffect(() => {
+    const checkTauri = () => {
+      if (typeof window === 'undefined') return false;
+      return isTauriEnvironment();
+    };
+
+    let attempts = 0;
+    const check = () => {
+      if (checkTauri()) {
+        setIsTauri(true);
+        setTauriChecked(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (check()) return;
+
+    const interval = setInterval(() => {
+      attempts++;
+      if (check() || attempts >= 20) {
+        setTauriChecked(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Poll server status when in Tauri
+  useEffect(() => {
+    if (!isTauri) return;
+
+    const checkStatus = async () => {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const status = await invoke<ServerStatus>('get_server_status');
+        setServerStatus(status);
+      } catch (err) {
+        console.error('Failed to get server status:', err);
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 2000);
+    return () => clearInterval(interval);
+  }, [isTauri]);
+
+  // Validate PIN format
+  const validatePin = (value: string): boolean => {
+    if (!pinEnabled) return true;
+    if (value.length < 4 || value.length > 6) {
+      setPinError('PIN must be 4-6 digits');
+      return false;
+    }
+    if (!/^\d+$/.test(value)) {
+      setPinError('PIN must contain only numbers');
+      return false;
+    }
+    setPinError(null);
+    return true;
+  };
+
+  const handleStartServer = async () => {
+    // Validate PIN if enabled
+    if (pinEnabled && !validatePin(pin)) {
+      return;
+    }
+
+    setIsStarting(true);
+    setError(null);
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const info = await invoke<ServerInfo>('start_network_server', {
+        port,
+        pin: pinEnabled ? pin : null,
+      });
+      setServerStatus({
+        running: true,
+        info,
+        connected_clients: 0,
+      });
+    } catch (err: any) {
+      console.error('Failed to start server:', err);
+      setError(err.toString());
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleStopServer = async () => {
+    setIsStopping(true);
+    setError(null);
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('stop_network_server');
+      setServerStatus({
+        running: false,
+        info: null,
+        connected_clients: 0,
+      });
+    } catch (err: any) {
+      console.error('Failed to stop server:', err);
+      setError(err.toString());
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Loading state
+  if (!tauriChecked) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Network Sharing</h2>
+          <p className="text-slate-400">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Non-Tauri environment
+  if (!isTauri) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Network Sharing</h2>
+          <p className="text-slate-400">Share your session with other devices on your local network</p>
+        </div>
+
+        <div className="bg-blue-600/10 border border-blue-600/30 rounded-lg p-4">
+          <p className="text-blue-400 text-sm">
+            <strong>Desktop App Required:</strong> Network sharing is only available in the desktop application.
+            Download the desktop app to share your session with other devices.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isRunning = serverStatus?.running ?? false;
+
+  return (
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Network Sharing</h2>
+        <p className="text-slate-400">Share your session with other devices on your local network</p>
+      </div>
+
+      {/* Server Status */}
+      <div className={`rounded-xl p-6 text-center ${
+        isRunning
+          ? 'bg-emerald-600/10 border border-emerald-600/30'
+          : 'bg-slate-700/30'
+      }`}>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+          <span className={`text-lg font-medium ${isRunning ? 'text-emerald-400' : 'text-slate-400'}`}>
+            {isRunning ? 'Server Running' : 'Server Stopped'}
+          </span>
+          {isRunning && pinEnabled && (
+            <span className="flex items-center gap-1 text-sm text-amber-400">
+              <LockClosedIcon className="h-4 w-4" />
+              PIN Protected
+            </span>
+          )}
+        </div>
+
+        {isRunning && serverStatus?.info && (
+          <div className="space-y-4">
+            {/* QR Code */}
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => setShowQR(!showQR)}
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-3"
+              >
+                <QrCodeIcon className="h-5 w-5" />
+                {showQR ? 'Hide QR Code' : 'Show QR Code'}
+              </button>
+              {showQR && (
+                <div className="bg-white p-4 rounded-xl inline-block">
+                  <QRCodeSVG
+                    value={serverStatus.info.url}
+                    size={180}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-sm text-slate-400 mb-2">Access URL</p>
+              <div className="flex items-center justify-center gap-2">
+                <code className="text-xl font-mono text-white bg-slate-700/50 px-4 py-2 rounded-lg">
+                  {serverStatus.info.url}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(serverStatus.info!.url)}
+                  className="p-2 text-slate-400 hover:text-white transition-colors"
+                  title="Copy URL"
+                >
+                  {copied ? (
+                    <CheckCircleIcon className="h-5 w-5 text-emerald-400" />
+                  ) : (
+                    <ClipboardIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <ComputerDesktopIcon className="h-5 w-5 text-slate-400" />
+                <span className="text-slate-300">
+                  {serverStatus.connected_clients} connected client{serverStatus.connected_clients !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-600/10 border border-red-600/30 rounded-lg p-4">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Configuration (only when stopped) */}
+      {!isRunning && (
+        <div className="bg-slate-700/30 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-medium text-white">Configuration</h3>
+
+          {/* Port Setting */}
+          <div className="flex items-center gap-4">
+            <label className="text-slate-400 w-24">Port:</label>
+            <input
+              type="number"
+              min="1024"
+              max="65535"
+              value={port}
+              onChange={(e) => setPort(parseInt(e.target.value) || 3001)}
+              className="w-24 px-3 py-2 bg-slate-600 border border-slate-500 rounded-lg text-white text-center"
+            />
+            <span className="text-slate-500 text-sm">Default: 3001</span>
+          </div>
+
+          {/* PIN Protection */}
+          <div className="border-t border-slate-600 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {pinEnabled ? (
+                  <LockClosedIcon className="h-5 w-5 text-amber-400" />
+                ) : (
+                  <LockOpenIcon className="h-5 w-5 text-slate-400" />
+                )}
+                <div>
+                  <h4 className="text-white font-medium">PIN Protection</h4>
+                  <p className="text-slate-400 text-sm">Require a PIN to access from other devices</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setPinEnabled(!pinEnabled);
+                  if (!pinEnabled) setPin('');
+                  setPinError(null);
+                }}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  pinEnabled ? 'bg-amber-500' : 'bg-slate-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                    pinEnabled ? 'left-7' : 'left-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {pinEnabled && (
+              <div className="ml-8 space-y-2">
+                <div className="flex items-center gap-4">
+                  <label className="text-slate-400">PIN:</label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setPin(value);
+                      if (value) validatePin(value);
+                    }}
+                    placeholder="4-6 digits"
+                    className="w-32 px-3 py-2 bg-slate-600 border border-slate-500 rounded-lg text-white text-center tracking-widest"
+                  />
+                </div>
+                {pinError && (
+                  <p className="text-red-400 text-sm">{pinError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Start/Stop Button */}
+      <div className="flex justify-center">
+        {isRunning ? (
+          <button
+            onClick={handleStopServer}
+            disabled={isStopping}
+            className="px-8 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-lg transition-colors font-medium flex items-center gap-3"
+          >
+            {isStopping ? (
+              <>
+                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                Stopping...
+              </>
+            ) : (
+              <>
+                <StopIcon className="h-5 w-5" />
+                Stop Sharing
+              </>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={handleStartServer}
+            disabled={isStarting || (pinEnabled && (!pin || pin.length < 4))}
+            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 text-white rounded-lg transition-all font-medium flex items-center gap-3"
+          >
+            {isStarting ? (
+              <>
+                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                <PlayIcon className="h-5 w-5" />
+                Start Sharing
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* How to Use */}
+      <div className="bg-slate-700/30 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-medium text-white">How to Use</h3>
+        <ol className="space-y-3 text-slate-300 text-sm list-decimal list-inside">
+          <li>Configure port and optional PIN protection</li>
+          <li>Click "Start Sharing" to begin broadcasting</li>
+          <li>On another device, scan the QR code or enter the URL</li>
+          {pinEnabled && <li>Enter the PIN when prompted on the other device</li>}
+          <li>Changes made on any device will sync to all connected devices</li>
+        </ol>
+      </div>
+
+      {/* Security Note */}
+      <div className="bg-amber-600/10 border border-amber-600/30 rounded-lg p-4">
+        <p className="text-amber-400 text-sm">
+          <strong>Note:</strong> Network sharing is only accessible to devices on your local network.
+          {pinEnabled ? ' PIN protection adds an extra layer of security.' : ' Consider enabling PIN protection for additional security.'}
         </p>
       </div>
     </div>
