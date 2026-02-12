@@ -5,6 +5,7 @@ import DemoIndicator from "@/components/DemoIndicator";
 import I18nProvider from "@/components/I18nProvider";
 import UpdaterProvider from "@/components/UpdaterProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import NetworkAuthProvider from "@/components/NetworkAuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
         <I18nProvider>
           <UpdaterProvider>
             <ErrorBoundary>
-              {children}
+              <NetworkAuthProvider>
+                {children}
+              </NetworkAuthProvider>
             </ErrorBoundary>
             <DemoIndicator />
           </UpdaterProvider>

@@ -282,6 +282,10 @@ class SyncService {
         } else {
           await storage.create(tableName, item.id, item);
         }
+
+        // Broadcast change to network clients
+        this.broadcastChange('update', tableName, item.id, item);
+
         return { success: true };
       }
 
@@ -307,6 +311,10 @@ class SyncService {
         const storage = getStorageAdapter();
         const tableName = DATA_TYPE_TO_TABLE[dataType];
         await storage.delete(tableName, id);
+
+        // Broadcast change to network clients
+        this.broadcastChange('delete', tableName, id);
+
         return { success: true };
       }
 
@@ -1150,6 +1158,33 @@ class SyncService {
       }
     }
     return null;
+  }
+
+  /**
+   * Broadcast a change to network clients via Tauri command.
+   * This is called when data changes in the desktop app to notify
+   * all connected browser clients via WebSocket.
+   */
+  private async broadcastChange(
+    msgType: 'update' | 'delete',
+    table: string,
+    id: string,
+    data?: any
+  ): Promise<void> {
+    if (!isTauri()) return;
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('broadcast_sync_message', {
+        table,
+        id,
+        data: data || {},
+        msgType,
+      });
+    } catch (error) {
+      // Non-critical error - log but don't fail the operation
+      console.warn('[SyncService] Failed to broadcast change:', error);
+    }
   }
 }
 

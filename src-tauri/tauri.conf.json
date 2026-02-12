@@ -40,6 +40,9 @@
     "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "../out": "out"
+    }
   }
 }

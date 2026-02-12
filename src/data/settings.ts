@@ -55,8 +55,25 @@ export const defaultVendingMachineSettings: VendingMachineSettings = {
   },
 };
 
+export interface NetworkSharingSettings {
+  enabled: boolean;
+  port: number;
+  autoStart: boolean;
+  pinEnabled: boolean;
+  pin: string; // 4-6 digit PIN stored as string
+}
+
+export const defaultNetworkSharingSettings: NetworkSharingSettings = {
+  enabled: false,
+  port: 3001,
+  autoStart: false,
+  pinEnabled: false,
+  pin: '',
+};
+
 export interface AppSettings {
   vendingMachine: VendingMachineSettings;
+  networkSharing: NetworkSharingSettings;
   currentObojimaDate?: {
     year: number;
     season: string;
@@ -71,6 +88,7 @@ export interface AppSettings {
 
 export const defaultAppSettings: AppSettings = {
   vendingMachine: defaultVendingMachineSettings,
+  networkSharing: defaultNetworkSharingSettings,
 };
 
 // Settings management functions
@@ -88,6 +106,10 @@ export function getSettings(): AppSettings {
         vendingMachine: {
           ...defaultVendingMachineSettings,
           ...parsed.vendingMachine,
+        },
+        networkSharing: {
+          ...defaultNetworkSharingSettings,
+          ...parsed.networkSharing,
         },
       };
     }
@@ -131,6 +153,10 @@ export async function getSettingsWithSync(): Promise<AppSettings> {
         vendingMachine: {
           ...defaultVendingMachineSettings,
           ...result.data.vendingMachine,
+        },
+        networkSharing: {
+          ...defaultNetworkSharingSettings,
+          ...result.data.networkSharing,
         },
       };
     } else {
