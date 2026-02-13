@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CalendarEvent } from '@/data/calendarEvents';
 import { getStorageAdapter } from '@/lib/storage';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 const TABLE_NAME = 'calendar_events';
 
 // GET - Fetch all calendar events

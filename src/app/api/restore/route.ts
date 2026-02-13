@@ -3,6 +3,9 @@ import db from '@/lib/db';
 import { getValidTableNames, isValidTableName } from '@/lib/utils/tableValidator';
 import { logger } from '@/lib/utils/logger';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 // Use validated table names from the central validator
 const TABLES = getValidTableNames().filter(t => t !== 'settings');
 

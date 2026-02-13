@@ -780,14 +780,18 @@ pub fn create_router(static_dir: PathBuf, state: Arc<AppState>) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
-        .allow_headers([header::CONTENT_TYPE, header::ACCEPT]);
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::ACCEPT,
+            header::HeaderName::from_static("x-session-token"),
+        ]);
 
     // API routes
     let api_routes = Router::new()
         .route("/auth-status", get(check_auth_status))
         .route("/verify-pin", axum::routing::post(verify_pin))
         .route("/settings", get(get_settings).post(save_setting))
-        .route("/{table}", get(get_all_items).post(save_item).delete(delete_item));
+        .route("/:table", get(get_all_items).post(save_item).delete(delete_item));
 
     // Main router
     Router::new()

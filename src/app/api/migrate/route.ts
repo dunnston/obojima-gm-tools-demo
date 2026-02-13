@@ -4,6 +4,9 @@ import { isValidTableName } from '@/lib/utils/tableValidator';
 import { safeJsonStringify } from '@/lib/utils/safeJson';
 import { logger } from '@/lib/utils/logger';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 // Mapping from migration types to table names
 const TYPE_TO_TABLE: Record<string, string> = {
   'characters': 'characters',

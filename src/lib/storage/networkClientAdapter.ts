@@ -122,19 +122,28 @@ export class NetworkClientAdapter implements StorageAdapter {
   }
 
   async getAll(table: string): Promise<any[]> {
+    console.log(`[NetworkClientAdapter] getAll called for table: ${table}`);
+    console.log(`[NetworkClientAdapter] baseUrl: ${this.baseUrl}`);
     try {
-      const response = await fetch(`${this.baseUrl}/api/${table}`, {
+      const url = `${this.baseUrl}/api/${table}`;
+      console.log(`[NetworkClientAdapter] Fetching from: ${url}`);
+      const response = await fetch(url, {
         headers: this.getHeaders(),
       });
 
+      console.log(`[NetworkClientAdapter] Response status: ${response.status}`);
       if (!response.ok) {
-        console.error(`[NetworkClientAdapter] Failed to get all from ${table}:`, response.status);
+        const errorText = await response.text();
+        console.error(`[NetworkClientAdapter] Failed to get all from ${table}:`, response.status, errorText);
         return [];
       }
 
       const data = await response.json();
+      console.log(`[NetworkClientAdapter] Response data:`, data);
       // Server returns { [table]: items[] }
-      return data[table] || [];
+      const items = data[table] || [];
+      console.log(`[NetworkClientAdapter] Returning ${items.length} items`);
+      return items;
     } catch (error) {
       console.error(`[NetworkClientAdapter] Error getting all from ${table}:`, error);
       return [];
