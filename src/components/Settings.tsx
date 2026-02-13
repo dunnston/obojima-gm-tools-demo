@@ -402,7 +402,7 @@ function BackupRestoreSettings() {
   );
 }
 
-const FALLBACK_VERSION = '0.1.4';
+const FALLBACK_VERSION = '0.2.1';
 
 function UpdatesSettings() {
   const updater = useUpdater();

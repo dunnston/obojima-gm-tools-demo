@@ -840,8 +840,9 @@ class SyncService {
         }
       }
 
-      // In demo mode, skip server sync entirely
-      if (IS_DEMO_MODE || !API_BASE) {
+      // In demo mode or web mode without API, skip server sync (relies on localStorage)
+      // But in Tauri/network client mode, always proceed - data goes directly to SQLite/server
+      if (IS_DEMO_MODE || (!API_BASE && !useDirectStorageAdapter())) {
         console.log(`Demo mode: ${dataType} saved to localStorage only`);
         return {
           success: true,
