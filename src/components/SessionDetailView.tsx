@@ -832,8 +832,8 @@ function CreatureCard({
       <div className="flex items-start gap-3 mb-3">
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
           {isCreature ? (
-            <img 
-              src={getCreatureImagePath(creature.creatureName || creature.name)} 
+            <img
+              src={creature.imageUrl || getCreatureImagePath(creature.creatureName || creature.name)}
               alt={creature.name}
               className="w-full h-full object-cover"
               onError={(e) => {

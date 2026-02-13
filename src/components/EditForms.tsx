@@ -5,6 +5,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile, addLocalMagicItemFile } from '@/utils/imageMapping';
 import { syncService } from '@/services/sync';
 import { isTauriEnvironment } from '@/lib/storage';
+import { LOCATIONS } from '@/utils/ingredientForaging';
 
 interface PotionEditFormProps {
   potion: any;
@@ -682,10 +683,15 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
     actions: creature.actions || [],
     bonus_actions: creature.bonus_actions || [],
     reactions: creature.reactions || [],
-    legendary_actions: creature.legendary_actions || []
+    legendary_actions: creature.legendary_actions || [],
+    tags: creature.tags || [],
+    location: creature.location || '',
+    habitat: creature.habitat || '',
+    info: creature.info || ''
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [currentTagInput, setCurrentTagInput] = useState('');
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -827,6 +833,24 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
     setFormData(prev => ({
       ...prev,
       legendary_actions: prev.legendary_actions.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  // Tag helpers
+  const addTag = () => {
+    if (currentTagInput.trim() && !formData.tags.includes(currentTagInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, currentTagInput.trim()]
+      }));
+      setCurrentTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter((tag: string) => tag !== tagToRemove)
     }));
   };
 
@@ -1388,6 +1412,94 @@ export function CreatureEditForm({ creature, onSave, onCancel }: CreatureEditFor
                 <p className="text-sm text-slate-500 italic">No legendary actions added yet. Click "Add Legendary Action" to add one.</p>
               )}
             </div>
+          </div>
+
+          {/* Location Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Location
+            </label>
+            <select
+              value={formData.location}
+              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+            >
+              <option value="">Select a location...</option>
+              {LOCATIONS.map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tags Section */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Tags
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={currentTagInput}
+                onChange={(e) => setCurrentTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="Add a tag..."
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              >
+                Add
+              </button>
+            </div>
+            {formData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 bg-slate-600 text-slate-200 px-3 py-1 rounded-full text-sm"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Habitat Field */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Habitat
+            </label>
+            <input
+              type="text"
+              value={formData.habitat}
+              onChange={(e) => setFormData(prev => ({ ...prev, habitat: e.target.value }))}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+              placeholder="e.g., Forests, Mountains, Swamps..."
+            />
+          </div>
+
+          {/* Info Text Area */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Additional Info
+            </label>
+            <textarea
+              value={formData.info}
+              onChange={(e) => setFormData(prev => ({ ...prev, info: e.target.value }))}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
+              placeholder="Additional notes, lore, or details about this creature..."
+              rows={4}
+            />
           </div>
 
           {/* Form Actions */}

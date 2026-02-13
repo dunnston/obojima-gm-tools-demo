@@ -65,7 +65,7 @@ export default function StatBlock({ creature, isOpen, onClose }: StatBlockProps)
                     {/* Creature Image */}
                     <div className="w-24 h-24 bg-slate-600/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
                       <img
-                        src={getCreatureImagePath(creature.name)}
+                        src={(creature as any).imageUrl || getCreatureImagePath(creature.name)}
                         alt={creature.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
