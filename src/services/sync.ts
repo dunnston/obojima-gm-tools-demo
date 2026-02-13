@@ -741,8 +741,16 @@ class SyncService {
           }));
         }
 
-        // Update localStorage as backup
-        localStorage.setItem(localStorageKey, JSON.stringify(validatedData));
+        // Update localStorage as backup (skip in Tauri/network mode to avoid quota issues)
+        if (!useDirectStorageAdapter()) {
+          try {
+            localStorage.setItem(localStorageKey, JSON.stringify(validatedData));
+          } catch (storageError) {
+            if (storageError instanceof DOMException && storageError.name === 'QuotaExceededError') {
+              console.warn(`[SyncService] localStorage quota exceeded for ${localStorageKey}, skipping backup`);
+            }
+          }
+        }
         return validatedData;
       } else {
         // Fall back to localStorage
@@ -816,8 +824,21 @@ class SyncService {
    */
   async saveWithFallback(dataType: DataType, localStorageKey: string, items: any[]): Promise<BatchResult<any>> {
     try {
-      // Save to localStorage immediately for offline support
-      localStorage.setItem(localStorageKey, JSON.stringify(items));
+      // In Tauri or network client mode, skip localStorage (data goes directly to SQLite/server)
+      // This avoids localStorage quota issues when storing large base64 images
+      if (!useDirectStorageAdapter()) {
+        // Save to localStorage immediately for offline support (web mode only)
+        try {
+          localStorage.setItem(localStorageKey, JSON.stringify(items));
+        } catch (storageError) {
+          // Handle quota exceeded gracefully - log but continue with server sync
+          if (storageError instanceof DOMException && storageError.name === 'QuotaExceededError') {
+            console.warn(`[SyncService] localStorage quota exceeded for ${localStorageKey}, skipping local backup`);
+          } else {
+            throw storageError;
+          }
+        }
+      }
 
       // In demo mode, skip server sync entirely
       if (IS_DEMO_MODE || !API_BASE) {

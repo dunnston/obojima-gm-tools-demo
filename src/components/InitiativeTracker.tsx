@@ -298,7 +298,7 @@ export default function InitiativeTracker() {
             ac: creature.armor_class,
             hp: hp,
             maxHp: hp,
-            imageUrl: getCreatureImagePath(creature.name),
+            imageUrl: creature.imageUrl || getCreatureImagePath(creature.name),
             creatureData: creature
           });
         }
@@ -393,7 +393,7 @@ export default function InitiativeTracker() {
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-600">
                       {participant.type === 'creature' ? (
                         <img
-                          src={getCreatureImagePath(participant.name)}
+                          src={participant.imageUrl || getCreatureImagePath(participant.name)}
                           alt={participant.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -519,7 +519,7 @@ export default function InitiativeTracker() {
               <div className="w-48 h-48 rounded-full overflow-hidden bg-slate-700 border-4 border-emerald-400">
                 {currentParticipant.type === 'creature' ? (
                   <img
-                    src={getCreatureImagePath(currentParticipant.name)}
+                    src={currentParticipant.imageUrl || getCreatureImagePath(currentParticipant.name)}
                     alt={currentParticipant.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -1286,7 +1286,7 @@ function AddParticipantModal({
                   >
                     <div className="flex items-center gap-2">
                       <img
-                        src={getCreatureImagePath(creature.name)}
+                        src={creature.imageUrl || getCreatureImagePath(creature.name)}
                         alt={creature.name}
                         className="w-8 h-8 rounded"
                         onError={(e) => {

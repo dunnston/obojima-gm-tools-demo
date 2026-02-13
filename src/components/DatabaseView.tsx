@@ -8,6 +8,7 @@ import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { creatures } from '@/data/creatures';
 import { getImportedCreatures } from '@/utils/creatureImport';
+import { LOCATIONS } from '@/utils/ingredientForaging';
 import { magicItems } from '@/data/magicItems';
 import { companionTypes } from '@/data/companionTypes';
 import { companions } from '@/data/companions';
@@ -442,18 +443,35 @@ export default function DatabaseView() {
   ];
 
   // Apply modifications to creatures and add new ones
-  // Combine base creatures with user-created creatures
-  // User creatures (modifiedCreatures) are completely separate from base creatures
   // Base creatures get stable IDs based on their names
   const baseCreaturesWithIds = allBaseCreatures.map(creature => ({
     ...creature,
     id: creature.id || `creature-base-${creature.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
   }));
 
-  // Combine: base creatures + all user-created creatures (which already have unique IDs from migration)
+  // Create a set to track which creatures we've already processed
+  const processedCreatureIds = new Set<string>();
+
+  // Merge base creatures with modifications (similar to ingredients)
   const currentCreatures = [
-    ...baseCreaturesWithIds,
-    ...modifiedCreatures
+    ...baseCreaturesWithIds.map(creature => {
+      // Find modification by ID
+      const modified = modifiedCreatures.find(c => c.id === creature.id);
+      if (modified) {
+        processedCreatureIds.add(creature.id);
+        return { ...modified, id: modified.id || creature.id };
+      }
+      return creature;
+    }),
+    // Add only NEW user-created creatures that don't exist in base data
+    ...modifiedCreatures.filter(modified => {
+      // Skip if we've already processed this creature
+      if (processedCreatureIds.has(modified.id)) {
+        return false;
+      }
+      // Only add if it's not a base creature
+      return !baseCreaturesWithIds.find(base => base.id === modified.id);
+    })
   ];
 
   // Apply modifications to magic items and add new ones
@@ -1580,6 +1598,8 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterSize, setFilterSize] = useState('all');
+  const [filterTag, setFilterTag] = useState('all');
+  const [filterLocation, setFilterLocation] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [selectedCreature, setSelectedCreature] = useState<any>(null);
 
@@ -1605,10 +1625,14 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
   };
 
   const filteredCreatures = creatures.filter(creature => {
-    const matchesSearch = creature.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = creature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (creature.habitat && creature.habitat.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (creature.info && creature.info.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = filterType === 'all' || creature.type.toLowerCase().includes(filterType.toLowerCase());
     const matchesSize = filterSize === 'all' || creature.size === filterSize;
-    return matchesSearch && matchesType && matchesSize;
+    const matchesTag = filterTag === 'all' || (creature.tags && creature.tags.includes(filterTag));
+    const matchesLocation = filterLocation === 'all' || creature.location === filterLocation;
+    return matchesSearch && matchesType && matchesSize && matchesTag && matchesLocation;
   }).sort((a, b) => {
     switch (sortBy) {
       case 'name': return a.name.localeCompare(b.name);
@@ -1620,6 +1644,7 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
 
   const types = [...new Set(creatures.map(c => c.type))];
   const sizes = [...new Set(creatures.map(c => c.size))];
+  const allTags = [...new Set(creatures.flatMap(c => c.tags || []))].sort();
 
   return (
     <div className="space-y-6">
@@ -1658,6 +1683,30 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
             <option value="all">All Sizes</option>
             {sizes.map(size => (
               <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+
+          {allTags.length > 0 && (
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+            >
+              <option value="all">All Tags</option>
+              {allTags.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          )}
+
+          <select
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+          >
+            <option value="all">All Locations</option>
+            {LOCATIONS.map(location => (
+              <option key={location} value={location}>{location}</option>
             ))}
           </select>
 
@@ -1713,7 +1762,7 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
               {/* Creature Image */}
               <div className="w-full h-32 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden">
                 <img
-                  src={getCreatureImagePath(creature.name)}
+                  src={creature.imageUrl || getCreatureImagePath(creature.name)}
                   alt={creature.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -1737,7 +1786,31 @@ function CreaturesTab({ creatures, onEdit, onAdd, onDelete, isCustomItem }: { cr
               <div className="text-sm text-slate-400">
                 {creature.size} {creature.type}
               </div>
-              
+
+              {/* Location */}
+              {creature.location && (
+                <div className="text-xs text-cyan-400">
+                  📍 {creature.location}
+                </div>
+              )}
+
+              {/* Tags */}
+              {creature.tags && creature.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {creature.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
+                    <span
+                      key={tagIndex}
+                      className="bg-emerald-600/20 text-emerald-400 px-2 py-0.5 rounded-full text-xs"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {creature.tags.length > 3 && (
+                    <span className="text-xs text-slate-500">+{creature.tags.length - 3}</span>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="text-center">
                   <div className="text-blue-400 font-bold">{creature.armor_class}</div>
@@ -1823,7 +1896,7 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
             {/* Creature Image */}
             <div className="w-24 h-24 bg-slate-600/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
               <img
-                src={getCreatureImagePath(creature.name)}
+                src={creature.imageUrl || getCreatureImagePath(creature.name)}
                 alt={creature.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -1878,9 +1951,9 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
               {Object.entries(creature.ability_scores).map(([ability, score]) => (
                 <div key={ability} className="bg-slate-700/30 rounded-lg p-3 text-center">
                   <div className="text-sm font-bold text-white">{ability}</div>
-                  <div className="text-lg text-emerald-400">{score}</div>
+                  <div className="text-lg text-emerald-400">{String(score)}</div>
                   <div className="text-xs text-slate-400">
-                    ({Math.floor(((score as number) - 10) / 2) >= 0 ? '+' : ''}{Math.floor(((score as number) - 10) / 2)})
+                    ({Math.floor((Number(score) - 10) / 2) >= 0 ? '+' : ''}{Math.floor((Number(score) - 10) / 2)})
                   </div>
                 </div>
               ))}
@@ -1894,7 +1967,7 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
               <div className="flex flex-wrap gap-4 text-sm">
                 {Object.entries(creature.speed).map(([type, speed]) => (
                   <span key={type} className="text-green-400">
-                    {type}: {speed}
+                    {type}: {String(speed)}
                   </span>
                 ))}
               </div>
@@ -1957,6 +2030,53 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
                     <p className="text-slate-300 text-sm leading-relaxed">{reaction.description}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Location */}
+          {creature.location && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Location</h3>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <p className="text-cyan-400">📍 {creature.location}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tags */}
+          {creature.tags && creature.tags.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {creature.tags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="bg-emerald-600/30 text-emerald-400 px-3 py-1 rounded-full text-sm border border-emerald-600/50"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Habitat */}
+          {creature.habitat && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Habitat</h3>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <p className="text-slate-300">{creature.habitat}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Additional Info */}
+          {creature.info && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Additional Info</h3>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{creature.info}</p>
               </div>
             </div>
           )}
@@ -2286,7 +2406,7 @@ function NPCsTab({ npcs, onEdit, onAdd, onDelete, isCustomItem }: { npcs: any[],
 
               {npc.tags && npc.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {npc.tags.map((tag, index) => (
+                  {npc.tags.map((tag: string, index: number) => (
                     <span
                       key={index}
                       className="text-xs bg-slate-600 text-slate-300 px-2 py-1 rounded-full"

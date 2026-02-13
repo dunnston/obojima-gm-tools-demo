@@ -63,6 +63,12 @@ export interface Creature {
   bonus_actions?: CreatureAction[];
   reactions?: CreatureAction[];
   legendary_actions?: CreatureAction[];
+  // User-defined fields
+  tags?: string[];
+  location?: string;
+  habitat?: string;
+  info?: string;
+  imageUrl?: string;
 }
 
 export interface Encounter {

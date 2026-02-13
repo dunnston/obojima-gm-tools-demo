@@ -933,8 +933,8 @@ export function CreatureSelectionModal({
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
-                              <img 
-                                src={getCreatureImagePath(creature.name)} 
+                              <img
+                                src={creature.imageUrl || getCreatureImagePath(creature.name)}
                                 alt={creature.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -1020,8 +1020,8 @@ export function CreatureSelectionModal({
                 <div>
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-600 flex-shrink-0">
-                      <img 
-                        src={getCreatureImagePath(selectedCreature.name)} 
+                      <img
+                        src={selectedCreature.imageUrl || getCreatureImagePath(selectedCreature.name)}
                         alt={selectedCreature.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -1310,7 +1310,7 @@ export function CreatureDetailsModal({
             <div>
               <div className="mb-4">
                 <img
-                  src={getCreatureImagePath(creature.name)}
+                  src={creature.imageUrl || getCreatureImagePath(creature.name)}
                   alt={creature.name}
                   className="w-full h-64 object-cover rounded-lg border border-slate-600"
                   onError={(e) => {

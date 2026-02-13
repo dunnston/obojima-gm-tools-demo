@@ -430,7 +430,7 @@ export default function EncounterCreator() {
                         {/* Creature Image */}
                         <div className="w-10 h-10 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                           <img
-                            src={getCreatureImagePath(ec.creature.name)}
+                            src={ec.creature.imageUrl || getCreatureImagePath(ec.creature.name)}
                             alt={ec.creature.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -513,7 +513,7 @@ export default function EncounterCreator() {
                     {/* Creature Image */}
                     <div className="w-10 h-10 bg-slate-600/30 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                       <img
-                        src={getCreatureImagePath(creature.name)}
+                        src={creature.imageUrl || getCreatureImagePath(creature.name)}
                         alt={creature.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
