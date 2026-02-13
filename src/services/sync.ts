@@ -5,7 +5,7 @@ const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 import { DEMO_NPCS, DEMO_COMPANIONS, mergeWithDemoData, shouldUseDemoData } from '@/data/demoData';
 
 // Import Tauri storage adapter
-import { getStorageAdapter, isTauriEnvironment } from '@/lib/storage';
+import { getStorageAdapter, isTauriEnvironment, isNetworkClient } from '@/lib/storage';
 
 // Import validation utilities
 import { validateFileSize, getMaxFileSizeForType, formatFileSize } from '@/lib/utils/validation';
@@ -14,6 +14,15 @@ import { logger } from '@/lib/utils/logger';
 // Check if we're in Tauri environment
 function isTauri(): boolean {
   return typeof window !== 'undefined' && isTauriEnvironment();
+}
+
+// Check if we should use the storage adapter directly (Tauri or network client)
+function useDirectStorageAdapter(): boolean {
+  const isTauriEnv = isTauri();
+  const isNetClient = isNetworkClient();
+  const result = isTauriEnv || isNetClient;
+  console.log(`[SyncService] useDirectStorageAdapter: isTauri=${isTauriEnv}, isNetworkClient=${isNetClient}, result=${result}`);
+  return result;
 }
 
 // Map data types to table names for storage adapter
@@ -239,16 +248,22 @@ class SyncService {
 
   // Generic data fetching
   async getData(dataType: DataType): Promise<SyncResult<any[]>> {
+    console.log(`[SyncService] getData called for: ${dataType}`);
     try {
-      // In Tauri mode, use storage adapter directly
-      if (isTauri()) {
+      // In Tauri or network client mode, use storage adapter directly
+      if (useDirectStorageAdapter()) {
+        console.log(`[SyncService] Using direct storage adapter for ${dataType}`);
         const storage = getStorageAdapter();
+        console.log(`[SyncService] Got storage adapter:`, storage.constructor.name);
         const tableName = DATA_TYPE_TO_TABLE[dataType];
+        console.log(`[SyncService] Table name: ${tableName}`);
         const items = await storage.getAll(tableName);
+        console.log(`[SyncService] Got ${items.length} items from storage`);
         this.cache.set(dataType, items);
         return { success: true, data: items };
       }
 
+      console.log(`[SyncService] Using fetch API for ${dataType}, API_BASE: "${API_BASE}"`);
       const response = await fetch(`${API_BASE}/api/${dataType}`);
       if (!response.ok) throw new Error('Failed to fetch');
 
@@ -272,8 +287,8 @@ class SyncService {
   // Generic data saving
   async saveData(dataType: DataType, item: any): Promise<SyncResult<void>> {
     try {
-      // In Tauri mode, use storage adapter directly
-      if (isTauri()) {
+      // In Tauri or network client mode, use storage adapter directly
+      if (useDirectStorageAdapter()) {
         const storage = getStorageAdapter();
         const tableName = DATA_TYPE_TO_TABLE[dataType];
         const existing = await storage.get(tableName, item.id);
@@ -306,8 +321,8 @@ class SyncService {
   // Generic data deletion
   async deleteData(dataType: DataType, id: string): Promise<SyncResult<void>> {
     try {
-      // In Tauri mode, use storage adapter directly
-      if (isTauri()) {
+      // In Tauri or network client mode, use storage adapter directly
+      if (useDirectStorageAdapter()) {
         const storage = getStorageAdapter();
         const tableName = DATA_TYPE_TO_TABLE[dataType];
         await storage.delete(tableName, id);
@@ -332,8 +347,8 @@ class SyncService {
 
   // Settings-specific methods (since they work differently)
   async getSettings(): Promise<SyncResult<any>> {
-    // In Tauri mode, use storage adapter directly
-    if (isTauri()) {
+    // In Tauri or network client mode, use storage adapter directly
+    if (useDirectStorageAdapter()) {
       try {
         const storage = getStorageAdapter();
         const settings = await storage.getAll('settings');
@@ -375,8 +390,8 @@ class SyncService {
   }
 
   async saveSetting(key: string, value: any): Promise<SyncResult<void>> {
-    // In Tauri mode, use storage adapter directly
-    if (isTauri()) {
+    // In Tauri or network client mode, use storage adapter directly
+    if (useDirectStorageAdapter()) {
       try {
         const storage = getStorageAdapter();
         await storage.setSetting(key, value);
@@ -940,7 +955,7 @@ class SyncService {
    * Works in both Tauri mode (using storage adapter) and web mode (using API)
    */
   async createBackup(): Promise<SyncResult<any>> {
-    if (isTauri()) {
+    if (useDirectStorageAdapter()) {
       try {
         const storage = getStorageAdapter();
         const backup: Record<string, any[]> = {};
@@ -1008,7 +1023,7 @@ class SyncService {
       return { success: false, error: 'Invalid backup file format' };
     }
 
-    if (isTauri()) {
+    if (useDirectStorageAdapter()) {
       try {
         const storage = getStorageAdapter();
         const restoredTables: string[] = [];
@@ -1091,10 +1106,9 @@ class SyncService {
       return { success: false, error: errorMsg };
     }
 
-    if (isTauri()) {
+    if (useDirectStorageAdapter()) {
       try {
-        // For Tauri, we'll store in the app's data directory
-        // The file will be stored as a base64 data URL in the database
+        // For Tauri and network clients, we'll store as base64 data URL in the database
         const reader = new FileReader();
         const dataUrl = await new Promise<string>((resolve, reject) => {
           reader.onload = () => resolve(reader.result as string);
@@ -1107,10 +1121,10 @@ class SyncService {
         const path = isAudio ? `${basePath}/${filename}` : `${basePath}/${subfolder}/${filename}`;
         await storage.setSetting(`uploaded_file:${path}`, dataUrl);
 
-        // Return both path and dataUrl - in Tauri mode, use dataUrl for display
+        // Return both path and dataUrl
         return { success: true, data: { path, dataUrl } };
       } catch (error) {
-        logger.error('File upload error (Tauri):', error);
+        logger.error('File upload error:', error);
         return { success: false, error: 'Failed to upload file' };
       }
     }
@@ -1144,10 +1158,10 @@ class SyncService {
   }
 
   /**
-   * Get an uploaded file's data URL (Tauri mode only)
+   * Get an uploaded file's data URL (Tauri or network client mode)
    */
   async getUploadedFile(path: string): Promise<string | null> {
-    if (isTauri()) {
+    if (useDirectStorageAdapter()) {
       try {
         const storage = getStorageAdapter();
         const dataUrl = await storage.getSetting(`uploaded_file:${path}`);

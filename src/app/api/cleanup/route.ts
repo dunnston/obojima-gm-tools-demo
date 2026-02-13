@@ -3,6 +3,9 @@ import db from '@/lib/db';
 import { isValidTableName } from '@/lib/utils/tableValidator';
 import { logger } from '@/lib/utils/logger';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 // Whitelist of tables that can be cleaned up
 // Does not include 'settings' or 'calendar_events' for safety
 const ALLOWED_CLEANUP_TABLES = new Set([

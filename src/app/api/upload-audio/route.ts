@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();

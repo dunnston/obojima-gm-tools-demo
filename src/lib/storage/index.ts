@@ -20,13 +20,18 @@ export function isTauriEnvironment(): boolean {
 // This is true when: in browser, NOT in Tauri, NOT on localhost dev server
 export function isNetworkClient(): boolean {
   if (typeof window === 'undefined') return false;
-  if (isTauriEnvironment()) return false;
+  if (isTauriEnvironment()) {
+    console.log('[isNetworkClient] In Tauri environment, returning false');
+    return false;
+  }
 
   const hostname = window.location.hostname;
   const port = window.location.port;
+  console.log('[isNetworkClient] Checking hostname:', hostname, 'port:', port);
 
   // Not a network client if on localhost (dev server or Vercel preview)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    console.log('[isNetworkClient] On localhost, returning false');
     return false;
   }
 
@@ -35,11 +40,13 @@ export function isNetworkClient(): boolean {
     // Check if it's a local IP address (192.168.x.x, 10.x.x.x, etc.)
     const localIpPattern = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/;
     if (!localIpPattern.test(hostname)) {
+      console.log('[isNetworkClient] Not a local IP, returning false');
       return false;
     }
   }
 
   // If we're on a local IP address, we're a network client
+  console.log('[isNetworkClient] Detected as network client, returning true');
   return true;
 }
 

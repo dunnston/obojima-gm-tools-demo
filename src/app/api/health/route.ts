@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Required for static export (Tauri build)
+export const dynamic = 'force-static';
+
 /**
  * Health check endpoint for monitoring application status.
  * Returns basic health information and optionally tests database connectivity.
