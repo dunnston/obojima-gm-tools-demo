@@ -36,15 +36,24 @@ interface CombatParticipant {
 
 const INITIATIVE_STORAGE_KEY = 'obojima-initiative-state';
 
+// Module-level cache so initiative state persists across navigation
+let cachedState: {
+  participants: CombatParticipant[];
+  combatStarted: boolean;
+  currentTurn: number;
+  round: number;
+} | null = null;
+
 export default function InitiativeTracker() {
-  const [participants, setParticipants] = useState<CombatParticipant[]>([]);
-  const [combatStarted, setCombatStarted] = useState(false);
-  const [currentTurn, setCurrentTurn] = useState(0);
-  const [round, setRound] = useState(1);
+  const [participants, setParticipants] = useState<CombatParticipant[]>(() => cachedState?.participants || []);
+  const [combatStarted, setCombatStarted] = useState(() => cachedState?.combatStarted || false);
+  const [currentTurn, setCurrentTurn] = useState(() => cachedState?.currentTurn || 0);
+  const [round, setRound] = useState(() => cachedState?.round || 1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'player' | 'creature'>('player');
   const [availableCreatures, setAvailableCreatures] = useState<Creature[]>(creatures);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(!!cachedState);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
   const { t } = useTranslation();
 
   // Load creatures from all sources (database + static + imported)
@@ -79,8 +88,12 @@ export default function InitiativeTracker() {
     }
   };
 
-  // Load saved initiative state on mount
+  // Load saved initiative state on mount (skip if module cache already loaded)
   useEffect(() => {
+    if (cachedState) {
+      setIsInitialized(true);
+      return;
+    }
     try {
       const savedState = localStorage.getItem(INITIATIVE_STORAGE_KEY);
       if (savedState) {
@@ -98,20 +111,25 @@ export default function InitiativeTracker() {
     setIsInitialized(true);
   }, []);
 
-  // Save initiative state whenever it changes
+  // Save initiative state whenever it changes (module cache + localStorage)
   useEffect(() => {
     if (!isInitialized) return; // Don't save during initial load
 
+    const stateToSave = {
+      participants,
+      combatStarted,
+      currentTurn,
+      round
+    };
+
+    // Always update module-level cache (survives navigation)
+    cachedState = stateToSave;
+
+    // Also persist to localStorage (survives app restart)
     try {
-      const stateToSave = {
-        participants,
-        combatStarted,
-        currentTurn,
-        round
-      };
       localStorage.setItem(INITIATIVE_STORAGE_KEY, JSON.stringify(stateToSave));
     } catch (error) {
-      console.error('Error saving initiative state:', error);
+      console.warn('[InitiativeTracker] localStorage save failed:', error);
     }
   }, [participants, combatStarted, currentTurn, round, isInitialized]);
 
@@ -153,7 +171,11 @@ export default function InitiativeTracker() {
 
   // Sort participants by initiative (descending)
   const sortedParticipants = [...participants].sort((a, b) => b.initiative - a.initiative);
-  const currentParticipant = combatStarted ? sortedParticipants[currentTurn] : null;
+  const currentTurnParticipant = combatStarted ? sortedParticipants[currentTurn] : null;
+  // Show selected participant (clicked) or fall back to current turn
+  const selectedParticipant = selectedParticipantId
+    ? participants.find(p => p.id === selectedParticipantId) || currentTurnParticipant
+    : currentTurnParticipant;
 
   const addParticipant = (participant: Omit<CombatParticipant, 'id'>) => {
     const newParticipant: CombatParticipant = {
@@ -235,6 +257,7 @@ export default function InitiativeTracker() {
     
     setCurrentTurn(nextIndex);
     setRound(newRound);
+    setSelectedParticipantId(null);
   };
 
   const endCombat = () => {
@@ -242,8 +265,10 @@ export default function InitiativeTracker() {
     setCurrentTurn(0);
     setRound(1);
     setParticipants([]);
+    setSelectedParticipantId(null);
     // Clear saved state when combat ends
-    localStorage.removeItem(INITIATIVE_STORAGE_KEY);
+    cachedState = null;
+    try { localStorage.removeItem(INITIATIVE_STORAGE_KEY); } catch {}
   };
 
   const loadEncounterAndPlayers = (encounterId: string, playerIds: string[]) => {
@@ -379,12 +404,17 @@ export default function InitiativeTracker() {
             return (
               <div
                 key={participant.id}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                onClick={() => setSelectedParticipantId(
+                  selectedParticipantId === participant.id ? null : participant.id
+                )}
+                className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
                   isDead
-                    ? 'border-red-500/50 bg-red-900/20 opacity-60' 
-                    : isCurrent 
-                    ? 'border-emerald-400 bg-emerald-900/30 shadow-lg shadow-emerald-400/20' 
-                    : 'border-slate-600 bg-slate-700/30'
+                    ? 'border-red-500/50 bg-red-900/20 opacity-60'
+                    : isCurrent
+                    ? 'border-emerald-400 bg-emerald-900/30 shadow-lg shadow-emerald-400/20'
+                    : selectedParticipantId === participant.id
+                    ? 'border-blue-400 bg-blue-900/20'
+                    : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -504,33 +534,49 @@ export default function InitiativeTracker() {
         </div>
       </div>
 
-      {/* Right Panel - Current Turn Details */}
-      <div className="w-1/2 bg-slate-900/50 p-6">
-        {currentParticipant ? (
+      {/* Right Panel - Selected/Current Turn Details */}
+      <div className="w-1/2 bg-slate-900/50 p-6 overflow-y-auto">
+        {selectedParticipant ? (
           <div className="space-y-6">
             {/* Header */}
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">{currentParticipant.name}{t('initiative.currentTurn')}</h2>
-              <div className="text-slate-400">{t('initiative.round')} {round}</div>
+              <h2 className="text-3xl font-bold text-white mb-2">
+                {selectedParticipant.name}
+                {combatStarted && selectedParticipant.id === currentTurnParticipant?.id
+                  ? t('initiative.currentTurn')
+                  : ''}
+              </h2>
+              {combatStarted && (
+                <div className="text-slate-400">
+                  {t('initiative.round')} {round}
+                  {selectedParticipant.id !== currentTurnParticipant?.id && (
+                    <span className="ml-2 text-blue-400 text-sm">({t('initiative.viewing')})</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Image */}
             <div className="flex justify-center">
-              <div className="w-48 h-48 rounded-full overflow-hidden bg-slate-700 border-4 border-emerald-400">
-                {currentParticipant.type === 'creature' ? (
+              <div className={`w-48 h-48 rounded-full overflow-hidden bg-slate-700 border-4 ${
+                combatStarted && selectedParticipant.id === currentTurnParticipant?.id
+                  ? 'border-emerald-400'
+                  : 'border-blue-400'
+              }`}>
+                {selectedParticipant.type === 'creature' ? (
                   <img
-                    src={currentParticipant.imageUrl || getCreatureImagePath(currentParticipant.name)}
-                    alt={currentParticipant.name}
+                    src={selectedParticipant.imageUrl || getCreatureImagePath(selectedParticipant.name)}
+                    alt={selectedParticipant.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = '/images/creatures/default-creature.svg';
                     }}
                   />
-                ) : currentParticipant.imageUrl ? (
+                ) : selectedParticipant.imageUrl ? (
                   <img
-                    src={currentParticipant.imageUrl}
-                    alt={currentParticipant.name}
+                    src={selectedParticipant.imageUrl}
+                    alt={selectedParticipant.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -542,16 +588,16 @@ export default function InitiativeTracker() {
             </div>
 
             {/* Stats */}
-            {currentParticipant.type === 'player' ? (
-              <PlayerDetails 
-                participant={currentParticipant} 
+            {selectedParticipant.type === 'player' ? (
+              <PlayerDetails
+                participant={selectedParticipant}
                 onUpdateHP={updateParticipantHP}
                 onHeal={healParticipant}
                 onDamage={damageParticipant}
               />
             ) : (
-              <CreatureDetails 
-                participant={currentParticipant} 
+              <CreatureDetails
+                participant={selectedParticipant}
                 onUpdateHP={updateParticipantHP}
                 onHeal={healParticipant}
                 onDamage={damageParticipant}
@@ -562,8 +608,8 @@ export default function InitiativeTracker() {
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
               <BoltIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-xl">{t('initiative.noActiveCombat')}</p>
-              <p className="text-sm mt-2">{t('initiative.startCombatToSee')}</p>
+              <p className="text-xl">{combatStarted ? t('initiative.clickToView') : t('initiative.noActiveCombat')}</p>
+              <p className="text-sm mt-2">{combatStarted ? t('initiative.clickToViewSubtitle') : t('initiative.startCombatToSee')}</p>
             </div>
           </div>
         )}

@@ -2,10 +2,11 @@
 
 import { NPC } from '@/data/npcs';
 import { SessionNPC } from '@/data/sessions';
-import { 
+import {
   XMarkIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
+import MentionText from './MentionText';
 
 interface NPCDetailsModalProps {
   npc: NPC;
@@ -70,7 +71,7 @@ export function NPCDetailsModal({ npc, sessionNotes, onClose }: NPCDetailsModalP
             {npc.details && (
               <div className="bg-slate-700/30 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-slate-300 mb-2">Description</h4>
-                <p className="text-white whitespace-pre-wrap">{npc.details}</p>
+                <MentionText text={npc.details} className="text-white whitespace-pre-wrap" />
               </div>
             )}
 
@@ -92,7 +93,7 @@ export function NPCDetailsModal({ npc, sessionNotes, onClose }: NPCDetailsModalP
             {sessionNotes && (
               <div className="bg-emerald-900/20 border border-emerald-400/30 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-emerald-400 mb-2">Session Notes</h4>
-                <p className="text-white whitespace-pre-wrap">{sessionNotes}</p>
+                <MentionText text={sessionNotes || ''} className="text-white whitespace-pre-wrap" />
               </div>
             )}
 

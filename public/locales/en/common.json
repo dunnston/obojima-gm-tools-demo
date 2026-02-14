@@ -16,7 +16,8 @@
     "npcs": "NPCs",
     "companions": "Companions",
     "settings": "Settings",
-    "databaseEditor": "Database Editor"
+    "databaseEditor": "Database Editor",
+    "npcManager": "NPCs"
   },
   "buttons": {
     "edit": "Edit",
@@ -379,6 +380,9 @@
     "currentTurn": "'s Turn",
     "noActiveCombat": "No active combat",
     "startCombatToSee": "Start combat to see turn details",
+    "clickToView": "Click a participant to view details",
+    "clickToViewSubtitle": "Select any creature or player from the initiative list",
+    "viewing": "viewing",
     "addTwoParticipants": "Add at least 2 participants to start combat",
     "allDefeated": "All participants are defeated! Combat ended.",
     "playerDetails": "Player Details",
@@ -492,6 +496,33 @@
       "maxHp": "Max HP",
       "pp": "PP",
       "pi": "PI"
+    }
+  },
+  "npcs": {
+    "title": "NPC Manager",
+    "subtitle": "Manage non-player characters for your Obojima campaign",
+    "searchPlaceholder": "Search NPCs by name, occupation, or details...",
+    "addNPC": "Add NPC",
+    "noNPCsYet": "No NPCs Yet",
+    "noNPCsFound": "No NPCs Found",
+    "addFirstNPC": "Add your first NPC to get started",
+    "adjustSearchTerms": "Try adjusting your search or filters",
+    "viewDetails": "View Details",
+    "editNPC": "Edit NPC",
+    "deleteNPC": "Delete NPC",
+    "confirmDelete": "Are you sure you want to delete",
+    "filterByLocation": "All Locations",
+    "filterByTag": "All Tags",
+    "sortByName": "Sort by Name",
+    "sortByLocation": "Sort by Location",
+    "sortByRecent": "Sort by Recent",
+    "clearFilters": "Clear Filters",
+    "offline": "Offline",
+    "refresh": "Refresh",
+    "mentions": {
+      "searchNPCs": "Search NPCs...",
+      "noResults": "No NPCs found",
+      "typeToSearch": "Type @ to mention an NPC"
     }
   },
   "sessions": {

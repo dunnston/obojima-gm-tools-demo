@@ -299,45 +299,53 @@ export default function DatabaseView() {
   };
 
   // Save to localStorage whenever modified data changes (keeping for backup)
+  // Wrapped in try/catch to handle quota exceeded errors gracefully
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedIngredients', JSON.stringify(modifiedIngredients));
+      try { localStorage.setItem('modifiedIngredients', JSON.stringify(modifiedIngredients)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedIngredients'); }
     }
   }, [modifiedIngredients, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedPotions', JSON.stringify(modifiedPotions));
+      try { localStorage.setItem('modifiedPotions', JSON.stringify(modifiedPotions)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedPotions'); }
     }
   }, [modifiedPotions, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedCreatures', JSON.stringify(modifiedCreatures));
+      try { localStorage.setItem('modifiedCreatures', JSON.stringify(modifiedCreatures)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCreatures'); }
     }
   }, [modifiedCreatures, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedMagicItems', JSON.stringify(modifiedMagicItems));
+      try { localStorage.setItem('modifiedMagicItems', JSON.stringify(modifiedMagicItems)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedMagicItems'); }
     }
   }, [modifiedMagicItems, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedNPCs', JSON.stringify(modifiedNPCs));
+      try { localStorage.setItem('modifiedNPCs', JSON.stringify(modifiedNPCs)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedNPCs'); }
     }
   }, [modifiedNPCs, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedCompanionTypes', JSON.stringify(modifiedCompanionTypes));
+      try { localStorage.setItem('modifiedCompanionTypes', JSON.stringify(modifiedCompanionTypes)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCompanionTypes'); }
     }
   }, [modifiedCompanionTypes, isLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      localStorage.setItem('modifiedCompanions', JSON.stringify(modifiedCompanions));
+      try { localStorage.setItem('modifiedCompanions', JSON.stringify(modifiedCompanions)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCompanions'); }
     }
   }, [modifiedCompanions, isLoaded]);
 

@@ -46,6 +46,8 @@ import {
   PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import EncounterGenerator from './EncounterGenerator';
+import MentionTextarea from './MentionTextarea';
+import MentionText from './MentionText';
 
 interface SessionDetailViewProps {
   session: GameSession;
@@ -324,9 +326,9 @@ export default function SessionDetailView({
         expanded={expandedSections.has('strongStart')}
         onToggle={() => toggleSection('strongStart')}
       >
-        <textarea
+        <MentionTextarea
           value={session.strongStart}
-          onChange={(e) => onUpdateSession(session.id, { strongStart: e.target.value })}
+          onChange={(value) => onUpdateSession(session.id, { strongStart: value })}
           placeholder="How will you kick off this session with energy and excitement?"
           className="w-full h-32 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:border-emerald-400"
         />
@@ -565,9 +567,9 @@ export default function SessionDetailView({
         expanded={expandedSections.has('notes')}
         onToggle={() => toggleSection('notes')}
       >
-        <textarea
+        <MentionTextarea
           value={session.sessionNotes}
-          onChange={(e) => onUpdateSession(session.id, { sessionNotes: e.target.value })}
+          onChange={(value) => onUpdateSession(session.id, { sessionNotes: value })}
           placeholder="Record what happens during the session..."
           className="w-full h-48 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:border-emerald-400"
         />

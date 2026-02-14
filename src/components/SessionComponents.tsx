@@ -16,7 +16,9 @@ import { magicItems } from '@/data/magicItems';
 import { syncService } from '@/services/sync';
 import { isTauriEnvironment } from '@/lib/storage';
 import { formatGoldValue } from '@/data/obojimaCurrency';
-import { 
+import MentionTextarea from './MentionTextarea';
+import MentionText from './MentionText';
+import {
   PlusIcon,
   TrashIcon,
   PencilIcon,
@@ -63,7 +65,7 @@ export function SceneCard({
             <h3 className="font-semibold text-white">{scene.title}</h3>
           </div>
           {scene.description && (
-            <p className="text-slate-400 text-sm line-clamp-2">{scene.description}</p>
+            <MentionText text={scene.description} className="text-slate-400 text-sm line-clamp-2" />
           )}
           
           {/* Scene Assets Summary */}
@@ -172,9 +174,9 @@ export function SecretClueCard({
           className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white mb-2"
           placeholder="Secret title..."
         />
-        <textarea
+        <MentionTextarea
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(value) => setContent(value)}
           className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm h-20 resize-none mb-2"
           placeholder="Secret content..."
         />
@@ -223,7 +225,7 @@ export function SecretClueCard({
         </div>
       </div>
       
-      <p className="text-slate-300 text-sm mb-3">{secret.content}</p>
+      <MentionText text={secret.content} className="text-slate-300 text-sm mb-3" />
       
       {!secret.revealed ? (
         <button
@@ -366,7 +368,7 @@ export function NPCCard({
                 <p className="text-slate-400 text-sm">📍 {npc.location}</p>
               )}
               {npc.description && (
-                <p className="text-slate-300 text-sm mt-1 line-clamp-2">{npc.description}</p>
+                <MentionText text={npc.description || ''} className="text-slate-300 text-sm mt-1 line-clamp-2" />
               )}
             </div>
             
@@ -405,9 +407,9 @@ export function NPCCard({
           <label className="block text-sm font-medium text-slate-300 mb-2">
             Session Notes
           </label>
-          <textarea
+          <MentionTextarea
             value={sessionNotes}
-            onChange={(e) => setSessionNotes(e.target.value)}
+            onChange={(value) => setSessionNotes(value)}
             rows={3}
             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-400 resize-none text-sm"
             placeholder="Notes specific to this session..."
@@ -436,7 +438,7 @@ export function NPCCard({
       {npc.notes && !showNotesEditor && (
         <div className="mt-3 p-3 bg-slate-800/50 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Session Notes:</div>
-          <div className="text-sm text-slate-300">{npc.notes}</div>
+          <MentionText text={npc.notes || ''} className="text-sm text-slate-300" />
         </div>
       )}
     </div>

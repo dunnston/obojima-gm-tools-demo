@@ -861,13 +861,14 @@ function EditSessionModal({
     }
   );
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>(session.playerCharacters);
+  const { t } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
       onSave(
-        name.trim(), 
-        new Date(realWorldDate), 
+        name.trim(),
+        new Date(realWorldDate),
         useGameDate ? gameDate : undefined,
         selectedCharacters
       );

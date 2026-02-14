@@ -16,7 +16,8 @@
     "npcs": "PNJs",
     "companions": "Compagnons",
     "settings": "Paramètres",
-    "databaseEditor": "Éditeur de Base de Données"
+    "databaseEditor": "Éditeur de Base de Données",
+    "npcManager": "PNJs"
   },
   "buttons": {
     "edit": "Modifier",
@@ -723,6 +724,9 @@
     "currentTurn": " - Tour",
     "noActiveCombat": "Aucun combat actif",
     "startCombatToSee": "Commencez un combat pour voir les détails du tour",
+    "clickToView": "Cliquez sur un participant pour voir les détails",
+    "clickToViewSubtitle": "Sélectionnez une créature ou un joueur dans la liste d'initiative",
+    "viewing": "aperçu",
     "addTwoParticipants": "Ajoutez au moins 2 participants pour commencer le combat",
     "allDefeated": "Tous les participants sont vaincus ! Combat terminé.",
     "playerDetails": "Détails du Joueur",
@@ -836,6 +840,33 @@
       "maxHp": "PV Max",
       "pp": "PP",
       "pi": "II"
+    }
+  },
+  "npcs": {
+    "title": "Gestionnaire de PNJs",
+    "subtitle": "Gérez les personnages non-joueurs de votre campagne d'Obojima",
+    "searchPlaceholder": "Rechercher des PNJs par nom, occupation ou détails...",
+    "addNPC": "Ajouter un PNJ",
+    "noNPCsYet": "Aucun PNJ",
+    "noNPCsFound": "Aucun PNJ Trouvé",
+    "addFirstNPC": "Ajoutez votre premier PNJ pour commencer",
+    "adjustSearchTerms": "Essayez d'ajuster votre recherche ou vos filtres",
+    "viewDetails": "Voir les Détails",
+    "editNPC": "Modifier le PNJ",
+    "deleteNPC": "Supprimer le PNJ",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer",
+    "filterByLocation": "Tous les Lieux",
+    "filterByTag": "Tous les Tags",
+    "sortByName": "Trier par Nom",
+    "sortByLocation": "Trier par Lieu",
+    "sortByRecent": "Trier par Récent",
+    "clearFilters": "Effacer les Filtres",
+    "offline": "Hors ligne",
+    "refresh": "Rafraîchir",
+    "mentions": {
+      "searchNPCs": "Rechercher des PNJs...",
+      "noResults": "Aucun PNJ trouvé",
+      "typeToSearch": "Tapez @ pour mentionner un PNJ"
     }
   },
   "sessions": {
