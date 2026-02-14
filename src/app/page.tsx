@@ -7,6 +7,7 @@ import VendingMachine from '@/components/VendingMachine';
 import EncounterCreator from '@/components/EncounterCreator';
 import IngredientForaging from '@/components/IngredientForaging';
 import CharacterManager from '@/components/CharacterManager';
+import NPCManager from '@/components/NPCManager';
 import SessionPlanner from '@/components/SessionPlanner';
 import DatabaseView from '@/components/DatabaseView';
 import Settings from '@/components/Settings';
@@ -17,6 +18,7 @@ import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
 import VistaEditor from '@/components/VistaEditor';
 import LocalSetupPage from './local-setup/page';
+import { NPCProvider } from '@/contexts/NPCContext';
 import { syncService } from '@/services/sync';
 import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
 
@@ -135,6 +137,8 @@ export default function Home() {
         return <IngredientForaging />;
       case 'characters':
         return <CharacterManager />;
+      case 'npcs':
+        return <NPCManager />;
       case 'notes':
         return <SessionPlanner onPageChange={setCurrentPage} currentGameDate={currentObojimaDate} onGameDateChange={handleObojimaDateChange} />;
       case 'quests':
@@ -165,20 +169,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
-      </div>
+    <NPCProvider>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
+        </div>
 
-      <div className="grid grid-cols-[auto_1fr] min-h-screen">
-        <Sidebar onPageChange={setCurrentPage} currentPage={currentPage} />
-        <div className="min-h-screen">
-          {renderPage()}
+        <div className="grid grid-cols-[auto_1fr] min-h-screen">
+          <Sidebar onPageChange={setCurrentPage} currentPage={currentPage} />
+          <div className="min-h-screen">
+            {renderPage()}
+          </div>
         </div>
       </div>
-    </div>
+    </NPCProvider>
   );
 }

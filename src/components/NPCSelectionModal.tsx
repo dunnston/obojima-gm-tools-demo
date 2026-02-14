@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { NPC } from '@/data/npcs';
 import { syncService } from '@/services/sync';
-import { 
+import {
   XMarkIcon,
   UserGroupIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
+import MentionTextarea from './MentionTextarea';
 
 // NPC Selection Modal
 export function NPCSelectionModal({
@@ -207,9 +208,9 @@ export function NPCSelectionModal({
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       Session Notes
                     </label>
-                    <textarea
+                    <MentionTextarea
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(value) => setNotes(value)}
                       rows={3}
                       className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
                       placeholder="Notes specific to this session..."

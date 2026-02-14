@@ -17,7 +17,9 @@ import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 import { getCreatureImagePath } from '@/utils/imageUtils';
-import { 
+import MentionTextarea from './MentionTextarea';
+import MentionText from './MentionText';
+import {
   XMarkIcon,
   PlusIcon,
   TrashIcon,
@@ -122,9 +124,9 @@ export function SceneEditModal({
 
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Description</label>
-                <textarea
+                <MentionTextarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, description: value })}
                   placeholder="What might happen in this scene?"
                   className="w-full h-24 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none"
                 />
@@ -132,9 +134,9 @@ export function SceneEditModal({
 
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Read Aloud Text</label>
-                <textarea
+                <MentionTextarea
                   value={formData.readAloudText}
-                  onChange={(e) => setFormData({ ...formData, readAloudText: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, readAloudText: value })}
                   placeholder="Narrative text to read to players..."
                   className="w-full h-32 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none font-serif"
                 />
@@ -285,9 +287,9 @@ export function SceneEditModal({
             {/* Notes */}
             <div>
               <label className="block text-sm text-slate-400 mb-1">GM Notes</label>
-              <textarea
+              <MentionTextarea
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, notes: value })}
                 placeholder="Private notes about this scene..."
                 className="w-full h-24 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none"
               />
@@ -362,7 +364,7 @@ export function SceneViewModal({
             {scene.description && (
               <div>
                 <h4 className="text-sm font-semibold text-slate-400 mb-2">Scene Overview</h4>
-                <p className="text-white">{scene.description}</p>
+                <MentionText text={scene.description} className="text-white whitespace-pre-wrap" />
               </div>
             )}
 
@@ -370,9 +372,7 @@ export function SceneViewModal({
             {scene.readAloudText && (
               <div className="bg-slate-700/50 rounded-lg p-6 border-l-4 border-emerald-400">
                 <h4 className="text-sm font-semibold text-emerald-400 mb-3">Read Aloud</h4>
-                <p className="text-white font-serif text-lg leading-relaxed whitespace-pre-wrap">
-                  {scene.readAloudText}
-                </p>
+                <MentionText text={scene.readAloudText} className="text-white font-serif text-lg leading-relaxed whitespace-pre-wrap" />
               </div>
             )}
 
@@ -500,7 +500,7 @@ export function SceneViewModal({
               <div>
                 <h4 className="text-sm font-semibold text-slate-400 mb-2">GM Notes</h4>
                 <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-white whitespace-pre-wrap">{scene.notes}</p>
+                  <MentionText text={scene.notes} className="text-white whitespace-pre-wrap" />
                 </div>
               </div>
             )}
@@ -1074,9 +1074,9 @@ export function CreatureSelectionModal({
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       Notes
                     </label>
-                    <textarea
+                    <MentionTextarea
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(value) => setNotes(value)}
                       rows={3}
                       className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
                       placeholder="Additional notes about this creature..."
@@ -1153,9 +1153,9 @@ export function CreatureSelectionModal({
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       Session Notes
                     </label>
-                    <textarea
+                    <MentionTextarea
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(value) => setNotes(value)}
                       rows={3}
                       className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
                       placeholder="Session-specific notes about this companion..."

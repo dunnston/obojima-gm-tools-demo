@@ -8,8 +8,11 @@ import { getPotionImagePath, getIngredientImagePath, getMagicItemImagePath } fro
 import { useItemTranslation } from '@/hooks/useItemTranslation';
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 
+// Module-level cache so inventory persists across navigation
+let cachedInventory: VendingMachineInventory | null = null;
+
 export default function VendingMachine() {
-  const [inventory, setInventory] = useState<VendingMachineInventory | null>(null);
+  const [inventory, setInventory] = useState<VendingMachineInventory | null>(() => cachedInventory);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedItemType, setSelectedItemType] = useState<'ingredient' | 'potion' | 'magicItem' | null>(null);
@@ -20,13 +23,18 @@ export default function VendingMachine() {
     setIsRefreshing(true);
     // Add a small delay for visual feedback
     await new Promise(resolve => setTimeout(resolve, 500));
-    setInventory(generateVendingMachineInventory());
+    const newInventory = generateVendingMachineInventory();
+    cachedInventory = newInventory;
+    setInventory(newInventory);
     setIsRefreshing(false);
   };
 
   useEffect(() => {
-    // Generate initial inventory
-    setInventory(generateVendingMachineInventory());
+    // Only generate inventory if there's no cached version
+    if (!cachedInventory) {
+      cachedInventory = generateVendingMachineInventory();
+      setInventory(cachedInventory);
+    }
   }, []);
 
   const openItemModal = (item: any, type: 'ingredient' | 'potion' | 'magicItem') => {

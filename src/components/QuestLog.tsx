@@ -6,6 +6,7 @@ import { Quest, QuestStatus, updateQuest } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
+import MentionText from './MentionText';
 import { formatGoldValue, CURRENCY_IMAGES } from '@/data/obojimaCurrency';
 import { SimpleCurrencyDisplay } from '@/components/CurrencyDisplay';
 
@@ -248,7 +249,7 @@ export default function QuestLog() {
                           {t('quests.by')} {quest.questGiver}
                         </span>
                       </div>
-                      <p className="text-slate-300 line-clamp-2">{quest.description}</p>
+                      <MentionText text={quest.description} className="text-slate-300 line-clamp-2" />
                       <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span>
                           {quest.objectives.filter(obj => obj.completed).length}/{quest.objectives.length} {t('quests.objectiveCount')}
@@ -373,8 +374,8 @@ export default function QuestLog() {
                     {quest.notes && (
                       <div>
                         <h4 className="text-lg font-semibold text-white mb-3">{t('quests.notes')}</h4>
-                        <div className="p-4 bg-slate-700/50 rounded-lg text-slate-200 whitespace-pre-wrap">
-                          {quest.notes}
+                        <div className="p-4 bg-slate-700/50 rounded-lg">
+                          <MentionText text={quest.notes} className="text-slate-200 whitespace-pre-wrap" />
                         </div>
                       </div>
                     )}

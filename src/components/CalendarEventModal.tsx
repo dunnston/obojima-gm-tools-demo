@@ -26,6 +26,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
+import MentionTextarea from './MentionTextarea';
 
 interface CalendarEventModalProps {
   event?: CalendarEvent;
@@ -258,9 +259,9 @@ export default function CalendarEventModal({
               <DocumentTextIcon className="h-4 w-4 inline mr-1" />
               Description
             </label>
-            <textarea
+            <MentionTextarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(value) => handleInputChange('description', value)}
               rows={4}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
               placeholder="Describe what happens during this event..."

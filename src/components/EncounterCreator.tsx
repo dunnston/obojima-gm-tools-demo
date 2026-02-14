@@ -8,6 +8,7 @@ import StatBlock from './StatBlock';
 import { calculateEncounterDifficulty, getEncounterDifficultyRating } from '@/utils/encounterCalculator';
 import { syncService } from '@/services/sync';
 import { PlusIcon, TrashIcon, EyeIcon, BookmarkIcon, CalculatorIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import MentionTextarea from './MentionTextarea';
 import { getCreatureImagePath } from '@/utils/imageUtils';
 
 interface EncounterCreature {
@@ -216,8 +217,9 @@ export default function EncounterCreator() {
 
   const deleteEncounter = async (encounterId: string) => {
     if (confirm(t('encounters.creator.confirmDelete'))) {
+      await syncService.deleteData('encounters', encounterId);
       const updated = savedEncounters.filter(e => e.id !== encounterId);
-      await saveEncounters(updated);
+      setSavedEncounters(updated);
     }
   };
 
@@ -275,9 +277,9 @@ export default function EncounterCreator() {
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   {t('encounters.creator.description')}
                 </label>
-                <textarea
+                <MentionTextarea
                   value={encounterDescription}
-                  onChange={(e) => setEncounterDescription(e.target.value)}
+                  onChange={(value) => setEncounterDescription(value)}
                   rows={3}
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
                   placeholder={t('encounters.creator.descriptionPlaceholder')}

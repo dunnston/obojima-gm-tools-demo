@@ -6,6 +6,7 @@ import { syncService } from '@/services/sync';
 import { CalendarEvent, formatEventDate } from '@/data/calendarEvents';
 import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import QuestRewardSelector from './QuestRewardSelector';
+import MentionTextarea from './MentionTextarea';
 
 interface QuestFormProps {
   quest?: Quest | null;
@@ -289,9 +290,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Description
             </label>
-            <textarea
+            <MentionTextarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(value) => handleInputChange('description', value)}
               rows={4}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
               placeholder="Describe the quest..."
@@ -487,9 +488,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Notes
             </label>
-            <textarea
+            <MentionTextarea
               value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
+              onChange={(value) => handleInputChange('notes', value)}
               rows={3}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-none"
               placeholder="Additional notes about this quest..."
