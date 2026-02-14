@@ -1,0 +1,11 @@
+{
+  "version": "0.3.0",
+  "notes": "NPC Manager page, @mention system for linking NPCs in notes, initiative tracker improvements, and bug fixes",
+  "pub_date": "2026-02-14T00:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaTZYVFM0VGVJUWxydEtXRUxsVm9DcUVFdXBTM2JGTTFCNVA1V0RJclovTFNjV0VTUHZTTzU4Wk9GMHkxamFDM3ovRk5YOWQwdW96Q3BMNGZHZFpneFBzaCtvY0pKbkFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcxMTEyNTA2CWZpbGU6T2JvamltYSBHTSBUb29sc18wLjMuMF94NjQtc2V0dXAuZXhlClBaZWtrbFh3OFBhM2JzNFVRcnRHb2IzQmdITUJBVlVmUEwyNE1UaWhKcUxYVGkyQytpZEFWcHVlcUVUTXN2bnRHeWhIay9XS1U4TVlkSjlTQ2xDUkFBPT0K",
+      "url": "https://github.com/dunnston/obojima-gm-tools-demo/releases/download/v0.3.0/Obojima.GM.Tools_0.3.0_x64-setup.exe"
+    }
+  }
+}
