@@ -12,11 +12,11 @@ import { LOCATIONS } from '@/utils/ingredientForaging';
 import { magicItems } from '@/data/magicItems';
 import { companionTypes } from '@/data/companionTypes';
 import { companions } from '@/data/companions';
-import { PotionEditForm, IngredientEditForm, CreatureEditForm, MagicItemEditForm, NPCEditForm, CompanionTypeEditForm, CompanionEditForm } from './EditForms';
+import { PotionEditForm, IngredientEditForm, CreatureEditForm, MagicItemEditForm, NPCEditForm, CompanionTypeEditForm, CompanionEditForm, LocationEditForm } from './EditForms';
 import { getPotionImagePath, getIngredientImagePath, getCreatureImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
-import { 
-  BeakerIcon, 
-  SparklesIcon, 
+import {
+  BeakerIcon,
+  SparklesIcon,
   FireIcon,
   GiftIcon,
   MagnifyingGlassIcon,
@@ -28,12 +28,15 @@ import {
   ArrowUpTrayIcon,
   UserGroupIcon,
   XMarkIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
+import { regions } from '@/data/encounters';
+import { LocationDetailsModal } from './LocationDetailsModal';
 import { syncService } from '@/services/sync';
 import { useItemTranslation } from '@/hooks/useItemTranslation';
 
-type TabType = 'potions' | 'ingredients' | 'creatures' | 'magicItems' | 'npcs' | 'companionTypes' | 'companions';
+type TabType = 'potions' | 'ingredients' | 'creatures' | 'magicItems' | 'npcs' | 'companionTypes' | 'companions' | 'locations';
 
 export default function DatabaseView() {
   const [activeTab, setActiveTab] = useState<TabType>('potions');
@@ -50,6 +53,7 @@ export default function DatabaseView() {
   const [modifiedNPCs, setModifiedNPCs] = useState<any[]>([]);
   const [modifiedCompanionTypes, setModifiedCompanionTypes] = useState<any[]>([]);
   const [modifiedCompanions, setModifiedCompanions] = useState<any[]>([]);
+  const [modifiedLocations, setModifiedLocations] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
@@ -91,7 +95,8 @@ export default function DatabaseView() {
         magicItemData,
         npcData,
         companionTypeData,
-        companionData
+        companionData,
+        locationData
       ] = await Promise.all([
         syncService.syncWithFallback('user-potions', 'modifiedPotions'),
         syncService.syncWithFallback('user-ingredients', 'modifiedIngredients'),
@@ -99,7 +104,8 @@ export default function DatabaseView() {
         syncService.syncWithFallback('user-magic-items', 'modifiedMagicItems'),
         syncService.syncWithFallback('npcs', 'modifiedNPCs'),
         syncService.syncWithFallback('user-companion-types', 'modifiedCompanionTypes'),
-        syncService.syncWithFallback('companions', 'modifiedCompanions')
+        syncService.syncWithFallback('companions', 'modifiedCompanions'),
+        syncService.syncWithFallback('locations', 'obojima-locations')
       ]);
 
       console.log('Loaded potion data from sync:', potionData);
@@ -126,6 +132,7 @@ export default function DatabaseView() {
       setModifiedNPCs(npcData);
       setModifiedCompanionTypes(companionTypeData);
       setModifiedCompanions(companionData);
+      setModifiedLocations(locationData);
       setIsLoaded(true);
       setSyncStatus('idle');
     } catch (error) {
@@ -209,7 +216,17 @@ export default function DatabaseView() {
           console.error('Error parsing saved companions:', error);
         }
       }
-      
+
+      const savedLocations = localStorage.getItem('obojima-locations');
+      if (savedLocations) {
+        try {
+          const parsedLocations = JSON.parse(savedLocations);
+          setModifiedLocations(parsedLocations);
+        } catch (error) {
+          console.error('Error parsing saved locations:', error);
+        }
+      }
+
       setIsLoaded(true);
     }
   };
@@ -298,6 +315,15 @@ export default function DatabaseView() {
     }
   };
 
+  const saveLocations = async (locations: any[]) => {
+    try {
+      await syncService.saveWithFallback('locations', 'obojima-locations', locations);
+      setModifiedLocations(locations);
+    } catch (error) {
+      console.error('Error saving locations:', error);
+    }
+  };
+
   // Save to localStorage whenever modified data changes (keeping for backup)
   // Wrapped in try/catch to handle quota exceeded errors gracefully
   useEffect(() => {
@@ -348,6 +374,13 @@ export default function DatabaseView() {
       catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCompanions'); }
     }
   }, [modifiedCompanions, isLoaded]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isLoaded) {
+      try { localStorage.setItem('obojima-locations', JSON.stringify(modifiedLocations)); }
+      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for obojima-locations'); }
+    }
+  }, [modifiedLocations, isLoaded]);
 
   // Combine all potion arrays and apply modifications
   // Apply modifications to potions and add new ones
@@ -635,6 +668,16 @@ export default function DatabaseView() {
         console.error('Error syncing companion deletion:', error);
         alert('Failed to delete companion. Please try again.');
       }
+    } else if (type === 'location') {
+      // All locations are custom (user-created)
+      setModifiedLocations(prev => prev.filter(l => l.id !== item.id));
+
+      // Sync deletion to server
+      try {
+        await syncService.deleteLocation(item.id);
+      } catch (error) {
+        console.error('Error syncing location deletion:', error);
+      }
     }
   };
 
@@ -657,6 +700,8 @@ export default function DatabaseView() {
       return !companionTypes.find(original => original.id === item.id);
     } else if (type === 'companion') {
       return true; // All companions are custom (user-created)
+    } else if (type === 'location') {
+      return true; // All locations are custom (user-created)
     }
     return false;
   };
@@ -885,8 +930,37 @@ export default function DatabaseView() {
       } catch (error) {
         console.error('Error syncing companion:', error);
       }
+    } else if (editingType === 'location') {
+      setModifiedLocations(prev => {
+        // Check if this is a new item (original editing item had empty id)
+        const isNewItem = !editingItem?.id;
+
+        if (isNewItem) {
+          // Generate unique ID for new location
+          updatedItem.id = `location_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          updatedItem.created_at = new Date();
+          updatedItem.updated_at = new Date();
+
+          if (updatedItem.name && updatedItem.name.trim()) {
+            return [...prev, updatedItem];
+          }
+          return prev;
+        } else {
+          // For existing items, replace the existing one
+          updatedItem.updated_at = new Date();
+          const filtered = prev.filter(item => item.id !== updatedItem.id);
+          return [...filtered, updatedItem];
+        }
+      });
+
+      // Sync to server
+      try {
+        await syncService.saveLocation(updatedItem);
+      } catch (error) {
+        console.error('Error syncing location:', error);
+      }
     }
-    
+
     setEditingItem(null);
     setEditingType('');
   };
@@ -1012,6 +1086,24 @@ export default function DatabaseView() {
           image: ''
         };
         break;
+      case 'location':
+        newItem = {
+          id: '',
+          name: '',
+          region: '',
+          toneVibe: '',
+          description: '',
+          readAloudText: '',
+          npcIds: [],
+          relatedLocationIds: [],
+          plotHooks: '',
+          linkedQuestIds: [],
+          treasure: [],
+          treasureNotes: '',
+          encounterIds: [],
+          dmNotes: ''
+        };
+        break;
     }
     
     setEditingItem(newItem);
@@ -1028,6 +1120,7 @@ export default function DatabaseView() {
       localStorage.removeItem('modifiedNPCs');
       localStorage.removeItem('modifiedCompanionTypes');
       localStorage.removeItem('modifiedCompanions');
+      localStorage.removeItem('obojima-locations');
       setModifiedIngredients([]);
       setModifiedPotions([]);
       setModifiedCreatures([]);
@@ -1035,6 +1128,7 @@ export default function DatabaseView() {
       setModifiedNPCs([]);
       setModifiedCompanionTypes([]);
       setModifiedCompanions([]);
+      setModifiedLocations([]);
     }
   };
 
@@ -1065,6 +1159,14 @@ export default function DatabaseView() {
       tabs: [
         { id: 'companionTypes' as TabType, name: t('database.tabs.companionTypes'), icon: FireIcon, count: currentCompanionTypes.length },
         { id: 'companions' as TabType, name: t('database.tabs.companions'), icon: SparklesIcon, count: modifiedCompanions.length }
+      ]
+    },
+    {
+      id: 'world',
+      name: 'World',
+      icon: MapPinIcon,
+      tabs: [
+        { id: 'locations' as TabType, name: 'Locations', icon: MapPinIcon, count: modifiedLocations.length }
       ]
     }
   ];
@@ -1184,6 +1286,7 @@ export default function DatabaseView() {
         {activeTab === 'npcs' && <NPCsTab npcs={modifiedNPCs} onEdit={handleEdit} onAdd={() => handleAdd('npc')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'companionTypes' && <CompanionTypesTab companionTypes={currentCompanionTypes} onEdit={handleEdit} onAdd={() => handleAdd('companionType')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'companions' && <CompanionsTab companions={modifiedCompanions} onEdit={handleEdit} onAdd={() => handleAdd('companion')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
+        {activeTab === 'locations' && <LocationsTab locations={modifiedLocations} npcs={modifiedNPCs} quests={[]} onEdit={handleEdit} onAdd={() => handleAdd('location')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
       </div>
 
       {/* Edit Forms */}
@@ -1233,6 +1336,13 @@ export default function DatabaseView() {
         <CompanionEditForm
           companion={editingItem}
           companionTypes={currentCompanionTypes}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+      )}
+      {editingItem && editingType === 'location' && (
+        <LocationEditForm
+          location={editingItem}
           onSave={handleSave}
           onCancel={handleCancel}
         />
@@ -3164,6 +3274,190 @@ function CompanionsTab({ companions, onEdit, onAdd, onDelete, isCustomItem }: { 
         <CompanionDetailModal
           companion={viewingCompanion}
           onClose={() => setViewingCompanion(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function LocationsTab({ locations, npcs, quests, onEdit, onAdd, onDelete, isCustomItem }: { locations: any[], npcs: any[], quests: any[], onEdit: (item: any, type: string) => void, onAdd: () => void, onDelete: (item: any, type: string) => void, isCustomItem: (item: any, type: string) => boolean }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRegion, setFilterRegion] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
+  const [viewingLocation, setViewingLocation] = useState<any>(null);
+
+  const filteredLocations = locations.filter(location => {
+    const matchesSearch = !searchTerm ||
+      location.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.toneVibe?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRegion = filterRegion === 'all' || location.region === filterRegion;
+    return matchesSearch && matchesRegion;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'name': return (a.name || '').localeCompare(b.name || '');
+      case 'region': return (a.region || '').localeCompare(b.region || '');
+      case 'recent': return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
+      default: return 0;
+    }
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-64">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search locations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+              />
+            </div>
+          </div>
+
+          <select
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-amber-400"
+          >
+            <option value="all">All Regions</option>
+            {regions.map(region => (
+              <option key={region.id} value={region.id}>{region.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-amber-400"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="region">Sort by Region</option>
+            <option value="recent">Sort by Recent</option>
+          </select>
+        </div>
+
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Add New Location
+        </button>
+      </div>
+
+      {/* Locations Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredLocations.map((location) => {
+          const regionName = regions.find(r => r.id === location.region)?.name;
+          const npcCount = (location.npcIds || []).length;
+          const questCount = (location.linkedQuestIds || []).length;
+          const encounterCount = (location.encounterIds || []).length;
+
+          return (
+            <div key={location.id} className="bg-slate-700/50 rounded-xl border border-slate-600 hover:border-amber-400 transition-all duration-200 overflow-hidden">
+              {location.imageUrl && (
+                <div className="w-full h-32 overflow-hidden">
+                  <img src={location.imageUrl} alt={location.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-6 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-white">{location.name}</h3>
+                    {regionName && (
+                      <p className="text-amber-400 text-sm flex items-center gap-1 mt-1">
+                        <MapPinIcon className="h-3.5 w-3.5" />
+                        {regionName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setViewingLocation(location)}
+                      className="p-1 text-slate-400 hover:text-blue-400 transition-colors"
+                      title="View Location Details"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onEdit(location, 'location')}
+                      className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                      title="Edit Location"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(location, 'location')}
+                      className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                      title="Delete Location"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {location.toneVibe && (
+                  <span className="inline-block px-2 py-0.5 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-xs text-indigo-300">
+                    {location.toneVibe}
+                  </span>
+                )}
+
+                {location.description && (
+                  <p className="text-sm text-slate-300 line-clamp-3">{location.description.replace(/@\[([^\]]+)\]\([^)]+\)/g, '$1')}</p>
+                )}
+
+                {/* Stats */}
+                <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                  {npcCount > 0 && (
+                    <span className="flex items-center gap-1">
+                      <UserGroupIcon className="h-3.5 w-3.5" />
+                      {npcCount} NPC{npcCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {questCount > 0 && (
+                    <span className="flex items-center gap-1">
+                      <GiftIcon className="h-3.5 w-3.5" />
+                      {questCount} Quest{questCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {encounterCount > 0 && (
+                    <span className="flex items-center gap-1">
+                      <FireIcon className="h-3.5 w-3.5" />
+                      {encounterCount} Encounter{encounterCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {filteredLocations.length === 0 && (
+        <div className="text-center py-12">
+          <MapPinIcon className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate-400 mb-2">No Locations Found</h3>
+          <p className="text-slate-500">Create your first location to get started!</p>
+        </div>
+      )}
+
+      {/* Location View Modal */}
+      {viewingLocation && (
+        <LocationDetailsModal
+          location={viewingLocation}
+          npcs={npcs}
+          allLocations={locations}
+          quests={quests}
+          onClose={() => setViewingLocation(null)}
+          onLocationClick={(loc) => {
+            setViewingLocation(loc);
+          }}
         />
       )}
     </div>

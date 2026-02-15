@@ -34,24 +34,28 @@ import {
   ArrowUpTrayIcon,
   FireIcon,
   MagnifyingGlassIcon,
-  EyeIcon
+  EyeIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
+import { regions } from '@/data/encounters';
 
 // Scene Edit Modal
-export function SceneEditModal({ 
-  scene, 
+export function SceneEditModal({
+  scene,
   savedEncounters,
   sessionMusic,
   sessionNPCs,
   sessionTreasure,
-  onSave, 
-  onClose 
+  savedLocations = [],
+  onSave,
+  onClose
 }: {
   scene: SessionScene;
   savedEncounters: Encounter[];
   sessionMusic: SessionMusic[];
   sessionNPCs: SessionNPC[];
   sessionTreasure: SessionTreasure[];
+  savedLocations?: any[];
   onSave: (updates: Partial<SessionScene>) => void;
   onClose: () => void;
 }) {
@@ -59,7 +63,8 @@ export function SceneEditModal({
     title: scene.title,
     description: scene.description,
     readAloudText: scene.readAloudText || '',
-    notes: scene.notes || ''
+    notes: scene.notes || '',
+    locationId: scene.locationId || ''
   });
   
   const [selectedMusic, setSelectedMusic] = useState<string[]>(
@@ -76,8 +81,10 @@ export function SceneEditModal({
   );
 
   const handleSave = () => {
+    const { locationId, ...rest } = formData;
     onSave({
-      ...formData,
+      ...rest,
+      locationId: locationId || undefined,
       music: sessionMusic.filter(m => selectedMusic.includes(m.id)),
       npcs: sessionNPCs.filter(n => selectedNPCs.includes(n.id)),
       encounters: selectedEncounters,
@@ -141,6 +148,31 @@ export function SceneEditModal({
                   className="w-full h-32 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none font-serif"
                 />
               </div>
+
+              {/* Location */}
+              {savedLocations.length > 0 && (
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1 flex items-center gap-1">
+                    <MapPinIcon className="h-4 w-4" />
+                    Location
+                  </label>
+                  <select
+                    value={formData.locationId}
+                    onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  >
+                    <option value="">No location</option>
+                    {savedLocations.map((location: any) => {
+                      const regionName = location.region ? regions.find((r: any) => r.id === location.region)?.name : null;
+                      return (
+                        <option key={location.id} value={location.id}>
+                          {location.name}{regionName ? ` (${regionName})` : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Music Selection */}

@@ -38,6 +38,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const [isEditingSession, setIsEditingSession] = useState(false);
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [encounters, setEncounters] = useState<Encounter[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const { t } = useTranslation();
   
@@ -79,15 +80,17 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
     setSyncStatus('syncing');
     try {
       // Load sessions, characters, and encounters in parallel
-      const [sessionData, characterData, encounterData] = await Promise.all([
+      const [sessionData, characterData, encounterData, locationData] = await Promise.all([
         syncService.syncWithFallback('sessions', 'obojima-sessions', validateSession),
         syncService.syncWithFallback('characters', 'obojima-characters', validateCharacter),
-        syncService.syncWithFallback('encounters', 'obojima-encounters', validateEncounter)
+        syncService.syncWithFallback('encounters', 'obojima-encounters', validateEncounter),
+        syncService.syncWithFallback('locations', 'obojima-locations')
       ]);
 
       setSessions(sessionData);
       setCharacters(characterData);
       setEncounters(encounterData);
+      setLocations(locationData);
       setSyncStatus('idle');
     } catch (error) {
       console.error('Error loading session data:', error);
@@ -569,10 +572,11 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       </div>
 
       {/* Session Content */}
-      <SessionDetailView 
+      <SessionDetailView
         session={selectedSession}
         characters={characters}
         savedEncounters={encounters}
+        savedLocations={locations}
         onUpdateSession={updateSession}
         onNavigateToInitiative={() => onPageChange?.('initiative')}
       />

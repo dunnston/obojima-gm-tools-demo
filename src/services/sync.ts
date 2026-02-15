@@ -41,6 +41,7 @@ const DATA_TYPE_TO_TABLE: Record<DataType, string> = {
   'user-magic-items': 'user_magic_items',
   'user-companion-types': 'user_companion_types',
   'calendar-events': 'calendar_events',
+  'locations': 'locations',
 };
 
 export interface SyncResult<T> {
@@ -63,7 +64,7 @@ export interface BatchItemError<T> {
   index: number;
 }
 
-export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types' | 'calendar-events';
+export type DataType = 'characters' | 'sessions' | 'quests' | 'encounters' | 'downtime' | 'companions' | 'npcs' | 'settings' | 'user-potions' | 'user-ingredients' | 'user-creatures' | 'user-magic-items' | 'user-companion-types' | 'calendar-events' | 'locations';
 
 // Concurrency and batching configuration
 const BATCH_SIZE = 10;
@@ -601,6 +602,19 @@ class SyncService {
     return this.deleteData('calendar-events', id);
   }
 
+  // Location methods
+  async getLocations(): Promise<SyncResult<any[]>> {
+    return this.getData('locations');
+  }
+
+  async saveLocation(location: any): Promise<SyncResult<void>> {
+    return this.saveData('locations', location);
+  }
+
+  async deleteLocation(id: string): Promise<SyncResult<void>> {
+    return this.deleteData('locations', id);
+  }
+
   // Register callbacks for specific data types
   onDataUpdate(dataType: DataType, callback: () => void) {
     if (!this.syncCallbacks.has(dataType)) {
@@ -970,6 +984,7 @@ class SyncService {
     'user_magic_items',
     'user_companion_types',
     'calendar_events',
+    'locations',
   ];
 
   /**

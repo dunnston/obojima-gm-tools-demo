@@ -25,4 +25,5 @@ export type StorageTable =
   | 'user_magic_items'
   | 'user_companion_types'
   | 'calendar_events'
+  | 'locations'
   | 'settings';

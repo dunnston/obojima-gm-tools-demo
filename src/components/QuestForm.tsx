@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, QUEST_REWARD_TYPES, QuestStatus, loadQuests } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { CalendarEvent, formatEventDate } from '@/data/calendarEvents';
-import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon, CalendarDaysIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { Location } from '@/data/locations';
+import { regions } from '@/data/encounters';
 import QuestRewardSelector from './QuestRewardSelector';
 import MentionTextarea from './MentionTextarea';
 
@@ -31,7 +33,9 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
           quantity: reward.quantity,
           value: reward.value
         })),
-        notes: quest.notes || ''
+        notes: quest.notes || '',
+        locationId: quest.locationId,
+        locationName: quest.locationName
       };
     }
     return createEmptyQuest();
@@ -42,13 +46,22 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
   const [showEventSearch, setShowEventSearch] = useState(false);
   const [linkedEvents, setLinkedEvents] = useState<CalendarEvent[]>([]);
 
-  // Load calendar events and find linked ones
+  // Location linking state
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
+  const [locationSearchTerm, setLocationSearchTerm] = useState('');
+  const [showLocationSearch, setShowLocationSearch] = useState(false);
+
+  // Load calendar events and locations
   useEffect(() => {
-    const loadCalendarEvents = async () => {
+    const loadData = async () => {
       try {
-        const result = await syncService.getCalendarEvents();
-        if (result.success && result.data) {
-          const events: CalendarEvent[] = result.data;
+        const [eventsResult, locationsResult] = await Promise.all([
+          syncService.getCalendarEvents(),
+          syncService.getLocations()
+        ]);
+
+        if (eventsResult.success && eventsResult.data) {
+          const events: CalendarEvent[] = eventsResult.data;
           setCalendarEvents(events);
 
           // Find events linked to this quest
@@ -57,18 +70,21 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
             setLinkedEvents(questLinkedEvents);
           }
         } else {
-          console.warn('Failed to load calendar events:', result.error);
           setCalendarEvents([]);
           setLinkedEvents([]);
         }
+
+        if (locationsResult.success && locationsResult.data) {
+          setAllLocations(locationsResult.data);
+        }
       } catch (error) {
-        console.error('Error loading calendar events:', error);
+        console.error('Error loading data:', error);
         setCalendarEvents([]);
         setLinkedEvents([]);
       }
     };
 
-    loadCalendarEvents();
+    loadData();
   }, [quest]);
 
   const handleInputChange = (field: keyof QuestFormData, value: any) => {
@@ -168,6 +184,59 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
     } catch (error) {
       console.error('Error unlinking event:', error);
       alert('Error unlinking event. Please try again.');
+    }
+  };
+
+  const handleLocationLink = async (location: Location) => {
+    setFormData(prev => ({
+      ...prev,
+      locationId: location.id,
+      locationName: location.name
+    }));
+
+    // Update the location's linkedQuestIds if quest exists
+    if (quest) {
+      try {
+        const updatedQuestIds = [...(location.linkedQuestIds || [])];
+        if (!updatedQuestIds.includes(quest.id)) {
+          updatedQuestIds.push(quest.id);
+          await syncService.saveLocation({
+            ...location,
+            linkedQuestIds: updatedQuestIds,
+            updated_at: new Date()
+          });
+        }
+      } catch (error) {
+        console.error('Error updating location with quest link:', error);
+      }
+    }
+
+    setShowLocationSearch(false);
+    setLocationSearchTerm('');
+  };
+
+  const handleLocationUnlink = async () => {
+    const oldLocationId = formData.locationId;
+    setFormData(prev => ({
+      ...prev,
+      locationId: undefined,
+      locationName: undefined
+    }));
+
+    // Remove this quest from the location's linkedQuestIds
+    if (quest && oldLocationId) {
+      try {
+        const location = allLocations.find(l => l.id === oldLocationId);
+        if (location) {
+          await syncService.saveLocation({
+            ...location,
+            linkedQuestIds: (location.linkedQuestIds || []).filter((id: string) => id !== quest.id),
+            updated_at: new Date()
+          });
+        }
+      } catch (error) {
+        console.error('Error updating location to remove quest link:', error);
+      }
     }
   };
 
@@ -479,6 +548,108 @@ export default function QuestForm({ quest, onSave, onCancel, isEditing = false }
             {!quest && (
               <div className="p-3 bg-slate-700/30 border border-slate-600 rounded-lg text-slate-400 text-sm">
                 Save the quest first to link calendar events to it.
+              </div>
+            )}
+          </div>
+
+          {/* Linked Location */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-slate-300">
+                <MapPinIcon className="h-4 w-4 inline mr-1" />
+                Linked Location
+              </label>
+              {!formData.locationId && (
+                <button
+                  type="button"
+                  onClick={() => setShowLocationSearch(!showLocationSearch)}
+                  className="flex items-center gap-1 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Link Location
+                </button>
+              )}
+            </div>
+
+            {/* Linked Location Display */}
+            {formData.locationId && (
+              <div className="flex items-center justify-between p-3 bg-slate-700/50 border border-amber-400/30 rounded-lg mb-4">
+                <div className="flex items-center gap-3">
+                  <MapPinIcon className="h-4 w-4 text-amber-400" />
+                  <div>
+                    <p className="text-white font-medium">{formData.locationName || formData.locationId}</p>
+                    {(() => {
+                      const loc = allLocations.find(l => l.id === formData.locationId);
+                      const regionName = loc?.region ? regions.find(r => r.id === loc.region)?.name : null;
+                      return regionName ? <p className="text-sm text-amber-400">{regionName}</p> : null;
+                    })()}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLocationUnlink}
+                  className="text-red-400 hover:text-red-300 text-sm"
+                >
+                  Unlink
+                </button>
+              </div>
+            )}
+
+            {/* Location Search */}
+            {showLocationSearch && !formData.locationId && (
+              <div className="relative mb-4">
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={locationSearchTerm}
+                    onChange={(e) => setLocationSearchTerm(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                    placeholder="Search for locations to link..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationSearch(false)}
+                    className="px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div className="max-h-40 bg-slate-800 border border-slate-600 rounded-lg overflow-y-auto">
+                  {allLocations
+                    .filter(location =>
+                      location.name?.toLowerCase().includes(locationSearchTerm.toLowerCase()) ||
+                      location.description?.toLowerCase().includes(locationSearchTerm.toLowerCase())
+                    )
+                    .map(location => {
+                      const regionName = location.region ? regions.find((r: any) => r.id === location.region)?.name : null;
+                      return (
+                        <button
+                          key={location.id}
+                          type="button"
+                          onClick={() => handleLocationLink(location)}
+                          className="w-full p-3 text-left hover:bg-slate-700 transition-colors border-b border-slate-600 last:border-b-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <MapPinIcon className="h-4 w-4 text-amber-400" />
+                            <div>
+                              <p className="text-white font-medium">{location.name}</p>
+                              {regionName && <p className="text-sm text-amber-400">{regionName}</p>}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                  {allLocations.filter(location =>
+                    location.name?.toLowerCase().includes(locationSearchTerm.toLowerCase()) ||
+                    location.description?.toLowerCase().includes(locationSearchTerm.toLowerCase())
+                  ).length === 0 && (
+                    <div className="p-3 text-slate-400 text-sm">
+                      No locations found. {locationSearchTerm && `Try searching for "${locationSearchTerm}"`}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

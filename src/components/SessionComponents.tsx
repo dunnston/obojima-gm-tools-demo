@@ -35,7 +35,8 @@ import {
   EyeSlashIcon,
   SparklesIcon,
   BoltIcon,
-  XMarkIcon
+  XMarkIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 
 // Scene Card Component
@@ -92,6 +93,11 @@ export function SceneCard({
               <div className="flex items-center gap-1">
                 <GiftIcon className="h-3 w-3" />
                 {scene.treasure.length}
+              </div>
+            )}
+            {scene.locationId && (
+              <div className="flex items-center gap-1 text-amber-400">
+                <MapPinIcon className="h-3 w-3" />
               </div>
             )}
           </div>
