@@ -1942,156 +1942,160 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">
-          {npc.id ? 'Edit NPC' : 'Create New NPC'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Portrait Upload */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Portrait</label>
-            <div className="flex items-start gap-6">
-              {editedNPC.portrait && (
-                <div className="aspect-square w-32 rounded-lg overflow-hidden bg-slate-700">
-                  <img
-                    src={editedNPC.portrait}
-                    alt={editedNPC.name || 'NPC'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1">
-                <label className="block">
-                  <div className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-center transition-colors">
-                    {editedNPC.portrait ? 'Change Portrait' : 'Upload Portrait'}
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </label>
-                {isUploading && (
-                  <div className="mt-2">
-                    <div className="bg-slate-700 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-emerald-500 h-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onCancel}>
+      <div className="bg-slate-800 rounded-xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
+            {npc.id ? 'Edit NPC' : 'Create New NPC'}
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
+            {/* Portrait Upload */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Portrait</label>
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                {editedNPC.portrait && (
+                  <div className="aspect-square w-24 sm:w-32 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                    <img
+                      src={editedNPC.portrait}
+                      alt={editedNPC.name || 'NPC'}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
+                <div className="w-full sm:flex-1">
+                  <label className="block">
+                    <div className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-center transition-colors">
+                      {editedNPC.portrait ? 'Change Portrait' : 'Upload Portrait'}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      disabled={isUploading}
+                    />
+                  </label>
+                  {isUploading && (
+                    <div className="mt-2">
+                      <div className="bg-slate-700 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-emerald-500 h-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={editedNPC.name || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, name: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Occupation</label>
+                <input
+                  type="text"
+                  value={editedNPC.occupation || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, occupation: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., Merchant, Guard, Scholar"
+                />
+              </div>
+            </div>
+
+            {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
               <input
                 type="text"
-                value={editedNPC.name || ''}
-                onChange={(e) => setEditedNPC({ ...editedNPC, name: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                value={editedNPC.location || ''}
+                onChange={(e) => setEditedNPC({ ...editedNPC, location: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                placeholder="Where can this NPC be found?"
+              />
+            </div>
+
+            {/* Details */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Details</label>
+              <textarea
+                value={editedNPC.details || ''}
+                onChange={(e) => setEditedNPC({ ...editedNPC, details: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                placeholder="Description, personality, backstory, notes..."
                 required
               />
             </div>
 
+            {/* Tags */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Occupation</label>
-              <input
-                type="text"
-                value={editedNPC.occupation || ''}
-                onChange={(e) => setEditedNPC({ ...editedNPC, occupation: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-                placeholder="e.g., Merchant, Guard, Scholar"
-              />
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
-            <input
-              type="text"
-              value={editedNPC.location || ''}
-              onChange={(e) => setEditedNPC({ ...editedNPC, location: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-              placeholder="Where can this NPC be found?"
-            />
-          </div>
-
-          {/* Details */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Details</label>
-            <textarea
-              value={editedNPC.details || ''}
-              onChange={(e) => setEditedNPC({ ...editedNPC, details: e.target.value })}
-              rows={6}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-              placeholder="Description, personality, backstory, notes..."
-              required
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Tags</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={currentTagInput}
-                onChange={(e) => setCurrentTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-                placeholder="Add a tag..."
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            {editedNPC.tags && editedNPC.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {editedNPC.tags.map((tag: string, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 bg-slate-600 text-slate-200 px-3 py-1 rounded-full text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="hover:text-red-400 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+              <label className="block text-sm font-medium text-slate-300 mb-2">Tags</label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={currentTagInput}
+                  onChange={(e) => setCurrentTagInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  className="flex-1 px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="Add a tag..."
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                >
+                  Add
+                </button>
               </div>
-            )}
+              {editedNPC.tags && editedNPC.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {editedNPC.tags.map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 bg-slate-600 text-slate-200 px-3 py-1.5 rounded-full text-sm"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-red-400 transition-colors p-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">
+          {/* Form Actions - pinned to bottom */}
+          <div className="flex justify-end gap-3 sm:gap-4 p-4 sm:p-6 border-t border-slate-700 flex-shrink-0">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
             >
               {npc.id ? 'Save Changes' : 'Create NPC'}
             </button>

@@ -39,6 +39,8 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [encounters, setEncounters] = useState<Encounter[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [npcs, setNpcs] = useState<any[]>([]);
+  const [quests, setQuests] = useState<any[]>([]);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const { t } = useTranslation();
   
@@ -80,17 +82,21 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
     setSyncStatus('syncing');
     try {
       // Load sessions, characters, and encounters in parallel
-      const [sessionData, characterData, encounterData, locationData] = await Promise.all([
+      const [sessionData, characterData, encounterData, locationData, npcData, questData] = await Promise.all([
         syncService.syncWithFallback('sessions', 'obojima-sessions', validateSession),
         syncService.syncWithFallback('characters', 'obojima-characters', validateCharacter),
         syncService.syncWithFallback('encounters', 'obojima-encounters', validateEncounter),
-        syncService.syncWithFallback('locations', 'obojima-locations')
+        syncService.syncWithFallback('locations', 'obojima-locations'),
+        syncService.syncWithFallback('npcs', 'modifiedNPCs'),
+        syncService.syncWithFallback('quests', 'quests')
       ]);
 
       setSessions(sessionData);
       setCharacters(characterData);
       setEncounters(encounterData);
       setLocations(locationData);
+      setNpcs(npcData);
+      setQuests(questData);
       setSyncStatus('idle');
     } catch (error) {
       console.error('Error loading session data:', error);
@@ -577,6 +583,8 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         characters={characters}
         savedEncounters={encounters}
         savedLocations={locations}
+        savedNPCs={npcs}
+        savedQuests={quests}
         onUpdateSession={updateSession}
         onNavigateToInitiative={() => onPageChange?.('initiative')}
       />

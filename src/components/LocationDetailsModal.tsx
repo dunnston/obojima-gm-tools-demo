@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Location, LocationTreasure } from '@/data/locations';
 import { NPC } from '@/data/npcs';
 import { Quest } from '@/data/quests';
@@ -18,12 +19,28 @@ import {
 } from '@heroicons/react/24/outline';
 import MentionText from './MentionText';
 
+interface TreasureItemData {
+  id?: string;
+  name: string;
+  type?: string;
+  rarity?: string;
+  category?: string;
+  effect?: string;
+  charges?: string;
+  price?: number;
+  imageUrl?: string;
+  flavorText?: string;
+  requiresAttunement?: boolean;
+  locations?: string[];
+}
+
 interface LocationDetailsModalProps {
   location: Location;
   npcs?: NPC[];
   allLocations?: Location[];
   quests?: Quest[];
   encounters?: any[];
+  allItems?: TreasureItemData[];
   onClose: () => void;
   onNPCClick?: (npc: NPC) => void;
   onLocationClick?: (location: Location) => void;
@@ -37,6 +54,7 @@ export function LocationDetailsModal({
   allLocations = [],
   quests = [],
   encounters = [],
+  allItems = [],
   onClose,
   onNPCClick,
   onLocationClick,
@@ -64,11 +82,44 @@ export function LocationDetailsModal({
     })
     .filter(Boolean) as { id: string; name: string }[];
 
+  const [loadedEncounterId, setLoadedEncounterId] = useState<string | null>(null);
+  const [confirmEncounterId, setConfirmEncounterId] = useState<string | null>(null);
+  const [viewingTreasure, setViewingTreasure] = useState<LocationTreasure | null>(null);
+
+  const lookupTreasureItem = (treasure: LocationTreasure): TreasureItemData | null => {
+    if (allItems.length === 0) return null;
+    return allItems.find(i =>
+      i.id === treasure.itemId ||
+      i.name?.toLowerCase() === treasure.itemName?.toLowerCase()
+    ) || null;
+  };
+
+  const hasActiveCombat = () => {
+    try {
+      const saved = localStorage.getItem('obojima-initiative-state');
+      if (saved) {
+        const state = JSON.parse(saved);
+        return state.participants && state.participants.length > 0;
+      }
+    } catch {}
+    return false;
+  };
+
   const handleLoadEncounter = (encounterId: string) => {
+    if (hasActiveCombat()) {
+      setConfirmEncounterId(encounterId);
+      return;
+    }
+    doLoadEncounter(encounterId);
+  };
+
+  const doLoadEncounter = (encounterId: string) => {
+    setConfirmEncounterId(null);
     localStorage.setItem('pendingEncounter', JSON.stringify({
       encounterId,
       playerIds: []
     }));
+    setLoadedEncounterId(encounterId);
     if (onLoadEncounter) {
       onLoadEncounter(encounterId);
     }
@@ -87,8 +138,8 @@ export function LocationDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
@@ -232,15 +283,72 @@ export function LocationDetailsModal({
                 {location.treasure && location.treasure.length > 0 && (
                   <div className="space-y-1 mb-2">
                     {location.treasure.map((item: LocationTreasure) => (
-                      <div key={item.id} className="flex items-center gap-2 text-sm text-white">
-                        {getTreasureIcon(item.type)}
-                        <span>{item.itemName}</span>
-                        {item.quantity && item.quantity > 1 && (
-                          <span className="text-slate-400">x{item.quantity}</span>
-                        )}
-                        {item.notes && (
-                          <span className="text-slate-400">- {item.notes}</span>
-                        )}
+                      <div key={item.id}>
+                        <button
+                          onClick={() => setViewingTreasure(viewingTreasure?.id === item.id ? null : item)}
+                          className="flex items-center gap-2 text-sm text-white hover:text-amber-300 transition-colors w-full text-left py-1 rounded px-1 -mx-1 hover:bg-slate-600/30"
+                        >
+                          {getTreasureIcon(item.type)}
+                          <span>{item.itemName}</span>
+                          {item.quantity && item.quantity > 1 && (
+                            <span className="text-slate-400">x{item.quantity}</span>
+                          )}
+                          {item.notes && (
+                            <span className="text-slate-400">- {item.notes}</span>
+                          )}
+                        </button>
+                        {viewingTreasure?.id === item.id && (() => {
+                          const itemData = lookupTreasureItem(item);
+                          const typeLabel = item.type === 'potion' ? 'Potion' : item.type === 'ingredient' ? 'Ingredient' : 'Magic Item';
+                          return (
+                            <div className="ml-6 mt-1 mb-2 p-3 bg-slate-600/30 border border-slate-500/30 rounded-lg text-sm space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400">Type:</span>
+                                <span className="text-white">{typeLabel}</span>
+                              </div>
+                              {itemData?.rarity && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-400">Rarity:</span>
+                                  <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                    itemData.rarity === 'Common' ? 'bg-slate-500/30 text-slate-300' :
+                                    itemData.rarity === 'Uncommon' ? 'bg-green-500/30 text-green-300' :
+                                    itemData.rarity === 'Rare' ? 'bg-blue-500/30 text-blue-300' :
+                                    itemData.rarity === 'Very Rare' ? 'bg-purple-500/30 text-purple-300' :
+                                    itemData.rarity === 'Legendary' ? 'bg-amber-500/30 text-amber-300' :
+                                    'bg-slate-500/30 text-slate-300'
+                                  }`}>{itemData.rarity}</span>
+                                </div>
+                              )}
+                              {itemData?.price != null && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-400">Price:</span>
+                                  <span className="text-amber-300">{itemData.price} gp</span>
+                                </div>
+                              )}
+                              {itemData?.effect && (
+                                <div>
+                                  <span className="text-slate-400">Effect:</span>
+                                  <p className="text-white mt-0.5">{itemData.effect}</p>
+                                </div>
+                              )}
+                              {itemData?.charges && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-400">Charges:</span>
+                                  <span className="text-white">{itemData.charges}</span>
+                                </div>
+                              )}
+                              {itemData?.requiresAttunement && (
+                                <div className="text-purple-300 text-xs">Requires Attunement</div>
+                              )}
+                              {itemData?.flavorText && (
+                                <p className="text-slate-300 italic text-xs mt-1">{itemData.flavorText}</p>
+                              )}
+                              {!itemData && (
+                                <p className="text-slate-400 italic">No additional details available</p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
@@ -262,14 +370,44 @@ export function LocationDetailsModal({
                 </h4>
                 <div className="space-y-2">
                   {linkedEncounters.map(enc => (
-                    <div key={enc.id} className="flex items-center justify-between bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2">
-                      <span className="text-red-300 text-sm">{enc.name}</span>
-                      <button
-                        onClick={() => handleLoadEncounter(enc.id)}
-                        className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded text-red-300 text-xs transition-colors"
-                      >
-                        Load to Initiative
-                      </button>
+                    <div key={enc.id}>
+                      <div className="flex items-center justify-between bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2">
+                        <span className="text-red-300 text-sm">{enc.name}</span>
+                        {loadedEncounterId === enc.id ? (
+                          <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded text-emerald-300 text-xs">
+                            Loaded — switch to Initiative tab
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleLoadEncounter(enc.id)}
+                            className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded text-red-300 text-xs transition-colors"
+                          >
+                            Load to Initiative
+                          </button>
+                        )}
+                      </div>
+                      {/* Confirmation dialog for active combat */}
+                      {confirmEncounterId === enc.id && (
+                        <div className="mt-2 p-3 bg-amber-900/30 border border-amber-400/30 rounded-lg">
+                          <p className="text-amber-200 text-sm mb-2">
+                            There is an active initiative order. Loading this encounter will replace it.
+                          </p>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => setConfirmEncounterId(null)}
+                              className="px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded text-white text-xs transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => doLoadEncounter(enc.id)}
+                              className="px-3 py-1 bg-amber-600 hover:bg-amber-500 rounded text-white text-xs transition-colors"
+                            >
+                              Replace & Load
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

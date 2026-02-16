@@ -54,6 +54,8 @@ export default function DatabaseView() {
   const [modifiedCompanionTypes, setModifiedCompanionTypes] = useState<any[]>([]);
   const [modifiedCompanions, setModifiedCompanions] = useState<any[]>([]);
   const [modifiedLocations, setModifiedLocations] = useState<any[]>([]);
+  const [encounters, setEncounters] = useState<any[]>([]);
+  const [quests, setQuests] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
@@ -96,7 +98,9 @@ export default function DatabaseView() {
         npcData,
         companionTypeData,
         companionData,
-        locationData
+        locationData,
+        encounterData,
+        questData
       ] = await Promise.all([
         syncService.syncWithFallback('user-potions', 'modifiedPotions'),
         syncService.syncWithFallback('user-ingredients', 'modifiedIngredients'),
@@ -105,7 +109,9 @@ export default function DatabaseView() {
         syncService.syncWithFallback('npcs', 'modifiedNPCs'),
         syncService.syncWithFallback('user-companion-types', 'modifiedCompanionTypes'),
         syncService.syncWithFallback('companions', 'modifiedCompanions'),
-        syncService.syncWithFallback('locations', 'obojima-locations')
+        syncService.syncWithFallback('locations', 'obojima-locations'),
+        syncService.syncWithFallback('encounters', 'encounters'),
+        syncService.syncWithFallback('quests', 'quests')
       ]);
 
       console.log('Loaded potion data from sync:', potionData);
@@ -133,6 +139,8 @@ export default function DatabaseView() {
       setModifiedCompanionTypes(companionTypeData);
       setModifiedCompanions(companionData);
       setModifiedLocations(locationData);
+      setEncounters(encounterData);
+      setQuests(questData);
       setIsLoaded(true);
       setSyncStatus('idle');
     } catch (error) {
@@ -1217,7 +1225,7 @@ export default function DatabaseView() {
       <div className="space-y-4">
         {/* Main Group Tabs */}
         <div className="flex justify-center overflow-x-auto">
-          <div className="flex bg-slate-800/50 backdrop-blur-sm rounded-xl p-1 border border-white/10">
+          <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/10">
             {tabGroups.map((group) => {
               const GroupIcon = group.icon;
               const totalCount = group.tabs.reduce((sum, tab) => sum + tab.count, 0);
@@ -1252,7 +1260,7 @@ export default function DatabaseView() {
 
         {/* Sub Tabs */}
         <div className="flex justify-center overflow-x-auto">
-          <div className="flex bg-slate-700/30 backdrop-blur-sm rounded-lg p-1 border border-white/5">
+          <div className="flex bg-slate-700/30 rounded-lg p-1 border border-white/5">
             {tabGroups.find(group => group.id === selectedGroup)?.tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -1278,7 +1286,7 @@ export default function DatabaseView() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl border border-white/10 p-6">
         {activeTab === 'potions' && <PotionsTab potions={potions} onEdit={handleEdit} onAdd={() => handleAdd('potion')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'ingredients' && <IngredientsTab ingredients={currentIngredients} onEdit={handleEdit} onAdd={() => handleAdd('ingredient')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'creatures' && <CreaturesTab creatures={currentCreatures} onEdit={handleEdit} onAdd={() => handleAdd('creature')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
@@ -1286,7 +1294,7 @@ export default function DatabaseView() {
         {activeTab === 'npcs' && <NPCsTab npcs={modifiedNPCs} onEdit={handleEdit} onAdd={() => handleAdd('npc')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'companionTypes' && <CompanionTypesTab companionTypes={currentCompanionTypes} onEdit={handleEdit} onAdd={() => handleAdd('companionType')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
         {activeTab === 'companions' && <CompanionsTab companions={modifiedCompanions} onEdit={handleEdit} onAdd={() => handleAdd('companion')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
-        {activeTab === 'locations' && <LocationsTab locations={modifiedLocations} npcs={modifiedNPCs} quests={[]} onEdit={handleEdit} onAdd={() => handleAdd('location')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
+        {activeTab === 'locations' && <LocationsTab locations={modifiedLocations} npcs={modifiedNPCs} quests={quests} encounters={encounters} allItems={[...potions.map(p => ({ ...p, id: p.id || `potion-${p.category}-${p.number}` })), ...currentIngredients, ...currentMagicItems]} onEdit={handleEdit} onAdd={() => handleAdd('location')} onDelete={handleDelete} isCustomItem={isCustomItem} />}
       </div>
 
       {/* Edit Forms */}
@@ -2006,7 +2014,7 @@ function CreatureDetailModal({ creature, onClose }: { creature: any; onClose: ()
   if (!mounted) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] overflow-y-auto" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[9999] overflow-y-auto" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl my-8 shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-slate-700">
@@ -2549,7 +2557,7 @@ function NPCsTab({ npcs, onEdit, onAdd, onDelete, isCustomItem }: { npcs: any[],
 
       {/* NPC View Modal */}
       {viewingNPC && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
             <div className="flex items-start justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">NPC Details</h2>
@@ -2823,7 +2831,7 @@ function CompanionTypeDetailModal({ companionType, onClose }: { companionType: a
     <>
       {/* Modal Background */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" 
+        className="fixed inset-0 bg-black/60 z-50"
         onClick={onClose}
       />
       
@@ -3009,7 +3017,7 @@ function CompanionDetailModal({ companion, onClose }: { companion: any, onClose:
   }
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-600">
           <h2 className="text-2xl font-bold text-white">{companion.name}</h2>
@@ -3280,11 +3288,12 @@ function CompanionsTab({ companions, onEdit, onAdd, onDelete, isCustomItem }: { 
   );
 }
 
-function LocationsTab({ locations, npcs, quests, onEdit, onAdd, onDelete, isCustomItem }: { locations: any[], npcs: any[], quests: any[], onEdit: (item: any, type: string) => void, onAdd: () => void, onDelete: (item: any, type: string) => void, isCustomItem: (item: any, type: string) => boolean }) {
+function LocationsTab({ locations, npcs, quests, encounters, allItems, onEdit, onAdd, onDelete, isCustomItem }: { locations: any[], npcs: any[], quests: any[], encounters: any[], allItems: any[], onEdit: (item: any, type: string) => void, onAdd: () => void, onDelete: (item: any, type: string) => void, isCustomItem: (item: any, type: string) => boolean }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRegion, setFilterRegion] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [viewingLocation, setViewingLocation] = useState<any>(null);
+  const [viewingNPCFromLocation, setViewingNPCFromLocation] = useState<any>(null);
 
   const filteredLocations = locations.filter(location => {
     const matchesSearch = !searchTerm ||
@@ -3454,11 +3463,83 @@ function LocationsTab({ locations, npcs, quests, onEdit, onAdd, onDelete, isCust
           npcs={npcs}
           allLocations={locations}
           quests={quests}
+          encounters={encounters}
+          allItems={allItems}
           onClose={() => setViewingLocation(null)}
+          onNPCClick={(npc) => setViewingNPCFromLocation(npc)}
           onLocationClick={(loc) => {
             setViewingLocation(loc);
           }}
         />
+      )}
+
+      {/* NPC Detail Modal (from location click) */}
+      {viewingNPCFromLocation && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700 shadow-2xl">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">NPC Details</h2>
+              <button
+                onClick={() => setViewingNPCFromLocation(null)}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+                title="Close"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                {viewingNPCFromLocation.portrait && (
+                  <div className="flex-shrink-0">
+                    <div className="aspect-square w-48 rounded-lg overflow-hidden bg-slate-700">
+                      <img src={viewingNPCFromLocation.portrait} alt={viewingNPCFromLocation.name} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                )}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h3 className="text-3xl font-bold text-white mb-2">{viewingNPCFromLocation.name}</h3>
+                    {viewingNPCFromLocation.occupation && (
+                      <p className="text-lg text-emerald-400">{viewingNPCFromLocation.occupation}</p>
+                    )}
+                  </div>
+                  {viewingNPCFromLocation.location && (
+                    <div>
+                      <span className="text-sm font-medium text-slate-400">Location</span>
+                      <p className="text-white">{viewingNPCFromLocation.location}</p>
+                    </div>
+                  )}
+                  {viewingNPCFromLocation.tags && viewingNPCFromLocation.tags.length > 0 && (
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">Tags</span>
+                      <div className="flex flex-wrap gap-2">
+                        {viewingNPCFromLocation.tags.map((tag: string, index: number) => (
+                          <span key={index} className="bg-slate-600 text-slate-200 px-3 py-1 rounded-full text-sm">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {viewingNPCFromLocation.details && (
+                <div>
+                  <span className="text-sm font-medium text-slate-400 block mb-2">Details</span>
+                  <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">{viewingNPCFromLocation.details}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end pt-6 border-t border-slate-700 mt-6">
+              <button
+                onClick={() => setViewingNPCFromLocation(null)}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
