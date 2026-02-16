@@ -10,6 +10,14 @@ export interface PlayerCharacter {
   passivePerception: number;
   passiveInsight: number;
   passiveInvestigation: number;
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+  speed: number;
+  proficiencyBonus: number;
   characterGoal: string;
   boons: string[];
   personalityTraits: string[];
@@ -33,6 +41,14 @@ export interface CharacterFormData {
   passivePerception: number | string;
   passiveInsight: number | string;
   passiveInvestigation: number | string;
+  strength: number | string;
+  dexterity: number | string;
+  constitution: number | string;
+  intelligence: number | string;
+  wisdom: number | string;
+  charisma: number | string;
+  speed: number | string;
+  proficiencyBonus: number | string;
   characterGoal: string;
   boons: string;
   personalityTraits: string;
@@ -55,6 +71,14 @@ export const createEmptyCharacter = (): CharacterFormData => ({
   passivePerception: '',
   passiveInsight: '',
   passiveInvestigation: '',
+  strength: 10,
+  dexterity: 10,
+  constitution: 10,
+  intelligence: 10,
+  wisdom: 10,
+  charisma: 10,
+  speed: 30,
+  proficiencyBonus: 2,
   characterGoal: '',
   boons: '',
   personalityTraits: '',
@@ -76,6 +100,14 @@ export const formDataToCharacter = (formData: CharacterFormData): Omit<PlayerCha
   passivePerception: typeof formData.passivePerception === 'string' ? parseInt(formData.passivePerception) || 0 : formData.passivePerception,
   passiveInsight: typeof formData.passiveInsight === 'string' ? parseInt(formData.passiveInsight) || 0 : formData.passiveInsight,
   passiveInvestigation: typeof formData.passiveInvestigation === 'string' ? parseInt(formData.passiveInvestigation) || 0 : formData.passiveInvestigation,
+  strength: typeof formData.strength === 'string' ? parseInt(formData.strength) || 10 : formData.strength,
+  dexterity: typeof formData.dexterity === 'string' ? parseInt(formData.dexterity) || 10 : formData.dexterity,
+  constitution: typeof formData.constitution === 'string' ? parseInt(formData.constitution) || 10 : formData.constitution,
+  intelligence: typeof formData.intelligence === 'string' ? parseInt(formData.intelligence) || 10 : formData.intelligence,
+  wisdom: typeof formData.wisdom === 'string' ? parseInt(formData.wisdom) || 10 : formData.wisdom,
+  charisma: typeof formData.charisma === 'string' ? parseInt(formData.charisma) || 10 : formData.charisma,
+  speed: typeof formData.speed === 'string' ? parseInt(formData.speed) || 30 : formData.speed,
+  proficiencyBonus: typeof formData.proficiencyBonus === 'string' ? parseInt(formData.proficiencyBonus) || 2 : formData.proficiencyBonus,
   characterGoal: formData.characterGoal,
   boons: formData.boons.split('\n').filter(item => item.trim() !== ''),
   personalityTraits: formData.personalityTraits.split('\n').filter(item => item.trim() !== ''),
@@ -97,6 +129,14 @@ export const characterToFormData = (character: PlayerCharacter): CharacterFormDa
   passivePerception: character.passivePerception,
   passiveInsight: character.passiveInsight,
   passiveInvestigation: character.passiveInvestigation,
+  strength: character.strength || 10,
+  dexterity: character.dexterity || 10,
+  constitution: character.constitution || 10,
+  intelligence: character.intelligence || 10,
+  wisdom: character.wisdom || 10,
+  charisma: character.charisma || 10,
+  speed: character.speed || 30,
+  proficiencyBonus: character.proficiencyBonus || 2,
   characterGoal: character.characterGoal,
   boons: character.boons.join('\n'),
   personalityTraits: character.personalityTraits.join('\n'),

@@ -31,6 +31,14 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
         passivePerception: character.passivePerception,
         passiveInsight: character.passiveInsight,
         passiveInvestigation: character.passiveInvestigation,
+        strength: character.strength || 10,
+        dexterity: character.dexterity || 10,
+        constitution: character.constitution || 10,
+        intelligence: character.intelligence || 10,
+        wisdom: character.wisdom || 10,
+        charisma: character.charisma || 10,
+        speed: character.speed || 30,
+        proficiencyBonus: character.proficiencyBonus || 2,
         characterGoal: character.characterGoal,
         boons: character.boons.join('\n'),
         personalityTraits: character.personalityTraits.join('\n'),
@@ -270,9 +278,7 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 placeholder={t('characters.form.pi')}
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 {t('characters.passiveInvestigation')}
@@ -287,9 +293,77 @@ export default function CharacterForm({ character, onSave, onCancel, isEditing =
                 placeholder={t('characters.passiveInvestigation')}
               />
             </div>
+          </div>
 
+          {/* Ability Scores */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-300 mb-3 border-b border-slate-700 pb-2">{t('characters.form.abilityScores')}</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {([
+                { key: 'strength' as const, label: 'STR' },
+                { key: 'dexterity' as const, label: 'DEX' },
+                { key: 'constitution' as const, label: 'CON' },
+                { key: 'intelligence' as const, label: 'INT' },
+                { key: 'wisdom' as const, label: 'WIS' },
+                { key: 'charisma' as const, label: 'CHA' },
+              ]).map(({ key, label }) => {
+                const val = typeof formData[key] === 'string' ? parseInt(formData[key] as string) || 10 : (formData[key] as number);
+                const mod = Math.floor((val - 10) / 2);
+                const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+                return (
+                  <div key={key} className="text-center">
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">{label}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={formData[key]}
+                      onChange={(e) => handleInputChange(key, e.target.value)}
+                      className="w-full px-2 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-center font-bold focus:outline-none focus:border-emerald-400"
+                    />
+                    <div className={`text-xs mt-1 font-medium ${mod > 0 ? 'text-emerald-400' : mod < 0 ? 'text-red-400' : 'text-slate-400'}`}>{modStr}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Speed & Proficiency */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                {t('characters.form.speed')}
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="120"
+                value={formData.speed}
+                onChange={(e) => handleInputChange('speed', e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="30"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                {t('characters.form.proficiency')}
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={formData.proficiencyBonus}
+                onChange={(e) => handleInputChange('proficiencyBonus', e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                placeholder="+2"
+              />
+              <p className="text-xs text-slate-500 mt-1">{t('characters.form.proficiencyHint')}</p>
+            </div>
+          </div>
+
+          <div>
             {/* Character Portrait Upload */}
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 {t('characters.form.characterPortrait')}
               </label>
