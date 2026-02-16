@@ -215,6 +215,18 @@ pub fn run() {
                 );
             "#,
             kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "add locations table",
+            sql: r#"
+                CREATE TABLE IF NOT EXISTS locations (
+                    id TEXT PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            "#,
+            kind: MigrationKind::Up,
         }
     ];
 

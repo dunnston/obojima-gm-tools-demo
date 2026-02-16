@@ -18,6 +18,7 @@ const VALID_TABLES: Set<string> = new Set([
   'user_magic_items',
   'user_companion_types',
   'calendar_events',
+  'locations',
   'settings'
 ]);
 

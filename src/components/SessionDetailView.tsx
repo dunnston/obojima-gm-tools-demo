@@ -21,11 +21,11 @@ import { combatPotions, utilityPotions, whimsyPotions } from '@/data/potions';
 import { ingredients } from '@/data/ingredients';
 import { magicItems } from '@/data/magicItems';
 import { getCreatureImagePath } from '@/utils/imageUtils';
-import { 
-  PlusIcon, 
-  PlayIcon, 
+import {
+  PlusIcon,
+  PlayIcon,
   PauseIcon,
-  PencilIcon, 
+  PencilIcon,
   EyeIcon,
   TrashIcon,
   CalendarIcon,
@@ -43,26 +43,36 @@ import {
   ArrowUpTrayIcon,
   CheckIcon,
   MapIcon,
-  PuzzlePieceIcon
+  MapPinIcon,
+  PuzzlePieceIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
+import { regions } from '@/data/encounters';
 import EncounterGenerator from './EncounterGenerator';
 import MentionTextarea from './MentionTextarea';
 import MentionText from './MentionText';
+import { LocationDetailsModal } from './LocationDetailsModal';
 
 interface SessionDetailViewProps {
   session: GameSession;
   characters: PlayerCharacter[];
   savedEncounters: Encounter[];
+  savedLocations?: any[];
+  savedNPCs?: any[];
+  savedQuests?: any[];
   onUpdateSession: (sessionId: string, updates: Partial<GameSession>) => void;
   onNavigateToInitiative?: () => void;
 }
 
-export default function SessionDetailView({ 
-  session, 
-  characters, 
+export default function SessionDetailView({
+  session,
+  characters,
   savedEncounters,
+  savedLocations = [],
+  savedNPCs = [],
+  savedQuests = [],
   onUpdateSession,
-  onNavigateToInitiative 
+  onNavigateToInitiative
 }: SessionDetailViewProps) {
   const [editingScene, setEditingScene] = useState<SessionScene | null>(null);
   const [viewingScene, setViewingScene] = useState<SessionScene | null>(null);
@@ -76,6 +86,10 @@ export default function SessionDetailView({
   const [viewingNPC, setViewingNPC] = useState<{ npc: any; sessionNotes?: string } | null>(null);
   const [viewingCompanion, setViewingCompanion] = useState<{ companion: any; sessionNotes?: string } | null>(null);
   const [showRandomEncounterGenerator, setShowRandomEncounterGenerator] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [locationSearchTerm, setLocationSearchTerm] = useState('');
+  const [viewingLocation, setViewingLocation] = useState<any>(null);
+  const [viewingNPCFromLocation, setViewingNPCFromLocation] = useState<any>(null);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -418,8 +432,145 @@ export default function SessionDetailView({
         </div>
       </Section>
 
+      {/* Locations Section */}
+      <Section
+        title="Locations"
+        icon={MapPinIcon}
+        count={(session.locationIds || []).length}
+        expanded={expandedSections.has('locations')}
+        onToggle={() => toggleSection('locations')}
+        onAdd={() => setShowLocationSelector(true)}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {(session.locationIds || []).map(locationId => {
+            const location = savedLocations.find(l => l.id === locationId);
+            if (!location) return null;
+            const regionName = location.region ? regions.find((r: any) => r.id === location.region)?.name : null;
+            const npcCount = (location.npcIds || []).length;
+            const encounterCount = (location.encounterIds || []).length;
+
+            return (
+              <div key={locationId} className="bg-slate-700/50 rounded-xl border border-slate-600 hover:border-amber-400/50 transition-all duration-200 overflow-hidden">
+                {location.imageUrl && (
+                  <div className="w-full h-28 overflow-hidden">
+                    <img src={location.imageUrl} alt={location.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="p-4 space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-semibold truncate">{location.name}</h4>
+                      {regionName && (
+                        <p className="text-amber-400 text-xs flex items-center gap-1 mt-0.5">
+                          <MapPinIcon className="h-3 w-3" />
+                          {regionName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-1 ml-2 flex-shrink-0">
+                      <button
+                        onClick={() => setViewingLocation(location)}
+                        className="p-1 text-slate-400 hover:text-blue-400 transition-colors"
+                        title="View Details"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const updatedIds = (session.locationIds || []).filter(id => id !== locationId);
+                          onUpdateSession(session.id, { locationIds: updatedIds });
+                        }}
+                        className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                        title="Remove location"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {location.toneVibe && (
+                    <span className="inline-block px-2 py-0.5 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-xs text-indigo-300">
+                      {location.toneVibe}
+                    </span>
+                  )}
+
+                  {location.description && (
+                    <p className="text-xs text-slate-300 line-clamp-2">{location.description.replace(/@\[([^\]]+)\]\([^)]+\)/g, '$1')}</p>
+                  )}
+
+                  {(npcCount > 0 || encounterCount > 0) && (
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-400 pt-1">
+                      {npcCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <UserGroupIcon className="h-3 w-3" />
+                          {npcCount} NPC{npcCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {encounterCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <BoltIcon className="h-3 w-3" />
+                          {encounterCount} Encounter{encounterCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {showLocationSelector && (
+            <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+              <input
+                type="text"
+                value={locationSearchTerm}
+                onChange={(e) => setLocationSearchTerm(e.target.value)}
+                placeholder="Search locations..."
+                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm mb-2"
+              />
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {savedLocations
+                  .filter(l =>
+                    !(session.locationIds || []).includes(l.id) &&
+                    (l.name?.toLowerCase().includes(locationSearchTerm.toLowerCase()) ||
+                     l.description?.toLowerCase().includes(locationSearchTerm.toLowerCase()))
+                  )
+                  .map(location => {
+                    const regionName = location.region ? regions.find((r: any) => r.id === location.region)?.name : null;
+                    return (
+                      <button
+                        key={location.id}
+                        onClick={() => {
+                          const updatedIds = [...(session.locationIds || []), location.id];
+                          onUpdateSession(session.id, { locationIds: updatedIds });
+                          setLocationSearchTerm('');
+                          setShowLocationSelector(false);
+                        }}
+                        className="w-full text-left px-2 py-1.5 text-sm text-white hover:bg-slate-600 rounded transition-colors flex items-center gap-2"
+                      >
+                        <MapPinIcon className="h-4 w-4 text-amber-400" />
+                        <span>{location.name}</span>
+                        {regionName && <span className="text-amber-400 text-xs">({regionName})</span>}
+                      </button>
+                    );
+                  })}
+                {savedLocations.filter(l => !(session.locationIds || []).includes(l.id)).length === 0 && (
+                  <p className="text-slate-400 text-sm p-2">No more locations available</p>
+                )}
+              </div>
+              <button
+                onClick={() => { setShowLocationSelector(false); setLocationSearchTerm(''); }}
+                className="mt-2 text-sm text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </Section>
+
       {/* NPCs Section */}
-      <Section 
+      <Section
         title="NPCs"
         icon={UserGroupIcon}
         count={session.npcs.length}
@@ -583,6 +734,7 @@ export default function SessionDetailView({
           sessionMusic={session.music}
           sessionNPCs={session.npcs}
           sessionTreasure={session.treasure}
+          savedLocations={savedLocations}
           onSave={(updates) => {
             handleUpdateScene(editingScene.id, updates);
             setEditingScene(null);
@@ -703,6 +855,90 @@ export default function SessionDetailView({
           sessionNotes={viewingCompanion.sessionNotes}
           onClose={() => setViewingCompanion(null)}
         />
+      )}
+
+      {/* Location Details Modal */}
+      {viewingLocation && (
+        <LocationDetailsModal
+          location={viewingLocation}
+          npcs={savedNPCs}
+          allLocations={savedLocations}
+          quests={savedQuests}
+          encounters={savedEncounters}
+          allItems={[...combatPotions, ...utilityPotions, ...whimsyPotions, ...ingredients, ...magicItems]}
+          onClose={() => setViewingLocation(null)}
+          onNPCClick={(npc) => setViewingNPCFromLocation(npc)}
+          onLocationClick={(loc) => setViewingLocation(loc)}
+          onNavigateToInitiative={onNavigateToInitiative}
+        />
+      )}
+
+      {/* NPC Detail from Location */}
+      {viewingNPCFromLocation && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700 shadow-2xl">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">NPC Details</h2>
+              <button
+                onClick={() => setViewingNPCFromLocation(null)}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                {viewingNPCFromLocation.portrait && (
+                  <div className="flex-shrink-0">
+                    <div className="aspect-square w-48 rounded-lg overflow-hidden bg-slate-700">
+                      <img src={viewingNPCFromLocation.portrait} alt={viewingNPCFromLocation.name} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                )}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h3 className="text-3xl font-bold text-white mb-2">{viewingNPCFromLocation.name}</h3>
+                    {viewingNPCFromLocation.occupation && (
+                      <p className="text-lg text-emerald-400">{viewingNPCFromLocation.occupation}</p>
+                    )}
+                  </div>
+                  {viewingNPCFromLocation.location && (
+                    <div>
+                      <span className="text-sm font-medium text-slate-400">Location</span>
+                      <p className="text-white">{viewingNPCFromLocation.location}</p>
+                    </div>
+                  )}
+                  {viewingNPCFromLocation.tags && viewingNPCFromLocation.tags.length > 0 && (
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">Tags</span>
+                      <div className="flex flex-wrap gap-2">
+                        {viewingNPCFromLocation.tags.map((tag: string, index: number) => (
+                          <span key={index} className="bg-slate-600 text-slate-200 px-3 py-1 rounded-full text-sm">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {viewingNPCFromLocation.details && (
+                <div>
+                  <span className="text-sm font-medium text-slate-400 block mb-2">Details</span>
+                  <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">{viewingNPCFromLocation.details}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end pt-6 border-t border-slate-700 mt-6">
+              <button
+                onClick={() => setViewingNPCFromLocation(null)}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

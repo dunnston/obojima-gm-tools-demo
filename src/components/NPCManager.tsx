@@ -162,13 +162,13 @@ export default function NPCManager() {
     });
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">{t('npcs.title')}</h1>
-        <div className="flex items-center justify-between">
-          <p className="text-gray-300">{t('npcs.subtitle')}</p>
-          <div className="flex items-center gap-2">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">{t('npcs.title')}</h1>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-gray-300 text-sm sm:text-base">{t('npcs.subtitle')}</p>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {syncStatus === 'syncing' && (
               <ArrowPathIcon className="h-4 w-4 text-blue-400 animate-spin" />
             )}
@@ -177,10 +177,10 @@ export default function NPCManager() {
             )}
             <button
               onClick={loadNPCs}
-              className="p-1 text-gray-400 hover:text-white transition-colors"
+              className="p-2.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50"
               title={t('npcs.refresh')}
             >
-              <ArrowPathIcon className="h-4 w-4" />
+              <ArrowPathIcon className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function NPCManager() {
 
       {/* Search and Controls */}
       <div className="mb-6 space-y-3">
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <input
               type="text"
@@ -199,35 +199,38 @@ export default function NPCManager() {
             />
             <MagnifyingGlassIcon className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${
-              showFilters || filterLocation || filterTag
-                ? 'bg-pink-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            <FunnelIcon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => {
-              setEditingNPC(null);
-              setShowForm(true);
-            }}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
-          >
-            <PlusIcon className="h-5 w-5" />
-            {t('npcs.addNPC')}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${
+                showFilters || filterLocation || filterTag
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <FunnelIcon className="h-5 w-5" />
+              <span className="sm:hidden">Filter</span>
+            </button>
+            <button
+              onClick={() => {
+                setEditingNPC(null);
+                setShowForm(true);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 sm:px-6 py-3 rounded-lg transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center"
+            >
+              <PlusIcon className="h-5 w-5" />
+              {t('npcs.addNPC')}
+            </button>
+          </div>
         </div>
 
         {/* Filter Row */}
         {showFilters && (
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <select
               value={filterLocation}
               onChange={(e) => setFilterLocation(e.target.value)}
-              className="bg-slate-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="bg-slate-800 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 w-full sm:w-auto"
             >
               <option value="">{t('npcs.filterByLocation')}</option>
               {allLocations.map(loc => (
@@ -237,7 +240,7 @@ export default function NPCManager() {
             <select
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
-              className="bg-slate-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="bg-slate-800 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 w-full sm:w-auto"
             >
               <option value="">{t('npcs.filterByTag')}</option>
               {allTags.map(tag => (
@@ -247,7 +250,7 @@ export default function NPCManager() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'name' | 'location' | 'recent')}
-              className="bg-slate-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="bg-slate-800 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 w-full sm:w-auto"
             >
               <option value="name">{t('npcs.sortByName')}</option>
               <option value="location">{t('npcs.sortByLocation')}</option>
@@ -256,7 +259,7 @@ export default function NPCManager() {
             {(filterLocation || filterTag) && (
               <button
                 onClick={() => { setFilterLocation(''); setFilterTag(''); }}
-                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
               >
                 {t('npcs.clearFilters')}
               </button>
@@ -279,16 +282,16 @@ export default function NPCManager() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredNPCs.map((npc) => (
             <div
               key={npc.id}
-              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:border-pink-400/30 transition-all duration-200"
+              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl border border-white/10 p-4 sm:p-6 hover:border-pink-400/30 transition-all duration-200"
             >
               {/* NPC Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
                     {npc.portrait ? (
                       <img
                         src={npc.portrait}
@@ -310,7 +313,7 @@ export default function NPCManager() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-white text-lg truncate">{npc.name}</h3>
+                    <h3 className="font-bold text-white text-base sm:text-lg truncate">{npc.name}</h3>
                     {npc.occupation && (
                       <p className="text-emerald-400 text-sm truncate">{npc.occupation}</p>
                     )}
@@ -323,27 +326,27 @@ export default function NPCManager() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button
                     onClick={() => openDetails(npc)}
-                    className="p-2 text-slate-400 hover:text-pink-400 transition-colors"
+                    className="p-2.5 text-slate-400 hover:text-pink-400 transition-colors rounded-lg hover:bg-slate-700/50"
                     title={t('npcs.viewDetails')}
                   >
-                    <EyeIcon className="h-4 w-4" />
+                    <EyeIcon className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => openEditForm(npc)}
-                    className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="p-2.5 text-slate-400 hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-700/50"
                     title={t('npcs.editNPC')}
                   >
-                    <PencilIcon className="h-4 w-4" />
+                    <PencilIcon className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleDeleteNPC(npc.id)}
-                    className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                    className="p-2.5 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-700/50"
                     title={t('npcs.deleteNPC')}
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon className="h-5 w-5" />
                   </button>
                 </div>
               </div>

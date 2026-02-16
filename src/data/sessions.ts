@@ -44,6 +44,7 @@ export interface SessionScene {
   title: string;
   description: string; // What might happen in this scene
   readAloudText?: string;
+  locationId?: string; // Reference to a Location
   music?: SessionMusic[];
   npcs?: SessionNPC[];
   encounters?: string[]; // References to saved encounter IDs
@@ -93,10 +94,11 @@ export interface GameSession {
   creatures: SessionCreature[];
   treasure: SessionTreasure[];
   scenes: SessionScene[];
-  
+  locationIds?: string[]; // References to Location IDs
+
   // Session notes
   sessionNotes: string;
-  
+
   // Metadata
   status: 'planned' | 'in-progress' | 'completed';
   createdAt: Date;
@@ -130,6 +132,7 @@ export const createEmptySession = (): Omit<GameSession, 'id' | 'createdAt' | 'up
   creatures: [],
   treasure: [],
   scenes: [],
+  locationIds: [],
   sessionNotes: '',
   status: 'planned'
 });
@@ -138,6 +141,7 @@ export const createEmptyScene = (order: number): Omit<SessionScene, 'id'> => ({
   title: '',
   description: '',
   readAloudText: '',
+  locationId: undefined,
   music: [],
   npcs: [],
   encounters: [],

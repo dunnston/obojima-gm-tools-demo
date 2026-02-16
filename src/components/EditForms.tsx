@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { addLocalIngredientFile, addLocalPotionFile, addLocalCreatureFile, addLocalMagicItemFile } from '@/utils/imageMapping';
 import { syncService } from '@/services/sync';
 import { isTauriEnvironment } from '@/lib/storage';
 import { LOCATIONS } from '@/utils/ingredientForaging';
+import { regions } from '@/data/encounters';
+import MentionTextarea from './MentionTextarea';
 
 interface PotionEditFormProps {
   potion: any;
@@ -1940,156 +1942,160 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">
-          {npc.id ? 'Edit NPC' : 'Create New NPC'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Portrait Upload */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Portrait</label>
-            <div className="flex items-start gap-6">
-              {editedNPC.portrait && (
-                <div className="aspect-square w-32 rounded-lg overflow-hidden bg-slate-700">
-                  <img
-                    src={editedNPC.portrait}
-                    alt={editedNPC.name || 'NPC'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1">
-                <label className="block">
-                  <div className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-center transition-colors">
-                    {editedNPC.portrait ? 'Change Portrait' : 'Upload Portrait'}
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </label>
-                {isUploading && (
-                  <div className="mt-2">
-                    <div className="bg-slate-700 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-emerald-500 h-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onCancel}>
+      <div className="bg-slate-800 rounded-xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
+            {npc.id ? 'Edit NPC' : 'Create New NPC'}
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
+            {/* Portrait Upload */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Portrait</label>
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                {editedNPC.portrait && (
+                  <div className="aspect-square w-24 sm:w-32 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                    <img
+                      src={editedNPC.portrait}
+                      alt={editedNPC.name || 'NPC'}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
+                <div className="w-full sm:flex-1">
+                  <label className="block">
+                    <div className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-center transition-colors">
+                      {editedNPC.portrait ? 'Change Portrait' : 'Upload Portrait'}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      disabled={isUploading}
+                    />
+                  </label>
+                  {isUploading && (
+                    <div className="mt-2">
+                      <div className="bg-slate-700 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-emerald-500 h-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={editedNPC.name || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, name: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Occupation</label>
+                <input
+                  type="text"
+                  value={editedNPC.occupation || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, occupation: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., Merchant, Guard, Scholar"
+                />
+              </div>
+            </div>
+
+            {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
               <input
                 type="text"
-                value={editedNPC.name || ''}
-                onChange={(e) => setEditedNPC({ ...editedNPC, name: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                value={editedNPC.location || ''}
+                onChange={(e) => setEditedNPC({ ...editedNPC, location: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                placeholder="Where can this NPC be found?"
+              />
+            </div>
+
+            {/* Details */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Details</label>
+              <textarea
+                value={editedNPC.details || ''}
+                onChange={(e) => setEditedNPC({ ...editedNPC, details: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                placeholder="Description, personality, backstory, notes..."
                 required
               />
             </div>
 
+            {/* Tags */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Occupation</label>
-              <input
-                type="text"
-                value={editedNPC.occupation || ''}
-                onChange={(e) => setEditedNPC({ ...editedNPC, occupation: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-                placeholder="e.g., Merchant, Guard, Scholar"
-              />
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
-            <input
-              type="text"
-              value={editedNPC.location || ''}
-              onChange={(e) => setEditedNPC({ ...editedNPC, location: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-              placeholder="Where can this NPC be found?"
-            />
-          </div>
-
-          {/* Details */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Details</label>
-            <textarea
-              value={editedNPC.details || ''}
-              onChange={(e) => setEditedNPC({ ...editedNPC, details: e.target.value })}
-              rows={6}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-              placeholder="Description, personality, backstory, notes..."
-              required
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Tags</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={currentTagInput}
-                onChange={(e) => setCurrentTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-                placeholder="Add a tag..."
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            {editedNPC.tags && editedNPC.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {editedNPC.tags.map((tag: string, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 bg-slate-600 text-slate-200 px-3 py-1 rounded-full text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="hover:text-red-400 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+              <label className="block text-sm font-medium text-slate-300 mb-2">Tags</label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={currentTagInput}
+                  onChange={(e) => setCurrentTagInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  className="flex-1 px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="Add a tag..."
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                >
+                  Add
+                </button>
               </div>
-            )}
+              {editedNPC.tags && editedNPC.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {editedNPC.tags.map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 bg-slate-600 text-slate-200 px-3 py-1.5 rounded-full text-sm"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-red-400 transition-colors p-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">
+          {/* Form Actions - pinned to bottom */}
+          <div className="flex justify-end gap-3 sm:gap-4 p-4 sm:p-6 border-t border-slate-700 flex-shrink-0">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
             >
               {npc.id ? 'Save Changes' : 'Create NPC'}
             </button>
@@ -2920,6 +2926,686 @@ export function CompanionEditForm({ companion, companionTypes, onSave, onCancel 
               className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
             >
               {companion.id ? 'Save Changes' : 'Create Companion'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ==================== Location Edit Form ====================
+
+interface LocationEditFormProps {
+  location: any;
+  onSave: (location: any) => void;
+  onCancel: () => void;
+}
+
+export function LocationEditForm({ location, onSave, onCancel }: LocationEditFormProps) {
+  const [editedLocation, setEditedLocation] = useState({
+    ...location,
+    name: location.name || '',
+    region: location.region || '',
+    toneVibe: location.toneVibe || '',
+    description: location.description || '',
+    readAloudText: location.readAloudText || '',
+    npcIds: location.npcIds || [],
+    relatedLocationIds: location.relatedLocationIds || [],
+    plotHooks: location.plotHooks || '',
+    linkedQuestIds: location.linkedQuestIds || [],
+    treasure: location.treasure || [],
+    treasureNotes: location.treasureNotes || '',
+    encounterIds: location.encounterIds || [],
+    dmNotes: location.dmNotes || '',
+    imageUrl: location.imageUrl || '',
+  });
+
+  // Image upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Entity lists for selectors
+  const [allNPCs, setAllNPCs] = useState<any[]>([]);
+  const [allQuests, setAllQuests] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [allEncounters, setAllEncounters] = useState<any[]>([]);
+  const [allPotions, setAllPotions] = useState<any[]>([]);
+  const [allIngredients, setAllIngredients] = useState<any[]>([]);
+  const [allMagicItems, setAllMagicItems] = useState<any[]>([]);
+
+  // Search states
+  const [npcSearch, setNpcSearch] = useState('');
+  const [questSearch, setQuestSearch] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [encounterSearch, setEncounterSearch] = useState('');
+  const [treasureSearch, setTreasureSearch] = useState('');
+  const [treasureType, setTreasureType] = useState<'potion' | 'ingredient' | 'magicItem'>('potion');
+  const [treasureQuantity, setTreasureQuantity] = useState(1);
+
+  // Toggle states for selectors
+  const [showNPCSelector, setShowNPCSelector] = useState(false);
+  const [showQuestSelector, setShowQuestSelector] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [showEncounterSelector, setShowEncounterSelector] = useState(false);
+  const [showTreasureSelector, setShowTreasureSelector] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [npcsResult, questsResult, locationsResult, encountersResult, potionsResult, ingredientsResult, magicItemsResult] = await Promise.all([
+          syncService.syncWithFallback('npcs', 'modifiedNPCs'),
+          syncService.syncWithFallback('quests', 'obojima-quests'),
+          syncService.syncWithFallback('locations', 'obojima-locations'),
+          syncService.syncWithFallback('encounters', 'obojima-encounters'),
+          syncService.syncWithFallback('user-potions', 'modifiedPotions'),
+          syncService.syncWithFallback('user-ingredients', 'modifiedIngredients'),
+          syncService.syncWithFallback('user-magic-items', 'modifiedMagicItems'),
+        ]);
+        setAllNPCs(npcsResult || []);
+        setAllQuests(questsResult || []);
+        setAllLocations((locationsResult || []).filter((l: any) => l.id !== location.id));
+        setAllEncounters(encountersResult || []);
+        setAllPotions(potionsResult || []);
+        setAllIngredients(ingredientsResult || []);
+        setAllMagicItems(magicItemsResult || []);
+      } catch (error) {
+        console.error('Error loading entity data for location form:', error);
+      }
+    };
+    loadData();
+  }, [location.id]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editedLocation.name.trim()) {
+      alert('Location name is required');
+      return;
+    }
+    onSave(editedLocation);
+  };
+
+  // Image upload handler
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const timestamp = Date.now();
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const filename = `location-${timestamp}.${fileExt}`;
+
+    try {
+      const result = await syncService.uploadFile(file, 'locations', filename);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      if (isTauriEnvironment() && result.data?.dataUrl) {
+        setEditedLocation((prev: any) => ({ ...prev, imageUrl: result.data.dataUrl }));
+      } else {
+        setEditedLocation((prev: any) => ({ ...prev, imageUrl: result.data?.path }));
+      }
+
+      setUploadProgress(100);
+    } catch (error: any) {
+      console.error('Error uploading location image:', error);
+      alert(error.message || 'Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      setTimeout(() => setUploadProgress(0), 1000);
+    }
+  };
+
+  // NPC helpers
+  const addNPC = (npcId: string) => {
+    if (!editedLocation.npcIds.includes(npcId)) {
+      setEditedLocation((prev: any) => ({ ...prev, npcIds: [...prev.npcIds, npcId] }));
+    }
+    setNpcSearch('');
+  };
+
+  const removeNPC = (npcId: string) => {
+    setEditedLocation((prev: any) => ({ ...prev, npcIds: prev.npcIds.filter((id: string) => id !== npcId) }));
+  };
+
+  // Quest helpers
+  const addQuest = (questId: string) => {
+    if (!editedLocation.linkedQuestIds.includes(questId)) {
+      setEditedLocation((prev: any) => ({ ...prev, linkedQuestIds: [...prev.linkedQuestIds, questId] }));
+    }
+    setQuestSearch('');
+  };
+
+  const removeQuest = (questId: string) => {
+    setEditedLocation((prev: any) => ({ ...prev, linkedQuestIds: prev.linkedQuestIds.filter((id: string) => id !== questId) }));
+  };
+
+  // Related location helpers
+  const addRelatedLocation = (locId: string) => {
+    if (!editedLocation.relatedLocationIds.includes(locId)) {
+      setEditedLocation((prev: any) => ({ ...prev, relatedLocationIds: [...prev.relatedLocationIds, locId] }));
+    }
+    setLocationSearch('');
+  };
+
+  const removeRelatedLocation = (locId: string) => {
+    setEditedLocation((prev: any) => ({ ...prev, relatedLocationIds: prev.relatedLocationIds.filter((id: string) => id !== locId) }));
+  };
+
+  // Encounter helpers
+  const addEncounter = (encId: string) => {
+    if (!editedLocation.encounterIds.includes(encId)) {
+      setEditedLocation((prev: any) => ({ ...prev, encounterIds: [...prev.encounterIds, encId] }));
+    }
+    setEncounterSearch('');
+  };
+
+  const removeEncounter = (encId: string) => {
+    setEditedLocation((prev: any) => ({ ...prev, encounterIds: prev.encounterIds.filter((id: string) => id !== encId) }));
+  };
+
+  // Treasure helpers
+  const getTreasureItems = () => {
+    switch (treasureType) {
+      case 'potion': return allPotions;
+      case 'ingredient': return allIngredients;
+      case 'magicItem': return allMagicItems;
+      default: return [];
+    }
+  };
+
+  const addTreasureItem = (item: any) => {
+    const newTreasure = {
+      id: `treasure_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: treasureType,
+      itemId: item.id || item.name,
+      itemName: item.name,
+      quantity: treasureQuantity,
+    };
+    setEditedLocation((prev: any) => ({ ...prev, treasure: [...prev.treasure, newTreasure] }));
+    setTreasureSearch('');
+    setTreasureQuantity(1);
+  };
+
+  const removeTreasureItem = (treasureId: string) => {
+    setEditedLocation((prev: any) => ({ ...prev, treasure: prev.treasure.filter((t: any) => t.id !== treasureId) }));
+  };
+
+  const filteredNPCs = allNPCs.filter(n =>
+    n.name?.toLowerCase().includes(npcSearch.toLowerCase()) &&
+    !editedLocation.npcIds.includes(n.id)
+  );
+
+  const filteredQuests = allQuests.filter((q: any) =>
+    q.title?.toLowerCase().includes(questSearch.toLowerCase()) &&
+    !editedLocation.linkedQuestIds.includes(q.id)
+  );
+
+  const filteredLocations = allLocations.filter((l: any) =>
+    l.name?.toLowerCase().includes(locationSearch.toLowerCase()) &&
+    !editedLocation.relatedLocationIds.includes(l.id)
+  );
+
+  const filteredEncounters = allEncounters.filter((e: any) =>
+    (e.name || e.title || '').toLowerCase().includes(encounterSearch.toLowerCase()) &&
+    !editedLocation.encounterIds.includes(e.id)
+  );
+
+  const filteredTreasureItems = getTreasureItems().filter((item: any) =>
+    item.name?.toLowerCase().includes(treasureSearch.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <MapPinIcon className="h-6 w-6 text-amber-400" />
+          {location.id ? 'Edit Location' : 'Create New Location'}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name & Region */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Location Name *</label>
+              <input
+                type="text"
+                value={editedLocation.name}
+                onChange={(e) => setEditedLocation((prev: any) => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                placeholder="Enter location name"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Obojima Region</label>
+              <select
+                value={editedLocation.region}
+                onChange={(e) => setEditedLocation((prev: any) => ({ ...prev, region: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="">Select a region...</option>
+                {regions.map(region => (
+                  <option key={region.id} value={region.id}>{region.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Location Image</label>
+            <div className="flex items-start gap-4">
+              {editedLocation.imageUrl && (
+                <div className="w-40 h-24 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                  <img
+                    src={editedLocation.imageUrl}
+                    alt={editedLocation.name || 'Location'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <label className="block">
+                  <div className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg cursor-pointer text-center transition-colors text-sm">
+                    {editedLocation.imageUrl ? 'Change Image' : 'Upload Image'}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+                {editedLocation.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setEditedLocation((prev: any) => ({ ...prev, imageUrl: '' }))}
+                    className="mt-2 text-xs text-slate-400 hover:text-red-400 transition-colors"
+                  >
+                    Remove image
+                  </button>
+                )}
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="bg-slate-700 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-amber-500 h-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tone/Vibe */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Tone / Vibe</label>
+            <input
+              type="text"
+              value={editedLocation.toneVibe}
+              onChange={(e) => setEditedLocation((prev: any) => ({ ...prev, toneVibe: e.target.value }))}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              placeholder="e.g., Mysterious, Peaceful, Dangerous..."
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+            <MentionTextarea
+              value={editedLocation.description}
+              onChange={(value) => setEditedLocation((prev: any) => ({ ...prev, description: value }))}
+              placeholder="Describe this location... (Use @ to mention NPCs)"
+              rows={4}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-y"
+            />
+          </div>
+
+          {/* Read Aloud Text */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Read Aloud Text</label>
+            <textarea
+              value={editedLocation.readAloudText}
+              onChange={(e) => setEditedLocation((prev: any) => ({ ...prev, readAloudText: e.target.value }))}
+              rows={4}
+              className="w-full px-3 py-2 bg-slate-700 border border-amber-500/30 rounded-lg text-amber-100 italic focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-y"
+              placeholder="Text to read aloud to players..."
+            />
+          </div>
+
+          {/* NPCs */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">NPCs</label>
+            {/* Selected NPCs */}
+            {editedLocation.npcIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {editedLocation.npcIds.map((npcId: string) => {
+                  const npc = allNPCs.find(n => n.id === npcId);
+                  return (
+                    <span key={npcId} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-lg text-blue-300 text-sm">
+                      {npc?.name || npcId}
+                      <button type="button" onClick={() => removeNPC(npcId)} className="text-blue-400 hover:text-red-400 ml-1">&times;</button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowNPCSelector(!showNPCSelector)}
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-slate-300 text-sm transition-colors"
+            >
+              {showNPCSelector ? 'Hide' : 'Add NPC'}
+            </button>
+            {showNPCSelector && (
+              <div className="mt-2 bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                <input
+                  type="text"
+                  value={npcSearch}
+                  onChange={(e) => setNpcSearch(e.target.value)}
+                  placeholder="Search NPCs..."
+                  className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm mb-2"
+                />
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {filteredNPCs.slice(0, 10).map(npc => (
+                    <button
+                      key={npc.id}
+                      type="button"
+                      onClick={() => addNPC(npc.id)}
+                      className="w-full text-left px-2 py-1 text-sm text-white hover:bg-slate-600 rounded transition-colors"
+                    >
+                      {npc.name} {npc.occupation && <span className="text-slate-400">- {npc.occupation}</span>}
+                    </button>
+                  ))}
+                  {filteredNPCs.length === 0 && <p className="text-slate-400 text-sm">No NPCs found</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Plot Hooks */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Plot Hooks</label>
+            <MentionTextarea
+              value={editedLocation.plotHooks}
+              onChange={(value) => setEditedLocation((prev: any) => ({ ...prev, plotHooks: value }))}
+              placeholder="Plot hooks for this location... (Use @ to mention NPCs)"
+              rows={3}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-y"
+            />
+          </div>
+
+          {/* Linked Quests */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Linked Quests</label>
+            {editedLocation.linkedQuestIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {editedLocation.linkedQuestIds.map((questId: string) => {
+                  const quest = allQuests.find((q: any) => q.id === questId);
+                  return (
+                    <span key={questId} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-lg text-emerald-300 text-sm">
+                      {quest?.title || questId}
+                      <button type="button" onClick={() => removeQuest(questId)} className="text-emerald-400 hover:text-red-400 ml-1">&times;</button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowQuestSelector(!showQuestSelector)}
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-slate-300 text-sm transition-colors"
+            >
+              {showQuestSelector ? 'Hide' : 'Link Quest'}
+            </button>
+            {showQuestSelector && (
+              <div className="mt-2 bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                <input
+                  type="text"
+                  value={questSearch}
+                  onChange={(e) => setQuestSearch(e.target.value)}
+                  placeholder="Search quests..."
+                  className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm mb-2"
+                />
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {filteredQuests.slice(0, 10).map((quest: any) => (
+                    <button
+                      key={quest.id}
+                      type="button"
+                      onClick={() => addQuest(quest.id)}
+                      className="w-full text-left px-2 py-1 text-sm text-white hover:bg-slate-600 rounded transition-colors"
+                    >
+                      {quest.title} <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        quest.status === 'completed' ? 'bg-green-500/30 text-green-300' :
+                        quest.status === 'in-progress' ? 'bg-blue-500/30 text-blue-300' :
+                        'bg-slate-500/30 text-slate-300'
+                      }`}>{quest.status}</span>
+                    </button>
+                  ))}
+                  {filteredQuests.length === 0 && <p className="text-slate-400 text-sm">No quests found</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Treasure */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Treasure</label>
+            {editedLocation.treasure.length > 0 && (
+              <div className="space-y-1 mb-2">
+                {editedLocation.treasure.map((item: any) => (
+                  <div key={item.id} className="flex items-center justify-between bg-slate-700/30 rounded px-3 py-1.5">
+                    <span className="text-sm text-white">
+                      {item.itemName}
+                      {item.quantity > 1 && <span className="text-slate-400"> x{item.quantity}</span>}
+                      <span className="text-slate-500 ml-2">({item.type})</span>
+                    </span>
+                    <button type="button" onClick={() => removeTreasureItem(item.id)} className="text-slate-400 hover:text-red-400">&times;</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowTreasureSelector(!showTreasureSelector)}
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-slate-300 text-sm transition-colors"
+            >
+              {showTreasureSelector ? 'Hide' : 'Add Treasure'}
+            </button>
+            {showTreasureSelector && (
+              <div className="mt-2 bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={treasureType}
+                    onChange={(e) => setTreasureType(e.target.value as any)}
+                    className="px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                  >
+                    <option value="potion">Potion</option>
+                    <option value="ingredient">Ingredient</option>
+                    <option value="magicItem">Magic Item</option>
+                  </select>
+                  <input
+                    type="number"
+                    value={treasureQuantity}
+                    onChange={(e) => setTreasureQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    min={1}
+                    className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                    placeholder="Qty"
+                  />
+                  <input
+                    type="text"
+                    value={treasureSearch}
+                    onChange={(e) => setTreasureSearch(e.target.value)}
+                    placeholder="Search items..."
+                    className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                  />
+                </div>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {filteredTreasureItems.slice(0, 10).map((item: any, index: number) => (
+                    <button
+                      key={item.id || `${item.name}-${index}`}
+                      type="button"
+                      onClick={() => addTreasureItem(item)}
+                      className="w-full text-left px-2 py-1 text-sm text-white hover:bg-slate-600 rounded transition-colors"
+                    >
+                      {item.name} {item.rarity && <span className="text-slate-400">({item.rarity})</span>}
+                    </button>
+                  ))}
+                  {filteredTreasureItems.length === 0 && <p className="text-slate-400 text-sm">No items found</p>}
+                </div>
+              </div>
+            )}
+            {/* Treasure Notes */}
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-slate-300 mb-1">Treasure Notes</label>
+              <textarea
+                value={editedLocation.treasureNotes}
+                onChange={(e) => setEditedLocation((prev: any) => ({ ...prev, treasureNotes: e.target.value }))}
+                rows={2}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-y text-sm"
+                placeholder="Additional treasure notes..."
+              />
+            </div>
+          </div>
+
+          {/* Linked Encounters */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Linked Encounters</label>
+            {editedLocation.encounterIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {editedLocation.encounterIds.map((encId: string) => {
+                  const enc = allEncounters.find((e: any) => e.id === encId);
+                  return (
+                    <span key={encId} className="inline-flex items-center gap-1 px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-lg text-red-300 text-sm">
+                      {enc?.name || enc?.title || encId}
+                      <button type="button" onClick={() => removeEncounter(encId)} className="text-red-400 hover:text-red-300 ml-1">&times;</button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowEncounterSelector(!showEncounterSelector)}
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-slate-300 text-sm transition-colors"
+            >
+              {showEncounterSelector ? 'Hide' : 'Link Encounter'}
+            </button>
+            {showEncounterSelector && (
+              <div className="mt-2 bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                <input
+                  type="text"
+                  value={encounterSearch}
+                  onChange={(e) => setEncounterSearch(e.target.value)}
+                  placeholder="Search encounters..."
+                  className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm mb-2"
+                />
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {filteredEncounters.slice(0, 10).map((enc: any) => (
+                    <button
+                      key={enc.id}
+                      type="button"
+                      onClick={() => addEncounter(enc.id)}
+                      className="w-full text-left px-2 py-1 text-sm text-white hover:bg-slate-600 rounded transition-colors"
+                    >
+                      {enc.name || enc.title}
+                    </button>
+                  ))}
+                  {filteredEncounters.length === 0 && <p className="text-slate-400 text-sm">No encounters found</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* DM Notes */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">DM Notes</label>
+            <MentionTextarea
+              value={editedLocation.dmNotes}
+              onChange={(value) => setEditedLocation((prev: any) => ({ ...prev, dmNotes: value }))}
+              placeholder="Private DM notes... (Use @ to mention NPCs)"
+              rows={3}
+              className="w-full px-3 py-2 bg-slate-700 border border-purple-500/30 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y"
+            />
+          </div>
+
+          {/* Related Locations (at the bottom as requested) */}
+          <div className="border-t border-slate-700 pt-4">
+            <label className="block text-sm font-medium text-slate-300 mb-1">Related Locations</label>
+            <p className="text-xs text-slate-400 mb-2">Sub-locations or related areas</p>
+            {editedLocation.relatedLocationIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {editedLocation.relatedLocationIds.map((locId: string) => {
+                  const loc = allLocations.find((l: any) => l.id === locId);
+                  return (
+                    <span key={locId} className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/20 border border-amber-400/30 rounded-lg text-amber-300 text-sm">
+                      {loc?.name || locId}
+                      <button type="button" onClick={() => removeRelatedLocation(locId)} className="text-amber-400 hover:text-red-400 ml-1">&times;</button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowLocationSelector(!showLocationSelector)}
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-slate-300 text-sm transition-colors"
+            >
+              {showLocationSelector ? 'Hide' : 'Link Location'}
+            </button>
+            {showLocationSelector && (
+              <div className="mt-2 bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                <input
+                  type="text"
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  placeholder="Search locations..."
+                  className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm mb-2"
+                />
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {filteredLocations.slice(0, 10).map((loc: any) => (
+                    <button
+                      key={loc.id}
+                      type="button"
+                      onClick={() => addRelatedLocation(loc.id)}
+                      className="w-full text-left px-2 py-1 text-sm text-white hover:bg-slate-600 rounded transition-colors"
+                    >
+                      {loc.name} {loc.region && <span className="text-slate-400">- {regions.find(r => r.id === loc.region)?.name || loc.region}</span>}
+                    </button>
+                  ))}
+                  {filteredLocations.length === 0 && <p className="text-slate-400 text-sm">No locations found</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+            >
+              {location.id ? 'Save Changes' : 'Create Location'}
             </button>
           </div>
         </form>

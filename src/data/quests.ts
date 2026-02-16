@@ -32,6 +32,8 @@ export interface Quest {
   dateUpdated: Date;
   dateCompleted?: Date;
   notes?: string;
+  locationId?: string;
+  locationName?: string;
 }
 
 export interface QuestFormData {
@@ -42,6 +44,8 @@ export interface QuestFormData {
   objectives: string[];
   rewards: Omit<QuestReward, 'id'>[];
   notes: string;
+  locationId?: string;
+  locationName?: string;
 }
 
 export function createEmptyQuest(): QuestFormData {
@@ -75,6 +79,8 @@ export function formDataToQuest(formData: QuestFormData): Omit<Quest, 'id' | 'da
       id: `reward-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     })),
     notes: formData.notes,
+    locationId: formData.locationId,
+    locationName: formData.locationName,
     dateCompleted: formData.status === 'completed' ? new Date() : undefined
   };
 }
