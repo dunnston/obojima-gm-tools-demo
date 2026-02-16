@@ -55,7 +55,15 @@ export default function CharacterManager() {
       personalityTraits: char.personalityTraits || [],
       ideals: char.ideals || [],
       bonds: char.bonds || [],
-      flaws: char.flaws || []
+      flaws: char.flaws || [],
+      strength: char.strength || 10,
+      dexterity: char.dexterity || 10,
+      constitution: char.constitution || 10,
+      intelligence: char.intelligence || 10,
+      wisdom: char.wisdom || 10,
+      charisma: char.charisma || 10,
+      speed: char.speed || 30,
+      proficiencyBonus: char.proficiencyBonus || 2
     };
   };
 
@@ -456,7 +464,7 @@ export default function CharacterManager() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">{t('characters.passiveInsight')}</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInsight || 10}</div>
@@ -464,6 +472,33 @@ export default function CharacterManager() {
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="text-sm text-slate-400 mb-1">{t('characters.passiveInvestigation')}</div>
                   <div className="text-white font-bold">{selectedCharacter.passiveInvestigation || 10}</div>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.form.speed')}</div>
+                  <div className="text-white font-bold">{selectedCharacter.speed || 30} ft</div>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                  <div className="text-sm text-slate-400 mb-1">{t('characters.form.proficiency')}</div>
+                  <div className="text-white font-bold">+{selectedCharacter.proficiencyBonus || 2}</div>
+                </div>
+              </div>
+
+              {/* Ability Scores */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-300 mb-3">{t('characters.form.abilityScores')}</h3>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                  {(['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'] as const).map((ability) => {
+                    const score = selectedCharacter[ability] || 10;
+                    const mod = Math.floor((score - 10) / 2);
+                    const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+                    return (
+                      <div key={ability} className="bg-slate-700/30 rounded-lg p-4 text-center">
+                        <div className="text-xs text-slate-500 uppercase mb-1">{ability.slice(0, 3)}</div>
+                        <div className="text-2xl text-white font-bold">{score}</div>
+                        <div className={`text-sm font-medium ${mod > 0 ? 'text-emerald-400' : mod < 0 ? 'text-red-400' : 'text-slate-400'}`}>{modStr}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

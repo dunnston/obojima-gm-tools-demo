@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import PotionBrewing from '@/components/PotionBrewing';
 import VendingMachine from '@/components/VendingMachine';
@@ -17,8 +17,10 @@ import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
 import VistaEditor from '@/components/VistaEditor';
+import PlayerQuickView from '@/components/PlayerQuickView';
 import LocalSetupPage from './local-setup/page';
 import { NPCProvider } from '@/contexts/NPCContext';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
 import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
 
@@ -36,6 +38,41 @@ export default function Home() {
     createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
   );
   const [calendarSyncStatus, setCalendarSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const [showQuickStats, setShowQuickStats] = useState(false);
+  const [isHoldingKey, setIsHoldingKey] = useState(false);
+
+  // Quick Stats hotkey: hold backtick to view, release to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === '`' || e.key === '~') {
+        e.preventDefault();
+        if (!isHoldingKey) {
+          setIsHoldingKey(true);
+          setShowQuickStats(true);
+        }
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === '`' || e.key === '~') {
+        e.preventDefault();
+        setIsHoldingKey(false);
+        setShowQuickStats(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isHoldingKey]);
 
   // Load saved date from settings with sync after component mounts
   useEffect(() => {
@@ -184,6 +221,30 @@ export default function Home() {
             {renderPage()}
           </div>
         </div>
+
+        {/* Quick Player Stats Floating Button */}
+        <button
+          onClick={() => setShowQuickStats(prev => !prev)}
+          className="fixed bottom-6 right-6 z-50 p-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-full shadow-lg shadow-blue-900/30 border border-white/10 text-white transition-all duration-200 hover:scale-110 group"
+          title="Quick Player Stats (hold ~ key)"
+          aria-label="Toggle quick player stats"
+        >
+          <UserGroupIcon className="h-5 w-5" />
+        </button>
+
+        {/* Quick Player Stats Overlay */}
+        <PlayerQuickView
+          isVisible={showQuickStats}
+          onClose={() => {
+            setShowQuickStats(false);
+            setIsHoldingKey(false);
+          }}
+          onNavigateToCharacter={() => {
+            setShowQuickStats(false);
+            setIsHoldingKey(false);
+            setCurrentPage('characters');
+          }}
+        />
       </div>
     </NPCProvider>
   );
