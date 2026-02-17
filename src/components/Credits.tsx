@@ -149,21 +149,12 @@ export default function Credits() {
                 In the interest of transparency, the following AI tools were used during development:
               </p>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-slate-800/30 rounded-xl p-4 border border-cyan-500/20">
-                  <h3 className="text-lg font-semibold text-cyan-400 mb-2">Development Tools</h3>
-                  <ul className="space-y-1 text-slate-300 text-sm">
-                    <li>• Claude Code - AI coding assistant</li>
-                    <li>• Cursor - AI-powered code editor</li>
-                  </ul>
-                </div>
-
-                <div className="bg-slate-800/30 rounded-xl p-4 border border-cyan-500/20">
-                  <h3 className="text-lg font-semibold text-cyan-400 mb-2">Graphics</h3>
-                  <ul className="space-y-1 text-slate-300 text-sm">
-                    <li>• ChatGPT - Application icon generation</li>
-                  </ul>
-                </div>
+              <div className="bg-slate-800/30 rounded-xl p-4 border border-cyan-500/20">
+                <h3 className="text-lg font-semibold text-cyan-400 mb-2">Development Tools</h3>
+                <ul className="space-y-1 text-slate-300 text-sm">
+                  <li>• Claude Code - AI coding assistant</li>
+                  <li>• Cursor - AI-powered code editor</li>
+                </ul>
               </div>
 
               <div className="bg-slate-800/40 rounded-lg p-4 border border-cyan-500/10 mt-4">
@@ -183,6 +174,7 @@ export default function Credits() {
             </div>
             
             <div className="space-y-4 text-slate-300">
+              <p>• <span className="text-purple-400 font-semibold">@manicfemme</span> for designing the application logo</p>
               <p>• <span className="text-purple-400 font-semibold">1985 Games</span> for creating the rich Obojima world and allowing use of their materials</p>
               <p>• <span className="text-purple-400 font-semibold">weaverotales</span> and <span className="text-purple-400 font-semibold">ThorTheNinja</span> for their invaluable data contributions and inspiration</p>
               <p>• <span className="text-purple-400 font-semibold">The D&D Community</span> for feedback and support during development</p>
