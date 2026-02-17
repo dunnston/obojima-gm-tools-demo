@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const isStaticExport = process.env.TAURI_BUILD === 'true';
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   // Static export for Tauri desktop app only
   ...(isStaticExport && { output: 'export' }),
   eslint: {

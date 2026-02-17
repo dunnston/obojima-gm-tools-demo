@@ -63,13 +63,12 @@ function CharacterCard({ character, onViewProfile }: { character: PlayerCharacte
       </div>
 
       {/* Class & Level */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-slate-400">{t('characters.class')}:</span>
-        <span className="text-white font-semibold">{character.class || '—'}</span>
+      <div className="text-right text-sm text-slate-300 font-semibold mb-3">
+        {character.class || '—'} Lvl {character.level}
       </div>
 
       {/* Top Stats Row */}
-      <div className="grid grid-cols-3 gap-2 text-center mb-3">
+      <div className="grid grid-cols-2 gap-2 text-center mb-3">
         <div className="bg-slate-700/40 rounded-lg p-2">
           <div className="text-[10px] text-slate-500 uppercase tracking-wider">AC</div>
           <div className="text-white font-bold text-lg">{character.armorClass}</div>
@@ -77,10 +76,6 @@ function CharacterCard({ character, onViewProfile }: { character: PlayerCharacte
         <div className="bg-slate-700/40 rounded-lg p-2">
           <div className="text-[10px] text-slate-500 uppercase tracking-wider">HP</div>
           <div className="text-white font-bold text-lg leading-tight">{character.hitPoints}<span className="text-slate-500 text-xs font-normal">/{character.maxHitPoints}</span></div>
-        </div>
-        <div className="bg-slate-700/40 rounded-lg p-2">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider">Level</div>
-          <div className="text-white font-bold text-lg">{character.level}</div>
         </div>
       </div>
 
@@ -101,7 +96,7 @@ function CharacterCard({ character, onViewProfile }: { character: PlayerCharacte
       </div>
 
       {/* Proficiency & Speed Row */}
-      <div className="grid grid-cols-4 gap-2 text-center mb-3">
+      <div className="grid grid-cols-2 gap-2 text-center mb-3">
         <div className="bg-slate-700/40 rounded-lg p-2">
           <div className="text-[10px] text-slate-500 uppercase tracking-wider">Prof</div>
           <div className="text-white font-bold">+{character.proficiencyBonus}</div>
@@ -109,14 +104,6 @@ function CharacterCard({ character, onViewProfile }: { character: PlayerCharacte
         <div className="bg-slate-700/40 rounded-lg p-2">
           <div className="text-[10px] text-slate-500 uppercase tracking-wider">Speed</div>
           <div className="text-white font-bold">{character.speed}</div>
-        </div>
-        <div className="bg-slate-700/40 rounded-lg p-2">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider">STR</div>
-          <div className={`font-bold ${modColor(character.strength)}`}>{calcMod(character.strength)}</div>
-        </div>
-        <div className="bg-slate-700/40 rounded-lg p-2">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider">DEX</div>
-          <div className={`font-bold ${modColor(character.dexterity)}`}>{calcMod(character.dexterity)}</div>
         </div>
       </div>
 
