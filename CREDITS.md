@@ -41,12 +41,16 @@
 
 ##  Assets
 
+**Application Logo**
+- Designed by @manicfemme
+
 **Images**
 - Creature, potion, ingredient, and magic item images sourced from Obojima materials
 - Default placeholder images created for the application
 
 ##  Special Thanks
 
+- **@manicfemme** for designing the application logo
 - **1985 Games** for creating the rich Obojima world and allowing use of their materials
 - **weaverotales** and **ThorTheNinja** for their valuable data contributions and inspiration
 - **The D&D Community** for feedback and support during development
