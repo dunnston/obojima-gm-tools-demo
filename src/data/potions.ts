@@ -5,6 +5,7 @@ export interface Potion {
   category: 'Combat' | 'Utility' | 'Whimsy';
   imageUrl?: string;
   price: number; // Price in gold pieces
+  description?: string;
 }
 
 export const combatPotions: Potion[] = [

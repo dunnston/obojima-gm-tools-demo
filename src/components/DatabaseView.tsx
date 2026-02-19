@@ -990,7 +990,8 @@ export default function DatabaseView() {
           rarity: 'Common',
           category: 'Combat',
           price: 50,
-          imageUrl: ''
+          imageUrl: '',
+          description: ''
         };
         break;
       case 'ingredient':
@@ -1481,9 +1482,13 @@ function PotionsTab({ potions, onEdit, onAdd, onDelete, isCustomItem }: { potion
               </div>
               
               <div className="text-xs text-slate-400">{potion.category}</div>
-              
+
+              {potion.description && (
+                <p className="text-xs text-slate-400 line-clamp-2">{potion.description}</p>
+              )}
+
               <div className="flex justify-end gap-1">
-                <button 
+                <button
                   onClick={() => onEdit(potion, 'potion')}
                   className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
                 >

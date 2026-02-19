@@ -22,7 +22,8 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
     rarity: potion.rarity || 'Common',
     category: potion.category || 'Utility',
     price: potion.price || 0,
-    imageUrl: potion.imageUrl || ''
+    imageUrl: potion.imageUrl || '',
+    description: potion.description || ''
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -187,6 +188,20 @@ export function PotionEditForm({ potion, onSave, onCancel }: PotionEditFormProps
                 step="0.01"
               />
             </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Describe what this potion does..."
+              rows={3}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-y"
+            />
           </div>
 
           {/* Image Upload */}
