@@ -389,6 +389,12 @@ function ItemDetailModal({ item, itemType, onClose }: ItemDetailModalProps) {
                   <div className="text-slate-400 text-sm mb-1">{t('common.category')}</div>
                   <div className="text-white font-medium">{item.category}</div>
                 </div>
+                {item.description && (
+                  <div className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="text-slate-400 text-sm mb-2">{t('common.description')}</div>
+                    <div className="text-white text-sm">{item.description}</div>
+                  </div>
+                )}
                 <div className="bg-slate-700/30 rounded-lg p-4 text-center">
                   <div className="flex justify-center mb-1">
                     <CurrencyDisplay goldValue={item.price || 0} size="lg" className="text-yellow-400" />

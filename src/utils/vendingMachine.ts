@@ -33,8 +33,12 @@ export function generateVendingMachineInventory(): VendingMachineInventory {
 function generateIngredients(settings: VendingMachineSettings): Ingredient[] {
   if (!settings.categories.ingredients) return [];
 
+  const forcedNames = settings.includedItems?.ingredients || [];
+  const forcedItems = ingredients.filter(i => forcedNames.includes(i.name));
+
   const availableIngredients = ingredients.filter(
-    ingredient => !settings.excludedItems.ingredients.includes(ingredient.name)
+    ingredient => !settings.excludedItems.ingredients.includes(ingredient.name) &&
+                  !forcedNames.includes(ingredient.name)
   );
 
   const commonIngredients = filterByRarity(availableIngredients, 'Common');
@@ -42,18 +46,36 @@ function generateIngredients(settings: VendingMachineSettings): Ingredient[] {
   const rareIngredients = filterByRarity(availableIngredients, 'Rare');
 
   return [
+    ...forcedItems,
     ...getRandomItems(commonIngredients, settings.ingredientQuantities.common),
     ...getRandomItems(uncommonIngredients, settings.ingredientQuantities.uncommon),
     ...getRandomItems(rareIngredients, settings.ingredientQuantities.rare)
   ];
 }
 
+function getCustomPotions(): Potion[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('modifiedPotions');
+    if (saved) return JSON.parse(saved);
+  } catch (error) {
+    console.error('Error loading custom potions:', error);
+  }
+  return [];
+}
+
 function generatePotions(settings: VendingMachineSettings): Potion[] {
   if (!settings.categories.potions) return [];
 
-  const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
+  const customPotions = getCustomPotions();
+  const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions, ...customPotions];
+
+  const forcedNames = settings.includedItems?.potions || [];
+  const forcedItems = allPotions.filter(p => forcedNames.includes(p.name));
+
   const availablePotions = allPotions.filter(
-    potion => !settings.excludedItems.potions.includes(potion.name)
+    potion => !settings.excludedItems.potions.includes(potion.name) &&
+              !forcedNames.includes(potion.name)
   );
 
   const commonPotions = filterByRarity(availablePotions, 'Common');
@@ -61,6 +83,7 @@ function generatePotions(settings: VendingMachineSettings): Potion[] {
   const rarePotions = filterByRarity(availablePotions, 'Rare');
 
   return [
+    ...forcedItems,
     ...getRandomItems(commonPotions, settings.potionQuantities.common),
     ...getRandomItems(uncommonPotions, settings.potionQuantities.uncommon),
     ...getRandomItems(rarePotions, settings.potionQuantities.rare)
@@ -70,21 +93,26 @@ function generatePotions(settings: VendingMachineSettings): Potion[] {
 function generateMagicItems(settings: VendingMachineSettings): MagicItem[] {
   if (!settings.categories.magicItems) return [];
 
+  const forcedNames = settings.includedItems?.magicItems || [];
+  const forcedItems = magicItems.filter(i => forcedNames.includes(i.name));
+
   const availableMagicItems = magicItems.filter(
-    item => !settings.excludedItems.magicItems.includes(item.name)
+    item => !settings.excludedItems.magicItems.includes(item.name) &&
+            !forcedNames.includes(item.name)
   );
 
-  const wondrousItems = availableMagicItems.filter(item => 
+  const wondrousItems = availableMagicItems.filter(item =>
     item.type === 'Wondrous Item' || item.type === 'Ring'
   );
-  const weapons = availableMagicItems.filter(item => 
+  const weapons = availableMagicItems.filter(item =>
     item.type.includes('Weapon')
   );
-  const rareItems = availableMagicItems.filter(item => 
+  const rareItems = availableMagicItems.filter(item =>
     item.rarity === 'Rare' || item.rarity === 'Very Rare' || item.rarity === 'Legendary'
   );
 
   return [
+    ...forcedItems,
     ...getRandomItems(wondrousItems, settings.magicItemQuantities.wondrous),
     ...getRandomItems(weapons, settings.magicItemQuantities.weapons),
     ...getRandomItems(rareItems, settings.magicItemQuantities.rare)
