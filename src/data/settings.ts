@@ -24,6 +24,11 @@ export interface VendingMachineSettings {
     ingredients: string[]; // ingredient names to exclude
     magicItems: string[]; // magic item names to exclude
   };
+  includedItems: {
+    potions: string[]; // potion names to always include
+    ingredients: string[]; // ingredient names to always include
+    magicItems: string[]; // magic item names to always include
+  };
 }
 
 // Default vending machine settings (matches current behavior)
@@ -49,6 +54,11 @@ export const defaultVendingMachineSettings: VendingMachineSettings = {
     rare: 1,
   },
   excludedItems: {
+    potions: [],
+    ingredients: [],
+    magicItems: [],
+  },
+  includedItems: {
     potions: [],
     ingredients: [],
     magicItems: [],
@@ -92,9 +102,25 @@ export const defaultAppSettings: AppSettings = {
 };
 
 // Settings management functions
+function mergeVendingMachine(saved?: Partial<VendingMachineSettings>): VendingMachineSettings {
+  if (!saved) return defaultVendingMachineSettings;
+  return {
+    ...defaultVendingMachineSettings,
+    ...saved,
+    excludedItems: {
+      ...defaultVendingMachineSettings.excludedItems,
+      ...saved.excludedItems,
+    },
+    includedItems: {
+      ...defaultVendingMachineSettings.includedItems,
+      ...saved.includedItems,
+    },
+  };
+}
+
 export function getSettings(): AppSettings {
   if (typeof window === 'undefined') return defaultAppSettings;
-  
+
   try {
     const saved = localStorage.getItem('appSettings');
     if (saved) {
@@ -103,10 +129,7 @@ export function getSettings(): AppSettings {
       return {
         ...defaultAppSettings,
         ...parsed,
-        vendingMachine: {
-          ...defaultVendingMachineSettings,
-          ...parsed.vendingMachine,
-        },
+        vendingMachine: mergeVendingMachine(parsed.vendingMachine),
         networkSharing: {
           ...defaultNetworkSharingSettings,
           ...parsed.networkSharing,
@@ -116,7 +139,7 @@ export function getSettings(): AppSettings {
   } catch (error) {
     console.error('Error loading settings:', error);
   }
-  
+
   return defaultAppSettings;
 }
 
@@ -146,17 +169,16 @@ export async function getSettingsWithSync(): Promise<AppSettings> {
   try {
     const result = await syncService.getSettings();
     if (result.success && result.data) {
+      // Sync may store under appSettings key or at top level
+      const syncData = result.data.appSettings || result.data;
       // Merge with defaults to ensure all properties exist
       return {
         ...defaultAppSettings,
-        ...result.data,
-        vendingMachine: {
-          ...defaultVendingMachineSettings,
-          ...result.data.vendingMachine,
-        },
+        ...syncData,
+        vendingMachine: mergeVendingMachine(syncData.vendingMachine),
         networkSharing: {
           ...defaultNetworkSharingSettings,
-          ...result.data.networkSharing,
+          ...syncData.networkSharing,
         },
       };
     } else {

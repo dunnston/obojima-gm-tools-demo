@@ -52,6 +52,7 @@ export default function Settings() {
   const [settings, setSettings] = useState<AppSettings>(getSettings());
   const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates' | 'networkSharing'>('vendingMachine');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const userHasEdited = useRef(false);
 
   // Debug: Log when Settings component renders
   useEffect(() => {
@@ -63,18 +64,26 @@ export default function Settings() {
     loadSettings();
   }, []);
 
-  // Auto-save settings when they change
+  // Auto-save settings when the user makes changes
   useEffect(() => {
-    if (settings !== getSettings()) {
-      saveSettingsAsync(settings);
-    }
+    if (!userHasEdited.current) return;
+    saveSettingsAsync(settings);
   }, [settings]);
 
   const loadSettings = async () => {
     setSyncStatus('syncing');
     try {
       const syncedSettings = await getSettingsWithSync();
-      setSettings(syncedSettings);
+      if (!userHasEdited.current) {
+        // Preserve local vendingMachine settings — they are the source of truth
+        // since they are saved synchronously. Only merge non-vending-machine
+        // settings from sync (e.g. networkSharing from another device).
+        const local = getSettings();
+        setSettings({
+          ...syncedSettings,
+          vendingMachine: local.vendingMachine,
+        });
+      }
       setSyncStatus('idle');
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -91,13 +100,19 @@ export default function Settings() {
   };
 
   const updateVendingMachineSettings = (updates: Partial<VendingMachineSettings>) => {
-    setSettings(prev => ({
-      ...prev,
-      vendingMachine: {
-        ...prev.vendingMachine,
-        ...updates,
-      },
-    }));
+    userHasEdited.current = true;
+    setSettings(prev => {
+      const next = {
+        ...prev,
+        vendingMachine: {
+          ...prev.vendingMachine,
+          ...updates,
+        },
+      };
+      // Save synchronously so changes survive navigation
+      saveSettings(next);
+      return next;
+    });
   };
 
   const handleReset = () => {
@@ -1027,8 +1042,24 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
     ingredients: '',
     magicItems: '',
   });
+  const [includeSearch, setIncludeSearch] = useState({
+    potions: '',
+    ingredients: '',
+    magicItems: '',
+  });
 
-  const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions];
+  const [customPotions, setCustomPotions] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('modifiedPotions');
+      if (saved) setCustomPotions(JSON.parse(saved));
+    } catch (error) {
+      console.error('Error loading custom potions:', error);
+    }
+  }, []);
+
+  const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions, ...customPotions];
 
   const handleCategoryChange = (category: keyof VendingMachineSettings['categories'], enabled: boolean) => {
     onUpdate({
@@ -1055,13 +1086,27 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
   const toggleExcludeItem = (category: keyof VendingMachineSettings['excludedItems'], itemName: string) => {
     const currentExcluded = settings.excludedItems[category];
     const isExcluded = currentExcluded.includes(itemName);
-    
+
     onUpdate({
       excludedItems: {
         ...settings.excludedItems,
         [category]: isExcluded
           ? currentExcluded.filter(name => name !== itemName)
           : [...currentExcluded, itemName],
+      },
+    });
+  };
+
+  const toggleIncludeItem = (category: keyof VendingMachineSettings['includedItems'], itemName: string) => {
+    const currentIncluded = settings.includedItems?.[category] || [];
+    const isIncluded = currentIncluded.includes(itemName);
+
+    onUpdate({
+      includedItems: {
+        ...(settings.includedItems || { potions: [], ingredients: [], magicItems: [] }),
+        [category]: isIncluded
+          ? currentIncluded.filter(name => name !== itemName)
+          : [...currentIncluded, itemName],
       },
     });
   };
@@ -1181,7 +1226,7 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
       <div className="space-y-6">
         <h3 className="text-xl font-semibold text-white">{t('settings.vendingMachine.excludeItems')}</h3>
         <p className="text-slate-400">{t('settings.vendingMachine.excludeItemsDescription')}</p>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {(['potions', 'ingredients', 'magicItems'] as const).map((category) => (
             <ExcludeItemsSection
@@ -1192,6 +1237,26 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
               searchTerm={excludeSearch[category]}
               onSearchChange={(term) => setExcludeSearch(prev => ({ ...prev, [category]: term }))}
               onToggleExclude={(itemName) => toggleExcludeItem(category, itemName)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Include Lists */}
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold text-white">{t('settings.vendingMachine.includeItems')}</h3>
+        <p className="text-slate-400">{t('settings.vendingMachine.includeItemsDescription')}</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {(['potions', 'ingredients', 'magicItems'] as const).map((category) => (
+            <IncludeItemsSection
+              key={category}
+              category={category}
+              items={getFilteredItems(category, includeSearch[category])}
+              includedItems={settings.includedItems?.[category] || []}
+              searchTerm={includeSearch[category]}
+              onSearchChange={(term) => setIncludeSearch(prev => ({ ...prev, [category]: term }))}
+              onToggleInclude={(itemName) => toggleIncludeItem(category, itemName)}
             />
           ))}
         </div>
@@ -1236,9 +1301,9 @@ function ExcludeItemsSection({
 
       {/* Items List */}
       <div className="max-h-60 overflow-y-auto space-y-2">
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <div
-            key={item.name}
+            key={`${item.name}-${idx}`}
             className="flex items-center justify-between p-2 rounded bg-slate-600/50 hover:bg-slate-600/70 transition-colors"
           >
             <div className="flex-1 min-w-0">
@@ -1273,9 +1338,93 @@ function ExcludeItemsSection({
       {excludedItems.length > 0 && (
         <div className="mt-3 pt-3 border-t border-slate-600">
           <span className="text-red-400 text-sm">
-            {t('settings.vendingMachine.itemsExcluded', { 
-              count: excludedItems.length, 
-              plural: excludedItems.length !== 1 ? 's' : '' 
+            {t('settings.vendingMachine.itemsExcluded', {
+              count: excludedItems.length,
+              plural: excludedItems.length !== 1 ? 's' : ''
+            })}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface IncludeItemsSectionProps {
+  category: 'potions' | 'ingredients' | 'magicItems';
+  items: any[];
+  includedItems: string[];
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  onToggleInclude: (itemName: string) => void;
+}
+
+function IncludeItemsSection({
+  category,
+  items,
+  includedItems,
+  searchTerm,
+  onSearchChange,
+  onToggleInclude
+}: IncludeItemsSectionProps) {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-slate-700/30 rounded-lg p-4 border border-emerald-600/20">
+      <h4 className="text-lg font-medium text-white mb-3 capitalize">{category}</h4>
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <input
+          type="text"
+          placeholder={t('settings.vendingMachine.searchPlaceholder', { category })}
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-slate-600 border border-slate-500 rounded-lg text-white text-sm placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+        />
+      </div>
+
+      {/* Items List */}
+      <div className="max-h-60 overflow-y-auto space-y-2">
+        {items.map((item, idx) => (
+          <div
+            key={`${item.name}-${idx}`}
+            className="flex items-center justify-between p-2 rounded bg-slate-600/50 hover:bg-slate-600/70 transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <span className="text-white text-sm truncate block">{item.name}</span>
+              <span className="text-slate-400 text-xs">{item.rarity}</span>
+            </div>
+            <button
+              onClick={() => onToggleInclude(item.name)}
+              className={`ml-2 p-1 rounded transition-colors ${
+                includedItems.includes(item.name)
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-slate-500 hover:bg-slate-400 text-slate-200'
+              }`}
+            >
+              {includedItems.includes(item.name) ? (
+                <CheckCircleIcon className="h-4 w-4" />
+              ) : (
+                <span className="block w-4 h-4 text-xs font-bold">+</span>
+              )}
+            </button>
+          </div>
+        ))}
+
+        {items.length === 0 && (
+          <div className="text-center py-4 text-slate-400 text-sm">
+            {t('settings.vendingMachine.noItemsFound')}
+          </div>
+        )}
+      </div>
+
+      {/* Included count */}
+      {includedItems.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-slate-600">
+          <span className="text-emerald-400 text-sm">
+            {t('settings.vendingMachine.itemsIncluded', {
+              count: includedItems.length,
+              plural: includedItems.length !== 1 ? 's' : ''
             })}
           </span>
         </div>
