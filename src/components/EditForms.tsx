@@ -1897,6 +1897,7 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
 export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc: any) => void; onCancel: () => void }) {
   const [editedNPC, setEditedNPC] = useState({
     ...npc,
+    size: npc.size || 'Medium',
     ability_scores: { ...DEFAULT_ABILITY_SCORES, ...(npc.ability_scores || {}) },
     saving_throw_proficiencies: {
       ...DEFAULT_SAVING_THROW_PROFICIENCIES,
