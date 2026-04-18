@@ -9,12 +9,13 @@ import {
   calendarEventToFormData,
   formDataToCalendarEvent
 } from '@/data/calendarEvents';
-import { 
+import {
   ObojimaDate,
-  SEASONS,
-  MOON_PHASES,
+  resolvePhase,
+  resolveSeason,
   formatObojimaDate
 } from '@/data/obojimaCalendar';
+import { useCalendarConfig } from '@/contexts/CalendarConfigContext';
 import { Quest } from '@/data/quests';
 import {
   XMarkIcon,
@@ -46,12 +47,16 @@ export default function CalendarEventModal({
   isEditing = false
 }: CalendarEventModalProps) {
   const { t } = useTranslation();
+  const config = useCalendarConfig();
   const [formData, setFormData] = useState<CalendarEventFormData>(() => {
     if (event) {
       return calendarEventToFormData(event);
     }
-    return createEmptyCalendarEvent(initialDate);
+    return createEmptyCalendarEvent(initialDate, config);
   });
+
+  const selectedSeason = resolveSeason(formData.date.season, config);
+  const maxCycles = selectedSeason?.cycles ?? 1;
 
   const [quests, setQuests] = useState<Quest[]>([]);
   const [questSearchTerm, setQuestSearchTerm] = useState('');
@@ -189,12 +194,12 @@ export default function CalendarEventModal({
                   onChange={(e) => handleDateChange('season', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-400"
                 >
-                  {SEASONS.map(season => (
-                    <option key={season.name} value={season.name}>{season.name}</option>
+                  {config.seasons.map(season => (
+                    <option key={season.id} value={season.id}>{season.name}</option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Cycle</label>
                 <select
@@ -202,12 +207,12 @@ export default function CalendarEventModal({
                   onChange={(e) => handleDateChange('cycle', parseInt(e.target.value))}
                   className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-400"
                 >
-                  <option value={1}>1st</option>
-                  <option value={2}>2nd</option>
-                  <option value={3}>3rd</option>
+                  {Array.from({ length: maxCycles }, (_, i) => i + 1).map(c => (
+                    <option key={c} value={c}>{ordinalShort(c)}</option>
+                  ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Phase</label>
                 <select
@@ -215,18 +220,18 @@ export default function CalendarEventModal({
                   onChange={(e) => handleDateChange('phase', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-400"
                 >
-                  {MOON_PHASES.map(phase => (
-                    <option key={phase.name} value={phase.name}>{phase.name}</option>
+                  {config.phases.map(phase => (
+                    <option key={phase.id} value={phase.id}>{phase.name}</option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Day</label>
                 <input
                   type="number"
                   min="1"
-                  max={MOON_PHASES.find(p => p.name === formData.date.phase)?.days || 8}
+                  max={resolvePhase(formData.date.phase, config)?.days ?? 8}
                   value={formData.date.day}
                   onChange={(e) => handleDateChange('day', parseInt(e.target.value))}
                   className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-400"
@@ -234,7 +239,7 @@ export default function CalendarEventModal({
               </div>
             </div>
             <p className="mt-2 text-sm text-slate-400">
-              Selected: {formatObojimaDate(formData.date)}
+              Selected: {formatObojimaDate(formData.date, config)}
             </p>
           </div>
 
@@ -385,4 +390,10 @@ export default function CalendarEventModal({
       </div>
     </div>
   );
+}
+
+function ordinalShort(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }

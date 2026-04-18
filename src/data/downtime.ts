@@ -370,23 +370,30 @@ export const studySubjects = [
 ];
 
 // Obojima Calendar Integration
-import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate, jsDateToObojimaDate, phasesBetweenObojimaDate } from './obojimaCalendar';
+import { CalendarConfig, DEFAULT_CALENDAR_CONFIG, ObojimaDate, formatObojimaDate, obojimaDateToJSDate, jsDateToObojimaDate, phasesBetweenObojimaDate } from './obojimaCalendar';
 
-export const formatDowntimeObojimaDate = (date: Date): string => {
+export const formatDowntimeObojimaDate = (
+  date: Date,
+  config: CalendarConfig = DEFAULT_CALENDAR_CONFIG
+): string => {
   try {
-    const obojimaDate = jsDateToObojimaDate(date);
-    return formatObojimaDate(obojimaDate);
+    const obojimaDate = jsDateToObojimaDate(date, 2024, config);
+    return formatObojimaDate(obojimaDate, config);
   } catch {
     // Fallback to regular date formatting if conversion fails
     return formatDowntimeDate(date);
   }
 };
 
-export const addDaysToObojimaDate = (startDate: Date, daysToAdd: number): Date => {
+export const addDaysToObojimaDate = (
+  startDate: Date,
+  daysToAdd: number,
+  config: CalendarConfig = DEFAULT_CALENDAR_CONFIG
+): Date => {
   try {
-    const obojimaDate = jsDateToObojimaDate(startDate);
-    const newObojimaDate = jsDateToObojimaDate(addDays(startDate, daysToAdd));
-    return obojimaDateToJSDate(newObojimaDate);
+    const obojimaDate = jsDateToObojimaDate(startDate, 2024, config);
+    const newObojimaDate = jsDateToObojimaDate(addDays(startDate, daysToAdd), 2024, config);
+    return obojimaDateToJSDate(newObojimaDate, 2024, config);
   } catch {
     // Fallback to regular date math if conversion fails
     return addDays(startDate, daysToAdd);
@@ -394,11 +401,15 @@ export const addDaysToObojimaDate = (startDate: Date, daysToAdd: number): Date =
 };
 
 // Calculate phases elapsed using accurate Obojima calendar system
-export const calculateObojimaPhases = (startDate: Date, endDate: Date = new Date()): number => {
+export const calculateObojimaPhases = (
+  startDate: Date,
+  endDate: Date = new Date(),
+  config: CalendarConfig = DEFAULT_CALENDAR_CONFIG
+): number => {
   try {
-    const startObojimaDate = jsDateToObojimaDate(startDate);
-    const endObojimaDate = jsDateToObojimaDate(endDate);
-    return phasesBetweenObojimaDate(startObojimaDate, endObojimaDate);
+    const startObojimaDate = jsDateToObojimaDate(startDate, 2024, config);
+    const endObojimaDate = jsDateToObojimaDate(endDate, 2024, config);
+    return phasesBetweenObojimaDate(startObojimaDate, endObojimaDate, config);
   } catch {
     // Fallback to regular phase calculation if conversion fails
     return calculatePhasesElapsed(startDate, endDate);

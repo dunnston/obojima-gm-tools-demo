@@ -2,19 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  ObojimaDate, 
-  Season, 
+import {
+  ObojimaDate,
+  Season,
   MoonPhase,
-  SEASONS,
-  MOON_PHASES,
-  DAYS_PER_YEAR,
+  getDaysPerCycle,
+  getYearDays,
+  getSeasonDays,
+  resolvePhase,
+  resolveSeason,
   formatObojimaDate,
   formatObojimaDateShort,
   addDaysToObojimaDate,
-  subtractDaysFromObojimaDate,
-  getCurrentObojimaDate
+  subtractDaysFromObojimaDate
 } from '@/data/obojimaCalendar';
+import { useCalendarConfigReady } from '@/contexts/CalendarConfigContext';
 import {
   CalendarDaysIcon,
   ChevronLeftIcon,
@@ -39,49 +41,36 @@ interface ObojimaCalendarProps {
 
 export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, syncStatus = 'idle' }: ObojimaCalendarProps) {
   const { t } = useTranslation();
+  const { config, isLoaded } = useCalendarConfigReady();
+  const yearDays = getYearDays(config);
   const [showTimeAdvancement, setShowTimeAdvancement] = useState(false);
   const [daysToAdvance, setDaysToAdvance] = useState(1);
 
-  // Helper function to get days in current phase
-  const getDaysInCurrentPhase = () => {
-    switch (currentDate.phase) {
-      case 'New Moon':
-      case 'Full Moon':
-        return 8;
-      case 'Waxing Moon':
-      case 'Waning Moon':
-        return 7;
-      default:
-        return 8;
-    }
-  };
+  const getDaysInCurrentPhase = () =>
+    resolvePhase(currentDate.phase, config)?.days ?? config.phases[0]?.days ?? 8;
 
-  // Helper function to get days remaining in current phase
-  const getDaysRemainingInPhase = () => {
-    return getDaysInCurrentPhase() - currentDate.day;
-  };
+  const getDaysRemainingInPhase = () => getDaysInCurrentPhase() - currentDate.day;
 
-  // Helper function to get days to advance to next phase
-  const getDaysToNextPhase = () => {
-    return getDaysRemainingInPhase() + 1;
-  };
+  const getDaysToNextPhase = () => getDaysRemainingInPhase() + 1;
 
-  // Helper function to get days remaining in current season
   const getDaysRemainingInSeason = () => {
-    const currentPhaseIndex = MOON_PHASES.findIndex(p => p.name === currentDate.phase);
+    const currentPhaseIndex = config.phases.findIndex(p => p.id === currentDate.phase);
     const currentCycle = currentDate.cycle || 1;
-    
+    const seasonConfig = resolveSeason(currentDate.season, config);
+    const cyclesInSeason = seasonConfig?.cycles ?? config.seasons[0].cycles;
+    const daysPerCycle = getDaysPerCycle(config);
+
     let remainingDays = getDaysRemainingInPhase();
-    
+
     // Add remaining phases in current cycle
-    for (let i = currentPhaseIndex + 1; i < MOON_PHASES.length; i++) {
-      remainingDays += MOON_PHASES[i].days;
+    for (let i = currentPhaseIndex + 1; i < config.phases.length; i++) {
+      remainingDays += config.phases[i].days;
     }
-    
+
     // Add complete remaining cycles
-    const remainingCycles = 3 - currentCycle;
-    remainingDays += remainingCycles * 30; // Each cycle is 30 days
-    
+    const remainingCycles = cyclesInSeason - currentCycle;
+    remainingDays += remainingCycles * daysPerCycle;
+
     return remainingDays;
   };
 
@@ -110,38 +99,44 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
     }
   };
 
-  const getMoonPhaseEmoji = (phase: MoonPhase) => {
-    switch (phase) {
-      case 'New Moon': return '🌑';
-      case 'Waxing Moon': return '🌓';
-      case 'Full Moon': return '🌕';
-      case 'Waning Moon': return '🌗';
-      default: return '🌙';
-    }
-  };
+  const getMoonPhaseEmoji = (phase: MoonPhase) =>
+    resolvePhase(phase, config)?.emoji ?? '🌙';
 
   const handlePreviousDay = () => {
-    const newDate = subtractDaysFromObojimaDate(currentDate, 1);
+    const newDate = subtractDaysFromObojimaDate(currentDate, 1, config);
     onDateChange(newDate);
   };
 
   const handleNextDay = () => {
-    const newDate = addDaysToObojimaDate(currentDate, 1);
+    const newDate = addDaysToObojimaDate(currentDate, 1, config);
     onDateChange(newDate);
   };
 
   const handleAdvanceTime = () => {
     if (daysToAdvance > 0) {
-      const newDate = addDaysToObojimaDate(currentDate, daysToAdvance);
+      const newDate = addDaysToObojimaDate(currentDate, daysToAdvance, config);
       onDateChange(newDate);
       setShowTimeAdvancement(false);
       setDaysToAdvance(1);
     }
   };
 
-  const currentSeason = SEASONS.find(s => s.name === currentDate.season);
-  const currentPhase = MOON_PHASES.find(p => p.name === currentDate.phase);
+  const currentSeason = resolveSeason(currentDate.season, config);
+  const currentPhase = resolvePhase(currentDate.phase, config);
+  const currentSeasonName = currentSeason?.name ?? currentDate.season;
+  const currentPhaseName = currentPhase?.name ?? currentDate.phase;
   const SeasonIcon = getSeasonIcon(currentDate.season);
+
+  // Avoid a first-render flash of the default config for custom-calendar users.
+  if (!isLoaded) {
+    return (
+      <div className="max-w-4xl">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center text-slate-400">
+          Loading calendar…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -182,10 +177,10 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
 
         <div className="text-center space-y-2">
           <div className="text-3xl font-bold text-white">
-            {formatObojimaDate(currentDate)}
+            {formatObojimaDate(currentDate, config)}
           </div>
           <div className="text-lg text-slate-300">
-            {getMoonPhaseEmoji(currentDate.phase)} {currentDate.phase}
+            {getMoonPhaseEmoji(currentDate.phase)} {currentPhaseName}
           </div>
         </div>
       </div>
@@ -206,7 +201,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
           <div className="text-center">
             <div className="text-sm text-slate-400">{t('calendar.quickNavigation')}</div>
             <div className="text-lg font-semibold text-white">
-              {formatObojimaDateShort(currentDate)}
+              {formatObojimaDateShort(currentDate, config)}
             </div>
           </div>
           
@@ -234,29 +229,30 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <SeasonIcon className={`h-6 w-6 ${getSeasonColor(currentDate.season)}`} />
-            <h3 className="text-lg font-semibold text-white">{currentDate.season}</h3>
+            <h3 className="text-lg font-semibold text-white">{currentSeasonName}</h3>
           </div>
           <p className="text-slate-300 mb-4">{currentSeason?.description}</p>
-          
+
           <div className="space-y-2">
             <div className="text-sm text-slate-400">{t('calendar.seasonProgress')}</div>
             <div className="space-y-1">
-              {MOON_PHASES.map((phase, index) => {
-                const isCurrent = phase.name === currentDate.phase;
-                const isPast = MOON_PHASES.indexOf(currentPhase!) > index;
+              {config.phases.map((phase, index) => {
+                const isCurrent = phase.id === currentDate.phase;
+                const currentPhaseIndex = config.phases.findIndex(p => p.id === currentDate.phase);
+                const isPast = currentPhaseIndex > index;
                 return (
                   <div
-                    key={phase.name}
+                    key={phase.id}
                     className={`flex items-center justify-between p-2 rounded ${
-                      isCurrent 
-                        ? 'bg-blue-500/20 border border-blue-400/50' 
-                        : isPast 
-                        ? 'bg-green-500/10' 
+                      isCurrent
+                        ? 'bg-blue-500/20 border border-blue-400/50'
+                        : isPast
+                        ? 'bg-green-500/10'
                         : 'bg-slate-700/30'
                     }`}
                   >
                     <span className={`text-sm ${isCurrent ? 'text-blue-300 font-semibold' : isPast ? 'text-green-400' : 'text-slate-400'}`}>
-                      {getMoonPhaseEmoji(phase.name)} {phase.name}
+                      {getMoonPhaseEmoji(phase.id)} {phase.name}
                     </span>
                     <span className="text-xs text-slate-500">
                       {phase.days} {t('calendar.days')}
@@ -272,7 +268,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="text-2xl">{getMoonPhaseEmoji(currentDate.phase)}</div>
-            <h3 className="text-lg font-semibold text-white">{currentDate.phase}</h3>
+            <h3 className="text-lg font-semibold text-white">{currentPhaseName}</h3>
           </div>
           <p className="text-slate-300 mb-4">{currentPhase?.description}</p>
           
@@ -303,25 +299,28 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">{t('calendar.yearOverview', { year: currentDate.year })}</h3>
         
-        <div className="grid grid-cols-4 gap-4">
-          {SEASONS.map((season) => {
-            const isCurrent = season.name === currentDate.season;
-            const SeasonIcon = getSeasonIcon(season.name);
+        <div
+          className="gap-4"
+          style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, Math.min(config.seasons.length, 6))}, minmax(0, 1fr))` }}
+        >
+          {config.seasons.map((season) => {
+            const isCurrent = season.id === currentDate.season;
+            const SeasonIcon = getSeasonIcon(season.id);
             return (
               <div
-                key={season.name}
+                key={season.id}
                 className={`text-center p-4 rounded-lg ${
                   isCurrent ? 'bg-blue-500/20 border border-blue-400/50' : 'bg-slate-700/30'
                 }`}
               >
                 <SeasonIcon className={`h-8 w-8 mx-auto mb-2 ${
-                  isCurrent ? 'text-blue-400' : getSeasonColor(season.name)
+                  isCurrent ? 'text-blue-400' : getSeasonColor(season.id)
                 }`} />
                 <div className={`font-semibold ${isCurrent ? 'text-blue-300' : 'text-white'}`}>
                   {season.name}
                 </div>
                 <div className="text-xs text-slate-400 mt-1">
-                  {season.totalDays} {t('calendar.days')}
+                  {getSeasonDays(season, config)} {t('calendar.days')}
                 </div>
               </div>
             );
@@ -342,7 +341,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                   {t('calendar.advanceTime.howMany')}
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-700/50 rounded p-2 mt-2">
-                  {t('calendar.advanceTime.current', { day: currentDate.day, total: getDaysInCurrentPhase(), phase: currentDate.phase })}<br/>
+                  {t('calendar.advanceTime.current', { day: currentDate.day, total: getDaysInCurrentPhase(), phase: currentPhaseName })}<br/>
                   {t('calendar.advanceTime.daysLeft', { days: getDaysRemainingInPhase() })}
                 </div>
               </div>
@@ -379,7 +378,7 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                 <div className="text-sm text-slate-400 text-center">
                   {t('calendar.advanceTime.newDate')} <br />
                   <span className="text-white font-medium">
-                    {formatObojimaDate(addDaysToObojimaDate(currentDate, daysToAdvance))}
+                    {formatObojimaDate(addDaysToObojimaDate(currentDate, daysToAdvance, config), config)}
                   </span>
                 </div>
 
@@ -399,11 +398,11 @@ export default function ObojimaCalendar({ currentDate, onDateChange, onRefresh, 
                     {t('calendar.advanceTime.oneSeason')}<br/>({getDaysToNextSeason()}d)
                   </button>
                   <button
-                    onClick={() => setDaysToAdvance(DAYS_PER_YEAR)}
+                    onClick={() => setDaysToAdvance(yearDays)}
                     className="px-2 py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded transition-colors"
-                    title={`${DAYS_PER_YEAR} days (1 full year)`}
+                    title={`${yearDays} days (1 full year)`}
                   >
-                    {t('calendar.advanceTime.oneYear')}<br/>({DAYS_PER_YEAR}d)
+                    {t('calendar.advanceTime.oneYear')}<br/>({yearDays}d)
                   </button>
                 </div>
               </div>
