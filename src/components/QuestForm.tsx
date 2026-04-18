@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, QUEST_REWARD_TYPES, QuestStatus, loadQuests } from '@/data/quests';
+import { Quest, QuestFormData, QuestReward, createEmptyQuest, formDataToQuest, QUEST_REWARD_TYPES, QuestStatus } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { CalendarEvent, formatEventDate } from '@/data/calendarEvents';
 import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon, CalendarDaysIcon, MapPinIcon } from '@heroicons/react/24/outline';

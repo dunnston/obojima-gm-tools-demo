@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { PlayerCharacter } from '@/data/characters';
 import CharacterForm from './CharacterForm';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -80,8 +81,8 @@ export default function CharacterManager() {
         setCharacters(validatedCharacters);
         setSyncStatus('idle');
       } else {
-        // Fall back to localStorage if API fails
-        const savedCharacters = localStorage.getItem('obojima-characters');
+        // Fall back to legacy localStorage (web demo only; host modes have sync)
+        const savedCharacters = webDemoOnlyStorage.getItem('obojima-characters');
         if (savedCharacters) {
           const parsed = JSON.parse(savedCharacters);
           const validatedCharacters = parsed.map(validateCharacter);
@@ -92,10 +93,9 @@ export default function CharacterManager() {
     } catch (error) {
       console.error('Error loading characters:', error);
       setSyncStatus('error');
-      
-      // Fall back to localStorage
+
       try {
-        const savedCharacters = localStorage.getItem('obojima-characters');
+        const savedCharacters = webDemoOnlyStorage.getItem('obojima-characters');
         if (savedCharacters) {
           const parsed = JSON.parse(savedCharacters);
           const validatedCharacters = parsed.map(validateCharacter);
@@ -151,14 +151,10 @@ export default function CharacterManager() {
     };
   }, []);
 
-  // Save characters to both API and localStorage
   const saveCharacters = async (updatedCharacters: PlayerCharacter[]) => {
     try {
-      // Save to localStorage immediately for offline support
-      localStorage.setItem('obojima-characters', JSON.stringify(updatedCharacters));
       setCharacters(updatedCharacters);
-      
-      // Save each character to API
+
       for (const character of updatedCharacters) {
         await syncService.saveCharacter(character);
       }

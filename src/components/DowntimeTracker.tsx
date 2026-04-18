@@ -121,17 +121,11 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
     try {
       await syncService.saveDowntimeActivity(activity);
 
-      // Update local state using functional updater and persist from the freshly computed array
-      // to avoid race conditions with rapid consecutive saves
       setActivities(prev => {
         const updatedActivities = prev.map(a => a.id === activity.id ? activity : a);
-        const finalActivities = updatedActivities.some(a => a.id === activity.id)
+        return updatedActivities.some(a => a.id === activity.id)
           ? updatedActivities
           : [...prev, activity];
-
-        // Persist from the freshly computed array returned by functional updater
-        localStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
-        return finalActivities;
       });
     } catch (error) {
       console.error('Error saving downtime activity:', error);
@@ -142,13 +136,11 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   // Save activities with sync (for bulk operations)
   const saveActivities = async (updatedActivities: SpecificDowntimeActivity[]) => {
     try {
-      // Save each activity individually to ensure proper sync
       for (const activity of updatedActivities) {
         await syncService.saveDowntimeActivity(activity);
       }
-      
+
       setActivities(updatedActivities);
-      localStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
     } catch (error) {
       console.error('Error saving downtime activities:', error);
       alert(t('downtime.errorSaving'));
@@ -183,16 +175,11 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
   const handleDeleteActivity = async (activityId: string) => {
     if (confirm(t('downtime.confirmDelete'))) {
       try {
-        // Delete from server
         await syncService.deleteDowntimeActivity(activityId);
-        
-        // Update local state
+
         const updatedActivities = activities.filter(activity => activity.id !== activityId);
         setActivities(updatedActivities);
-        
-        // Update localStorage as backup
-        localStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
-        
+
         setSelectedActivity(null);
       } catch (error) {
         console.error('Error deleting downtime activity:', error);

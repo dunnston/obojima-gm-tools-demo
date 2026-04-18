@@ -34,6 +34,7 @@ import {
 import { regions } from '@/data/encounters';
 import { LocationDetailsModal } from './LocationDetailsModal';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import { useItemTranslation } from '@/hooks/useItemTranslation';
 
 type TabType = 'potions' | 'ingredients' | 'creatures' | 'magicItems' | 'npcs' | 'companionTypes' | 'companions' | 'locations';
@@ -114,9 +115,6 @@ export default function DatabaseView() {
         syncService.syncWithFallback('quests', 'quests')
       ]);
 
-      console.log('Loaded potion data from sync:', potionData);
-      console.log('LocalStorage modifiedPotions:', localStorage.getItem('modifiedPotions'));
-
       // Migrate data to ensure all items have unique IDs
       const migratedCreatures = migrateCreaturesWithIds(creatureData);
       const migratedMagicItems = migrateMagicItemsWithIds(magicItemData);
@@ -154,10 +152,10 @@ export default function DatabaseView() {
   // Fallback localStorage loading (keeping original logic)
   const loadFromLocalStorage = () => {
     if (typeof window !== 'undefined') {
-      const savedIngredients = localStorage.getItem('modifiedIngredients');
-      const savedPotions = localStorage.getItem('modifiedPotions');
-      const savedCreatures = localStorage.getItem('modifiedCreatures');
-      const savedMagicItems = localStorage.getItem('modifiedMagicItems');
+      const savedIngredients = webDemoOnlyStorage.getItem('modifiedIngredients');
+      const savedPotions = webDemoOnlyStorage.getItem('modifiedPotions');
+      const savedCreatures = webDemoOnlyStorage.getItem('modifiedCreatures');
+      const savedMagicItems = webDemoOnlyStorage.getItem('modifiedMagicItems');
 
       if (savedIngredients) {
         try {
@@ -195,7 +193,7 @@ export default function DatabaseView() {
         }
       }
 
-      const savedNPCs = localStorage.getItem('modifiedNPCs');
+      const savedNPCs = webDemoOnlyStorage.getItem('modifiedNPCs');
       if (savedNPCs) {
         try {
           const parsedNPCs = JSON.parse(savedNPCs);
@@ -205,7 +203,7 @@ export default function DatabaseView() {
         }
       }
 
-      const savedCompanionTypes = localStorage.getItem('modifiedCompanionTypes');
+      const savedCompanionTypes = webDemoOnlyStorage.getItem('modifiedCompanionTypes');
       if (savedCompanionTypes) {
         try {
           const parsedCompanionTypes = JSON.parse(savedCompanionTypes);
@@ -215,7 +213,7 @@ export default function DatabaseView() {
         }
       }
 
-      const savedCompanions = localStorage.getItem('modifiedCompanions');
+      const savedCompanions = webDemoOnlyStorage.getItem('modifiedCompanions');
       if (savedCompanions) {
         try {
           const parsedCompanions = JSON.parse(savedCompanions);
@@ -225,7 +223,7 @@ export default function DatabaseView() {
         }
       }
 
-      const savedLocations = localStorage.getItem('obojima-locations');
+      const savedLocations = webDemoOnlyStorage.getItem('obojima-locations');
       if (savedLocations) {
         try {
           const parsedLocations = JSON.parse(savedLocations);
@@ -332,63 +330,6 @@ export default function DatabaseView() {
     }
   };
 
-  // Save to localStorage whenever modified data changes (keeping for backup)
-  // Wrapped in try/catch to handle quota exceeded errors gracefully
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedIngredients', JSON.stringify(modifiedIngredients)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedIngredients'); }
-    }
-  }, [modifiedIngredients, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedPotions', JSON.stringify(modifiedPotions)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedPotions'); }
-    }
-  }, [modifiedPotions, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedCreatures', JSON.stringify(modifiedCreatures)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCreatures'); }
-    }
-  }, [modifiedCreatures, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedMagicItems', JSON.stringify(modifiedMagicItems)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedMagicItems'); }
-    }
-  }, [modifiedMagicItems, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedNPCs', JSON.stringify(modifiedNPCs)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedNPCs'); }
-    }
-  }, [modifiedNPCs, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedCompanionTypes', JSON.stringify(modifiedCompanionTypes)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCompanionTypes'); }
-    }
-  }, [modifiedCompanionTypes, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('modifiedCompanions', JSON.stringify(modifiedCompanions)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for modifiedCompanions'); }
-    }
-  }, [modifiedCompanions, isLoaded]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoaded) {
-      try { localStorage.setItem('obojima-locations', JSON.stringify(modifiedLocations)); }
-      catch (e) { console.warn('[DatabaseView] localStorage quota exceeded for obojima-locations'); }
-    }
-  }, [modifiedLocations, isLoaded]);
 
   // Combine all potion arrays and apply modifications
   // Apply modifications to potions and add new ones
@@ -786,8 +727,6 @@ export default function DatabaseView() {
       // Sync to server
       try {
         await saveUserPotions(updatedPotions);
-        console.log('Potions saved successfully');
-        console.log('LocalStorage after save:', localStorage.getItem('modifiedPotions'));
       } catch (error) {
         console.error('Error syncing potion:', error);
       }
@@ -1122,14 +1061,14 @@ export default function DatabaseView() {
   // Function to clear all saved changes (useful for debugging)
   const clearSavedChanges = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('modifiedIngredients');
-      localStorage.removeItem('modifiedPotions');
-      localStorage.removeItem('modifiedCreatures');
-      localStorage.removeItem('modifiedMagicItems');
-      localStorage.removeItem('modifiedNPCs');
-      localStorage.removeItem('modifiedCompanionTypes');
-      localStorage.removeItem('modifiedCompanions');
-      localStorage.removeItem('obojima-locations');
+      webDemoOnlyStorage.removeItem('modifiedIngredients');
+      webDemoOnlyStorage.removeItem('modifiedPotions');
+      webDemoOnlyStorage.removeItem('modifiedCreatures');
+      webDemoOnlyStorage.removeItem('modifiedMagicItems');
+      webDemoOnlyStorage.removeItem('modifiedNPCs');
+      webDemoOnlyStorage.removeItem('modifiedCompanionTypes');
+      webDemoOnlyStorage.removeItem('modifiedCompanions');
+      webDemoOnlyStorage.removeItem('obojima-locations');
       setModifiedIngredients([]);
       setModifiedPotions([]);
       setModifiedCreatures([]);

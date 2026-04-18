@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generateVendingMachineInventory, VendingMachineInventory } from '@/utils/vendingMachine';
+import { syncService } from '@/services/sync';
+import type { Potion } from '@/data/potions';
 import { ArrowPathIcon, SparklesIcon, BeakerIcon, WrenchScrewdriverIcon, CogIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { getPotionImagePath, getIngredientImagePath, getMagicItemImagePath } from '@/utils/imageUtils';
 import { useItemTranslation } from '@/hooks/useItemTranslation';
@@ -19,22 +21,34 @@ export default function VendingMachine() {
   const { t } = useTranslation();
   const { translatePotionName, translateIngredientName } = useItemTranslation();
 
+  const loadCustomPotions = async (): Promise<Potion[]> => {
+    try {
+      const data = await syncService.syncWithFallback('user-potions', 'modifiedPotions');
+      return Array.isArray(data) ? (data as Potion[]) : [];
+    } catch (error) {
+      console.error('Error loading custom potions:', error);
+      return [];
+    }
+  };
+
   const refreshInventory = async () => {
     setIsRefreshing(true);
     // Add a small delay for visual feedback
     await new Promise(resolve => setTimeout(resolve, 500));
-    const newInventory = generateVendingMachineInventory();
+    const customPotions = await loadCustomPotions();
+    const newInventory = generateVendingMachineInventory(customPotions);
     cachedInventory = newInventory;
     setInventory(newInventory);
     setIsRefreshing(false);
   };
 
   useEffect(() => {
-    // Only generate inventory if there's no cached version
-    if (!cachedInventory) {
-      cachedInventory = generateVendingMachineInventory();
+    if (cachedInventory) return;
+    (async () => {
+      const customPotions = await loadCustomPotions();
+      cachedInventory = generateVendingMachineInventory(customPotions);
       setInventory(cachedInventory);
-    }
+    })();
   }, []);
 
   const openItemModal = (item: any, type: 'ingredient' | 'potion' | 'magicItem') => {

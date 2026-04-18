@@ -6,6 +6,7 @@ import { NPC } from '@/data/npcs';
 import { NPCEditForm } from './EditForms';
 import { NPCDetailsModal } from './NPCDetailsModal';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import { useNPCs } from '@/contexts/NPCContext';
 import {
   PlusIcon,
@@ -41,7 +42,8 @@ export default function NPCManager() {
         setNPCs(result.data);
         setSyncStatus('idle');
       } else {
-        const saved = localStorage.getItem('obojima-npcs');
+        // Web-demo fallback: read the same key DatabaseView/SessionPlanner/EditForms use.
+        const saved = webDemoOnlyStorage.getItem('modifiedNPCs');
         if (saved) {
           try { setNPCs(JSON.parse(saved)); } catch {}
         }
@@ -51,7 +53,7 @@ export default function NPCManager() {
       console.error('Error loading NPCs:', error);
       setSyncStatus('error');
       try {
-        const saved = localStorage.getItem('obojima-npcs');
+        const saved = webDemoOnlyStorage.getItem('modifiedNPCs');
         if (saved) setNPCs(JSON.parse(saved));
       } catch {}
     }

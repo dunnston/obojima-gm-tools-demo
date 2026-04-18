@@ -271,22 +271,16 @@ export default function InitiativeTracker() {
     try { localStorage.removeItem(INITIATIVE_STORAGE_KEY); } catch {}
   };
 
-  const loadEncounterAndPlayers = (encounterId: string, playerIds: string[]) => {
-    // Load encounter from localStorage
-    const savedEncounters = localStorage.getItem('obojima-encounters');
-    if (!savedEncounters) return;
-
+  const loadEncounterAndPlayers = async (encounterId: string, playerIds: string[]) => {
     try {
-      const encounters: Encounter[] = JSON.parse(savedEncounters);
+      // Load encounters and player characters from sync service (SQLite on Tauri/network client).
+      const [encounters, characters] = await Promise.all([
+        syncService.syncWithFallback('encounters', 'obojima-encounters') as Promise<Encounter[]>,
+        syncService.syncWithFallback('characters', 'obojima-characters') as Promise<PlayerCharacter[]>,
+      ]);
+
       const encounter = encounters.find(e => e.id === encounterId);
       if (!encounter) return;
-
-      // Load player characters
-      const savedCharacters = localStorage.getItem('obojima-characters');
-      let characters: PlayerCharacter[] = [];
-      if (savedCharacters) {
-        characters = JSON.parse(savedCharacters);
-      }
 
       const newParticipants: CombatParticipant[] = [];
 

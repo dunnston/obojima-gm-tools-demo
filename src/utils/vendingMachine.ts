@@ -20,12 +20,12 @@ function filterByRarity<T extends { rarity: string }>(items: T[], rarity: string
   return items.filter(item => item.rarity === rarity);
 }
 
-export function generateVendingMachineInventory(): VendingMachineInventory {
+export function generateVendingMachineInventory(customPotions: Potion[] = []): VendingMachineInventory {
   const settings = getSettings().vendingMachine;
-  
+
   return {
     ingredients: generateIngredients(settings),
-    potions: generatePotions(settings),
+    potions: generatePotions(settings, customPotions),
     magicItems: generateMagicItems(settings)
   };
 }
@@ -53,21 +53,9 @@ function generateIngredients(settings: VendingMachineSettings): Ingredient[] {
   ];
 }
 
-function getCustomPotions(): Potion[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const saved = localStorage.getItem('modifiedPotions');
-    if (saved) return JSON.parse(saved);
-  } catch (error) {
-    console.error('Error loading custom potions:', error);
-  }
-  return [];
-}
-
-function generatePotions(settings: VendingMachineSettings): Potion[] {
+function generatePotions(settings: VendingMachineSettings, customPotions: Potion[]): Potion[] {
   if (!settings.categories.potions) return [];
 
-  const customPotions = getCustomPotions();
   const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions, ...customPotions];
 
   const forcedNames = settings.includedItems?.potions || [];

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Quest, QuestStatus, updateQuest } from '@/data/quests';
+import { Quest, QuestStatus } from '@/data/quests';
 import { syncService } from '@/services/sync';
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
@@ -47,15 +47,11 @@ export default function QuestLog() {
   // Delete quest with sync
   const deleteQuest = async (questId: string) => {
     try {
-      // Delete from API
       await syncService.deleteQuest(questId);
-      
-      // Also update local state and localStorage immediately
+
       const updatedQuests = quests.filter(q => q.id !== questId);
       setQuests(updatedQuests);
-      localStorage.setItem('obojima-quests', JSON.stringify(updatedQuests));
-      
-      // Then reload to ensure sync
+
       await loadQuests();
     } catch (error) {
       console.error('Error deleting quest:', error);
