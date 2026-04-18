@@ -88,10 +88,25 @@ export default function CalendarEventModal({
   };
 
   const handleDateChange = (field: keyof ObojimaDate, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      date: { ...prev.date, [field]: value }
-    }));
+    setFormData(prev => {
+      const nextDate = { ...prev.date, [field]: value } as ObojimaDate;
+      // Clamp cycle and day to the new season/phase's max so we never save an
+      // impossible date (e.g. cycle 3 in a 1-cycle season after a season switch,
+      // or day 8 in a 5-day phase after a phase switch).
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
+      }
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return { ...prev, date: nextDate };
+    });
   };
 
   const handleQuestSelect = (quest: Quest) => {

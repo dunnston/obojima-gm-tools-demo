@@ -39,13 +39,24 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
   };
 
   const handleGameDateChange = (field: keyof ObojimaDate, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      gameDate: {
-        ...prev.gameDate,
-        [field]: value
+    setFormData(prev => {
+      const nextDate = { ...prev.gameDate, [field]: value };
+      // Clamp cycle/day to the new season/phase's max so invalid dates can't
+      // be saved via a season/phase swap after setting cycle or day.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
       }
-    }));
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return { ...prev, gameDate: nextDate };
+    });
   };
 
   const handleCharacterToggle = (characterId: string) => {

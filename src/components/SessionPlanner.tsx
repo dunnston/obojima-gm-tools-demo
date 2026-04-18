@@ -667,10 +667,24 @@ function CreateSessionModal({
   };
 
   const handleGameDateChange = (field: string, value: string | number) => {
-    setGameDate(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setGameDate(prev => {
+      const nextDate = { ...prev, [field]: value };
+      // Clamp cycle/day when the season or phase changes so invalid dates
+      // (e.g. cycle 3 in a 1-cycle season) can't slip through.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
+      }
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return nextDate;
+    });
   };
 
   const toggleCharacter = (characterId: string) => {
@@ -904,10 +918,24 @@ function EditSessionModal({
   };
 
   const handleGameDateChange = (field: string, value: string | number) => {
-    setGameDate(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setGameDate(prev => {
+      const nextDate = { ...prev, [field]: value };
+      // Clamp cycle/day when the season or phase changes so invalid dates
+      // (e.g. cycle 3 in a 1-cycle season) can't slip through.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
+      }
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return nextDate;
+    });
   };
 
   const toggleCharacter = (characterId: string) => {

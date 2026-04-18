@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpIcon,
   ArrowDownIcon,
@@ -38,8 +38,10 @@ interface ImpactReport {
 }
 
 async function scanImpact(draft: CalendarConfig, prev: CalendarConfig): Promise<ImpactReport> {
-  const newSeasonIds = new Set(draft.seasons.map(s => s.id));
-  const newPhaseIds = new Set(draft.phases.map(p => p.id));
+  const newSeasonsById = new Map(draft.seasons.map(s => [s.id, s]));
+  const newPhasesById = new Map(draft.phases.map(p => [p.id, p]));
+  const newSeasonIds = new Set(newSeasonsById.keys());
+  const newPhaseIds = new Set(newPhasesById.keys());
   const removedSeasonIds = prev.seasons
     .filter(s => !newSeasonIds.has(s.id))
     .map(s => s.id);
@@ -48,12 +50,17 @@ async function scanImpact(draft: CalendarConfig, prev: CalendarConfig): Promise<
     .map(p => p.id);
 
   if (removedSeasonIds.length === 0 && removedPhaseIds.length === 0) {
-    // Still check cycle shrinkage: a reduced cycle count can orphan dates.
+    // Still destructive if a season's cycle count shrank or a phase's day
+    // count shrank — either can orphan a stored date.
     const cycleShrunk = prev.seasons.some(ps => {
-      const matched = draft.seasons.find(ds => ds.id === ps.id);
+      const matched = newSeasonsById.get(ps.id);
       return matched && matched.cycles < ps.cycles;
     });
-    if (!cycleShrunk) {
+    const phaseDaysShrunk = prev.phases.some(pp => {
+      const matched = newPhasesById.get(pp.id);
+      return matched && matched.days < pp.days;
+    });
+    if (!cycleShrunk && !phaseDaysShrunk) {
       return {
         removedSeasonIds: [],
         removedPhaseIds: [],
@@ -71,18 +78,22 @@ async function scanImpact(draft: CalendarConfig, prev: CalendarConfig): Promise<
     syncService.getSessions().catch(() => ({ success: false, data: [] })),
   ]);
 
-  const isDateAffected = (d: { season?: string; phase?: string; cycle?: number }): boolean => {
+  const isDateAffected = (d: { season?: string; phase?: string; cycle?: number; day?: number }): boolean => {
     if (!d) return false;
     if (d.season && !newSeasonIds.has(d.season)) return true;
     if (d.phase && !newPhaseIds.has(d.phase)) return true;
     if (d.season && typeof d.cycle === 'number') {
-      const newSeason = draft.seasons.find(s => s.id === d.season);
+      const newSeason = newSeasonsById.get(d.season);
       if (newSeason && d.cycle > newSeason.cycles) return true;
+    }
+    if (d.phase && typeof d.day === 'number') {
+      const newPhase = newPhasesById.get(d.phase);
+      if (newPhase && d.day > newPhase.days) return true;
     }
     return false;
   };
 
-  const settingsAny = (settingsResult as { data?: { currentObojimaDate?: { season?: string; phase?: string; cycle?: number } } }).data;
+  const settingsAny = (settingsResult as { data?: { currentObojimaDate?: { season?: string; phase?: string; cycle?: number; day?: number } } }).data;
   const currentDate = settingsAny?.currentObojimaDate;
   const currentDateAffected = currentDate ? isDateAffected(currentDate) : false;
 
@@ -95,12 +106,12 @@ async function scanImpact(draft: CalendarConfig, prev: CalendarConfig): Promise<
     if (raw && typeof raw === 'object') return [raw as T];
     return [];
   };
-  const events = asArray<{ date?: { season?: string; phase?: string; cycle?: number } }>(
+  const events = asArray<{ date?: { season?: string; phase?: string; cycle?: number; day?: number } }>(
     (eventsResult as { data?: unknown }).data,
   );
   const eventsAffected = events.filter(e => e.date && isDateAffected(e.date)).length;
 
-  const sessions = asArray<{ gameDate?: { season?: string; phase?: string; cycle?: number } }>(
+  const sessions = asArray<{ gameDate?: { season?: string; phase?: string; cycle?: number; day?: number } }>(
     (sessionsResult as { data?: unknown }).data,
   );
   const sessionsAffected = sessions.filter(s => s.gameDate && isDateAffected(s.gameDate)).length;
@@ -148,6 +159,19 @@ export default function CalendarSettings() {
   const [importText, setImportText] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Track the activeConfig the draft was seeded from. If activeConfig changes
+  // (e.g. the async context load resolved after this tab opened) AND the user
+  // hasn't started editing, resync the draft so we don't overwrite the newly
+  // loaded config with stale defaults on save.
+  const draftBaselineRef = useRef<CalendarConfig>(activeConfig);
+  useEffect(() => {
+    if (JSON.stringify(draft) === JSON.stringify(draftBaselineRef.current)) {
+      setDraft(activeConfig);
+      draftBaselineRef.current = activeConfig;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConfig]);
 
   const dirty = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(activeConfig),
