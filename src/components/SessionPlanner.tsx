@@ -7,7 +7,8 @@ import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
 import { ObojimaDate, formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
 import { syncService } from '@/services/sync';
-import { 
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
+import {
   PlusIcon, 
   PlayIcon, 
   PauseIcon,
@@ -145,13 +146,12 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const saveSession = async (session: GameSession) => {
     try {
       await syncService.saveSession(session);
-      // Update local state using functional updater and persist from the freshly computed array
-      // to avoid race conditions with debounced saves
       setSessions(prev => {
         const filtered = prev.filter(s => s.id !== session.id);
         const updatedSessions = [...filtered, session];
-        // Persist from the freshly computed array returned by functional updater
-        localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+        // Mirror to localStorage on web demo so syncWithFallback can read it back on reload.
+        // No-op on Tauri / network client where SQLite is authoritative.
+        webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
         return updatedSessions;
       });
     } catch (error) {
@@ -163,12 +163,11 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   // Save all sessions (only used for bulk operations like initial creation)
   const saveSessions = async (updatedSessions: GameSession[]) => {
     try {
-      // Save each session individually
       for (const session of updatedSessions) {
         await syncService.saveSession(session);
       }
       setSessions(updatedSessions);
-      localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+      webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
     } catch (error) {
       console.error('Error saving sessions:', error);
       alert(t('sessions.errorSaving'));
@@ -329,10 +328,9 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         // Delete from API
         await syncService.deleteSession(sessionId);
         
-        // Update local state
         const updatedSessions = sessions.filter(session => session.id !== sessionId);
         setSessions(updatedSessions);
-        localStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+        webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
         
         if (selectedSession && selectedSession.id === sessionId) {
           setSelectedSession(null);

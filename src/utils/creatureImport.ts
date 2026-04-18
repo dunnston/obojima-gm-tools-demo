@@ -78,8 +78,21 @@ export function importCreaturesFromJSON(jsonData: any[]): CreatureImportResult {
       }
     });
     
-    localStorage.setItem('importedCreatures', JSON.stringify(newCreatures));
-    result.success = true;
+    // Imported creatures still live in localStorage because getImportedCreatures() is called
+    // synchronously during render. Once the other Bucket A writes are routed through SQLite,
+    // this remaining blob is tiny in practice. A future refactor should move this into the
+    // user-creatures table via syncService.
+    try {
+      localStorage.setItem('importedCreatures', JSON.stringify(newCreatures));
+      result.success = true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn('[creatureImport] localStorage quota exceeded — imported creatures not persisted.');
+        result.errors.push('Storage quota exceeded. Clear old data or reduce import size.');
+      } else {
+        throw error;
+      }
+    }
   }
 
   return result;

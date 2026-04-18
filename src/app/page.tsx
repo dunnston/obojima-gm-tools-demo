@@ -16,12 +16,13 @@ import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
-import VistaEditor from '@/components/VistaEditor';
 import PlayerQuickView from '@/components/PlayerQuickView';
 import LocalSetupPage from './local-setup/page';
 import { NPCProvider } from '@/contexts/NPCContext';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
+import { clearLegacyContentStorageIfHost } from '@/lib/storage/legacyCleanup';
 import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
 
 export default function Home() {
@@ -74,6 +75,13 @@ export default function Home() {
     };
   }, [isHoldingKey]);
 
+  // One-shot: purge legacy content keys from localStorage on Tauri / network client.
+  useEffect(() => {
+    clearLegacyContentStorageIfHost().catch(err => {
+      console.warn('[page] legacy cleanup failed:', err);
+    });
+  }, []);
+
   // Load saved date from settings with sync after component mounts
   useEffect(() => {
     loadCalendarDate();
@@ -100,8 +108,8 @@ export default function Home() {
         setCurrentObojimaDate(validDate);
         setCalendarSyncStatus('idle');
       } else {
-        // Fall back to localStorage for migration
-        const saved = localStorage.getItem('obojima-current-date');
+        // Fall back to localStorage for migration (web demo only)
+        const saved = webDemoOnlyStorage.getItem('obojima-current-date');
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
@@ -126,8 +134,8 @@ export default function Home() {
       console.error('Error loading calendar date:', error);
       setCalendarSyncStatus('error');
 
-      // Fall back to localStorage
-      const saved = localStorage.getItem('obojima-current-date');
+      // Fall back to localStorage (web demo only)
+      const saved = webDemoOnlyStorage.getItem('obojima-current-date');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -162,8 +170,8 @@ export default function Home() {
       console.error('Error syncing calendar date:', error);
     }
 
-    // Always save validated date to localStorage as backup
-    localStorage.setItem('obojima-current-date', JSON.stringify(validDate));
+    // Backup to localStorage on web demo only (host modes already persisted via syncService)
+    webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate));
   };
 
   const renderPage = () => {
@@ -182,8 +190,6 @@ export default function Home() {
         return <QuestLog />;
       case 'encounters':
         return <EncounterCreator />;
-      case 'vista':
-        return <VistaEditor />;
       case 'vending':
         return <VendingMachine />;
       case 'database':

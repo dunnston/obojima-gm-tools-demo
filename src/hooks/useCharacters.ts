@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PlayerCharacter } from '@/data/characters';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 
 function validateCharacter(char: any): PlayerCharacter {
   return {
@@ -44,14 +45,14 @@ export function useCharacters() {
       if (result.success && result.data) {
         setCharacters(result.data.map(validateCharacter));
       } else {
-        const saved = localStorage.getItem('obojima-characters');
+        const saved = webDemoOnlyStorage.getItem('obojima-characters');
         if (saved) {
           setCharacters(JSON.parse(saved).map(validateCharacter));
         }
       }
     } catch {
       try {
-        const saved = localStorage.getItem('obojima-characters');
+        const saved = webDemoOnlyStorage.getItem('obojima-characters');
         if (saved) {
           setCharacters(JSON.parse(saved).map(validateCharacter));
         }
