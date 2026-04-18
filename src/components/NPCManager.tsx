@@ -382,7 +382,17 @@ export default function NPCManager() {
       {/* Edit/Create Form Modal */}
       {showForm && (
         <NPCEditForm
-          npc={editingNPC || { name: '', details: '', tags: [] }}
+          npc={editingNPC || {
+            name: '',
+            details: '',
+            tags: [],
+            size: 'Medium',
+            ability_scores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+            saving_throw_proficiencies: { STR: false, DEX: false, CON: false, INT: false, WIS: false, CHA: false },
+            proficiency_bonus: 2,
+            features: [],
+            actions: [],
+          }}
           onSave={editingNPC ? handleEditNPC : handleAddNPC}
           onCancel={closeForm}
         />

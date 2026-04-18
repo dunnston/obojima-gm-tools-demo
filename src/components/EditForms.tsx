@@ -8,6 +8,20 @@ import { isTauriEnvironment } from '@/lib/storage';
 import { LOCATIONS } from '@/utils/ingredientForaging';
 import { regions } from '@/data/encounters';
 import MentionTextarea from './MentionTextarea';
+import {
+  ABILITIES,
+  type Ability,
+  SIZE_OPTIONS,
+  CREATURE_TYPE_OPTIONS,
+  ALIGNMENT_OPTIONS,
+  DEFAULT_ABILITY_SCORES,
+  DEFAULT_SAVING_THROW_PROFICIENCIES,
+  getAbilityModifier,
+  formatModifier,
+  type NPCFeature,
+  type NPCAction,
+} from '@/data/npcs';
+import { CollapsibleSection, CollapsibleRow } from './CollapsibleList';
 
 interface PotionEditFormProps {
   potion: any;
@@ -1881,7 +1895,15 @@ export function MagicItemEditForm({ magicItem, onSave, onCancel }: MagicItemEdit
 }
 
 export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc: any) => void; onCancel: () => void }) {
-  const [editedNPC, setEditedNPC] = useState(npc);
+  const [editedNPC, setEditedNPC] = useState({
+    ...npc,
+    ability_scores: { ...DEFAULT_ABILITY_SCORES, ...(npc.ability_scores || {}) },
+    saving_throw_proficiencies: {
+      ...DEFAULT_SAVING_THROW_PROFICIENCIES,
+      ...(npc.saving_throw_proficiencies || {}),
+    },
+    proficiency_bonus: npc.proficiency_bonus ?? 2,
+  });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentTagInput, setCurrentTagInput] = useState('');
@@ -1889,6 +1911,77 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(editedNPC);
+  };
+
+  const updateAbilityScore = (ability: Ability, raw: string) => {
+    const parsed = parseInt(raw, 10);
+    const value = Number.isNaN(parsed) ? 0 : parsed;
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      ability_scores: { ...prev.ability_scores, [ability]: value },
+    }));
+  };
+
+  const toggleSavingThrowProficiency = (ability: Ability) => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      saving_throw_proficiencies: {
+        ...prev.saving_throw_proficiencies,
+        [ability]: !prev.saving_throw_proficiencies?.[ability],
+      },
+    }));
+  };
+
+  const savingThrowBonus = (ability: Ability): number => {
+    const mod = getAbilityModifier(editedNPC.ability_scores?.[ability] ?? 10);
+    const prof = editedNPC.saving_throw_proficiencies?.[ability] ? (editedNPC.proficiency_bonus ?? 2) : 0;
+    return mod + prof;
+  };
+
+  const addFeature = () => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      features: [...(prev.features || []), { name: '', description: '' }],
+    }));
+  };
+
+  const updateFeature = (index: number, patch: Partial<NPCFeature>) => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      features: (prev.features || []).map((f: NPCFeature, i: number) =>
+        i === index ? { ...f, ...patch } : f
+      ),
+    }));
+  };
+
+  const removeFeature = (index: number) => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      features: (prev.features || []).filter((_: NPCFeature, i: number) => i !== index),
+    }));
+  };
+
+  const addAction = () => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      actions: [...(prev.actions || []), { name: '', description: '' }],
+    }));
+  };
+
+  const updateAction = (index: number, patch: Partial<NPCAction>) => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      actions: (prev.actions || []).map((a: NPCAction, i: number) =>
+        i === index ? { ...a, ...patch } : a
+      ),
+    }));
+  };
+
+  const removeAction = (index: number) => {
+    setEditedNPC((prev: any) => ({
+      ...prev,
+      actions: (prev.actions || []).filter((_: NPCAction, i: number) => i !== index),
+    }));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2021,6 +2114,39 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Pronouns</label>
+                <input
+                  type="text"
+                  value={editedNPC.pronouns || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, pronouns: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., she/her, they/them"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Race</label>
+                <input
+                  type="text"
+                  value={editedNPC.race || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, race: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., Human, Elf, Dwarf"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Class</label>
+                <input
+                  type="text"
+                  value={editedNPC.class || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, class: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., Fighter, Wizard"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Occupation</label>
                 <input
                   type="text"
@@ -2030,7 +2156,362 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
                   placeholder="e.g., Merchant, Guard, Scholar"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Alignment</label>
+                <select
+                  value={editedNPC.alignment || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, alignment: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                >
+                  <option value="">Select alignment...</option>
+                  {ALIGNMENT_OPTIONS.map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {/* Size / Creature Type */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Size</label>
+                <select
+                  value={editedNPC.size || 'Medium'}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, size: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                >
+                  {SIZE_OPTIONS.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Creature Type</label>
+                <select
+                  value={editedNPC.creature_type || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, creature_type: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                >
+                  <option value="">Select type...</option>
+                  {CREATURE_TYPE_OPTIONS.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Subtype</label>
+                <input
+                  type="text"
+                  value={editedNPC.creature_subtype || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, creature_subtype: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="e.g., Human, Elf"
+                />
+              </div>
+            </div>
+
+            {/* Ability Scores */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-300">Ability Scores</label>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span>Proficiency Bonus</span>
+                  <input
+                    type="number"
+                    value={editedNPC.proficiency_bonus ?? 2}
+                    onChange={(e) => setEditedNPC({ ...editedNPC, proficiency_bonus: parseInt(e.target.value, 10) || 0 })}
+                    className="w-14 px-2 py-1 bg-slate-700/50 border border-slate-600 rounded text-white text-center focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-600 bg-slate-900/40 overflow-hidden">
+                <div className="grid grid-cols-6 divide-x divide-slate-700">
+                  {ABILITIES.map((ability) => {
+                    const score = editedNPC.ability_scores?.[ability] ?? 10;
+                    const mod = getAbilityModifier(score);
+                    return (
+                      <div key={ability} className="flex flex-col items-center py-3 px-1 bg-slate-800/40">
+                        <span className="text-[10px] sm:text-xs font-bold tracking-wider text-amber-400/90 uppercase">{ability}</span>
+                        <span className="text-lg sm:text-xl font-bold text-white mt-1">{formatModifier(mod)}</span>
+                        <input
+                          type="number"
+                          value={score}
+                          onChange={(e) => updateAbilityScore(ability, e.target.value)}
+                          className="w-12 mt-1 px-1 py-0.5 bg-slate-700/60 border border-slate-600 rounded text-white text-center text-sm focus:outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-6 divide-x divide-slate-700 border-t border-slate-700">
+                  {ABILITIES.map((ability) => {
+                    const proficient = !!editedNPC.saving_throw_proficiencies?.[ability];
+                    const bonus = savingThrowBonus(ability);
+                    return (
+                      <button
+                        type="button"
+                        key={`save-${ability}`}
+                        onClick={() => toggleSavingThrowProficiency(ability)}
+                        className="flex items-center justify-center gap-1.5 py-2 bg-slate-800/20 hover:bg-slate-700/40 transition-colors"
+                        title={`${ability} saving throw — ${proficient ? 'proficient' : 'not proficient'}`}
+                      >
+                        <span
+                          className={`w-3 h-3 rounded-full border ${
+                            proficient ? 'bg-amber-400 border-amber-300' : 'border-slate-500 bg-transparent'
+                          }`}
+                        />
+                        <span className="text-sm text-slate-200">{formatModifier(bonus)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Click a dot to toggle saving throw proficiency.</p>
+            </div>
+
+            {/* Physical Description */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Physical Description</label>
+              <textarea
+                value={editedNPC.physical_description || ''}
+                onChange={(e) => setEditedNPC({ ...editedNPC, physical_description: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                placeholder="Appearance, height, build, distinctive features..."
+              />
+            </div>
+
+            {/* Personality Traits */}
+            <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/30 p-4">
+              <h3 className="text-sm font-semibold text-amber-300/90 uppercase tracking-wider">Personality Traits</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Personality</label>
+                <textarea
+                  value={editedNPC.personality || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, personality: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="How they act and speak..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Ideals</label>
+                <textarea
+                  value={editedNPC.ideals || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, ideals: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="What they believe in..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Bonds</label>
+                <textarea
+                  value={editedNPC.bonds || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, bonds: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="Who or what they care about..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Flaws</label>
+                <textarea
+                  value={editedNPC.flaws || ''}
+                  onChange={(e) => setEditedNPC({ ...editedNPC, flaws: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
+                  placeholder="Weaknesses, fears, secrets..."
+                />
+              </div>
+            </div>
+
+            {/* Features */}
+            <CollapsibleSection
+              title="Features"
+              count={editedNPC.features?.length || 0}
+              defaultOpen={(editedNPC.features?.length || 0) > 0}
+              headerAccessory={
+                <button
+                  type="button"
+                  onClick={addFeature}
+                  className="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
+                >
+                  + Add Feature
+                </button>
+              }
+            >
+              {(editedNPC.features?.length || 0) === 0 ? (
+                <p className="text-sm text-slate-500 italic">No features yet.</p>
+              ) : (
+                (editedNPC.features as NPCFeature[]).map((feature, index) => (
+                  <CollapsibleRow
+                    key={index}
+                    defaultOpen={!feature.name}
+                    summary={
+                      <span className="text-white font-medium truncate block">
+                        {feature.name || <span className="text-slate-500 italic">New feature</span>}
+                      </span>
+                    }
+                    rowAccessory={
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(index)}
+                        className="text-slate-400 hover:text-red-400 text-lg leading-none px-2"
+                        title="Remove feature"
+                      >
+                        ×
+                      </button>
+                    }
+                    details={
+                      <div className="space-y-2 pt-2">
+                        <input
+                          type="text"
+                          value={feature.name}
+                          onChange={(e) => updateFeature(index, { name: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:border-emerald-400"
+                          placeholder="Feature name"
+                        />
+                        <textarea
+                          value={feature.description}
+                          onChange={(e) => updateFeature(index, { description: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:border-emerald-400"
+                          placeholder="Description"
+                        />
+                      </div>
+                    }
+                  />
+                ))
+              )}
+            </CollapsibleSection>
+
+            {/* Actions */}
+            <CollapsibleSection
+              title="Actions"
+              count={editedNPC.actions?.length || 0}
+              defaultOpen={(editedNPC.actions?.length || 0) > 0}
+              headerAccessory={
+                <button
+                  type="button"
+                  onClick={addAction}
+                  className="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
+                >
+                  + Add Action
+                </button>
+              }
+            >
+              {(editedNPC.actions?.length || 0) === 0 ? (
+                <p className="text-sm text-slate-500 italic">No actions yet.</p>
+              ) : (
+                (editedNPC.actions as NPCAction[]).map((action, index) => (
+                  <CollapsibleRow
+                    key={index}
+                    defaultOpen={!action.name}
+                    summary={
+                      <span className="text-white font-medium truncate block">
+                        {action.name || <span className="text-slate-500 italic">New action</span>}
+                      </span>
+                    }
+                    rowAccessory={
+                      <button
+                        type="button"
+                        onClick={() => removeAction(index)}
+                        className="text-slate-400 hover:text-red-400 text-lg leading-none px-2"
+                        title="Remove action"
+                      >
+                        ×
+                      </button>
+                    }
+                    details={
+                      <div className="space-y-2 pt-2">
+                        <input
+                          type="text"
+                          value={action.name}
+                          onChange={(e) => updateAction(index, { name: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:border-emerald-400"
+                          placeholder="Action name"
+                        />
+                        <textarea
+                          value={action.description}
+                          onChange={(e) => updateAction(index, { description: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:border-emerald-400"
+                          placeholder="Description"
+                        />
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Attack Bonus</label>
+                            <input
+                              type="number"
+                              value={action.attack_bonus ?? ''}
+                              onChange={(e) =>
+                                updateAction(index, {
+                                  attack_bonus: e.target.value === '' ? undefined : parseInt(e.target.value, 10),
+                                })
+                              }
+                              className="w-full px-2 py-1.5 bg-slate-700/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                              placeholder="+5"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Damage</label>
+                            <input
+                              type="text"
+                              value={action.damage_dice || ''}
+                              onChange={(e) => updateAction(index, { damage_dice: e.target.value })}
+                              className="w-full px-2 py-1.5 bg-slate-700/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                              placeholder="1d8 + 3"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Damage Type</label>
+                            <input
+                              type="text"
+                              value={action.damage_type || ''}
+                              onChange={(e) => updateAction(index, { damage_type: e.target.value })}
+                              className="w-full px-2 py-1.5 bg-slate-700/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                              placeholder="piercing"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Range</label>
+                            <input
+                              type="text"
+                              value={action.range || ''}
+                              onChange={(e) => updateAction(index, { range: e.target.value })}
+                              className="w-full px-2 py-1.5 bg-slate-700/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                              placeholder="5 ft."
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Spell Save DC</label>
+                          <input
+                            type="number"
+                            value={action.spell_save_dc ?? ''}
+                            onChange={(e) =>
+                              updateAction(index, {
+                                spell_save_dc: e.target.value === '' ? undefined : parseInt(e.target.value, 10),
+                              })
+                            }
+                            className="w-28 px-2 py-1.5 bg-slate-700/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
+                            placeholder="15"
+                          />
+                        </div>
+                      </div>
+                    }
+                  />
+                ))
+              )}
+            </CollapsibleSection>
 
             {/* Location */}
             <div>
@@ -2052,7 +2533,7 @@ export function NPCEditForm({ npc, onSave, onCancel }: { npc: any; onSave: (npc:
                 onChange={(e) => setEditedNPC({ ...editedNPC, details: e.target.value })}
                 rows={4}
                 className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-400"
-                placeholder="Description, personality, backstory, notes..."
+                placeholder="Description, backstory, notes..."
                 required
               />
             </div>
