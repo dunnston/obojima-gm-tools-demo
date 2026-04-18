@@ -7,7 +7,8 @@ import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
 import { ObojimaDate, formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
 import { syncService } from '@/services/sync';
-import { 
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
+import {
   PlusIcon, 
   PlayIcon, 
   PauseIcon,
@@ -147,7 +148,11 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       await syncService.saveSession(session);
       setSessions(prev => {
         const filtered = prev.filter(s => s.id !== session.id);
-        return [...filtered, session];
+        const updatedSessions = [...filtered, session];
+        // Mirror to localStorage on web demo so syncWithFallback can read it back on reload.
+        // No-op on Tauri / network client where SQLite is authoritative.
+        webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
+        return updatedSessions;
       });
     } catch (error) {
       console.error('Error saving session:', error);
@@ -162,6 +167,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         await syncService.saveSession(session);
       }
       setSessions(updatedSessions);
+      webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
     } catch (error) {
       console.error('Error saving sessions:', error);
       alert(t('sessions.errorSaving'));
@@ -324,6 +330,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
         
         const updatedSessions = sessions.filter(session => session.id !== sessionId);
         setSessions(updatedSessions);
+        webDemoOnlyStorage.setItem('obojima-sessions', JSON.stringify(updatedSessions));
         
         if (selectedSession && selectedSession.id === sessionId) {
           setSelectedSession(null);

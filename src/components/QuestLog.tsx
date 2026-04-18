@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Quest, QuestStatus } from '@/data/quests';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import QuestForm from './QuestForm';
 import MentionText from './MentionText';
@@ -51,6 +52,7 @@ export default function QuestLog() {
 
       const updatedQuests = quests.filter(q => q.id !== questId);
       setQuests(updatedQuests);
+      webDemoOnlyStorage.setItem('obojima-quests', JSON.stringify(updatedQuests));
 
       await loadQuests();
     } catch (error) {

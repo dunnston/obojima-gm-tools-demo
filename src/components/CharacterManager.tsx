@@ -154,6 +154,9 @@ export default function CharacterManager() {
   const saveCharacters = async (updatedCharacters: PlayerCharacter[]) => {
     try {
       setCharacters(updatedCharacters);
+      // Mirror to localStorage on web demo so syncWithFallback can read it back.
+      // No-op on Tauri / network client where SQLite is authoritative.
+      webDemoOnlyStorage.setItem('obojima-characters', JSON.stringify(updatedCharacters));
 
       for (const character of updatedCharacters) {
         await syncService.saveCharacter(character);

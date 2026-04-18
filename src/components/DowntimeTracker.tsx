@@ -16,6 +16,7 @@ import {
 import { PlayerCharacter } from '@/data/characters';
 import { ObojimaDate, formatObojimaDate, obojimaDateToJSDate } from '@/data/obojimaCalendar';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import {
   CalendarDaysIcon,
   UserGroupIcon,
@@ -123,9 +124,12 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
 
       setActivities(prev => {
         const updatedActivities = prev.map(a => a.id === activity.id ? activity : a);
-        return updatedActivities.some(a => a.id === activity.id)
+        const finalActivities = updatedActivities.some(a => a.id === activity.id)
           ? updatedActivities
           : [...prev, activity];
+        // Mirror to localStorage on web demo (no-op on Tauri / network client).
+        webDemoOnlyStorage.setItem('obojima-downtime-activities', JSON.stringify(finalActivities));
+        return finalActivities;
       });
     } catch (error) {
       console.error('Error saving downtime activity:', error);
@@ -141,6 +145,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
       }
 
       setActivities(updatedActivities);
+      webDemoOnlyStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
     } catch (error) {
       console.error('Error saving downtime activities:', error);
       alert(t('downtime.errorSaving'));
@@ -179,6 +184,7 @@ export default function DowntimeTracker({ currentObojimaDate }: DowntimeTrackerP
 
         const updatedActivities = activities.filter(activity => activity.id !== activityId);
         setActivities(updatedActivities);
+        webDemoOnlyStorage.setItem('obojima-downtime-activities', JSON.stringify(updatedActivities));
 
         setSelectedActivity(null);
       } catch (error) {

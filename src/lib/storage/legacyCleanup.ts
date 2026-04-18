@@ -1,43 +1,43 @@
 import { isTauriEnvironment, isNetworkClient, getStorageAdapter } from './index';
 
-// Keys that previously held content data in localStorage. On Tauri, SQLite is authoritative.
-// On network clients, the host's SQLite is authoritative. Clearing these reclaims quota and
-// prevents stale per-device copies from leaking into the UI via legacy fallback reads.
-const LEGACY_CONTENT_KEYS = [
-  'obojima-sessions',
-  'obojima-characters',
-  'obojima-downtime-activities',
-  'obojima-quests',
-  'obojima-locations',
-  'obojima-npcs',
-  'obojima-encounters',
-  'modifiedPotions',
-  'modifiedIngredients',
-  'modifiedCreatures',
-  'modifiedMagicItems',
-  'modifiedNPCs',
-  'modifiedCompanionTypes',
-  'modifiedCompanions',
-] as const;
+// Legacy localStorage keys → the SQLite table name that supersedes them.
+// Purging a key is safe only once its table is populated (meaning sync has written
+// that data type at least once). If a table is empty, the key may still hold
+// pre-migration data and must be preserved.
+const LEGACY_KEY_TO_TABLE: Record<string, string> = {
+  'obojima-sessions': 'sessions',
+  'obojima-characters': 'characters',
+  'obojima-downtime-activities': 'downtime_activities',
+  'obojima-quests': 'quests',
+  'obojima-locations': 'locations',
+  'obojima-npcs': 'npcs',
+  'obojima-encounters': 'encounters',
+  'modifiedPotions': 'user_potions',
+  'modifiedIngredients': 'user_ingredients',
+  'modifiedCreatures': 'user_creatures',
+  'modifiedMagicItems': 'user_magic_items',
+  'modifiedNPCs': 'npcs',
+  'modifiedCompanionTypes': 'user_companion_types',
+  'modifiedCompanions': 'companions',
+};
 
-// Sentinel so we only run this once per install.
-const CLEANUP_MARKER_KEY = 'obojima-legacy-localstorage-cleared-v2';
-
-// Tables we'll probe to decide if SQLite already has this user's data.
-// If any of these contains rows, we consider the user already migrated.
-const SAFETY_PROBE_TABLES = ['characters', 'sessions', 'npcs', 'downtime_activities'] as const;
+// Sentinel bumped whenever cleanup semantics change. Cleared ONLY when every
+// present legacy key has been purged OR proven orphaned — otherwise we retry
+// on the next launch so keys whose SQLite tables later receive data can get
+// cleaned up in the future.
+const CLEANUP_MARKER_KEY = 'obojima-legacy-localstorage-cleared-v3';
 
 // Clears legacy content-data keys out of localStorage on Tauri desktop and network clients.
 //
-// Safety: on Tauri, we first probe SQLite for any existing content. If SQLite is completely
-// empty AND localStorage has legacy content keys, we refuse to purge — that would silently
-// delete a legacy user's only copy of their data. We do not set the marker in that case, so
-// we'll retry on the next launch (by which point SQLite may be populated via sync).
+// Per-key safety: each legacy key is purged only if its corresponding SQLite table has rows.
+// A key whose table is empty is left in place — it may hold pre-migration data that the
+// app has not yet re-ingested. Over time, as the app writes to each table via syncService,
+// subsequent launches will clear the corresponding keys.
 //
 // On network clients, any localStorage content is per-device noise — the host's SQLite is
-// authoritative. We skip the probe and purge directly.
+// authoritative. We skip the per-key probe and purge everything directly.
 //
-// A one-shot op (marker-gated). Safe no-op on the web demo.
+// Safe no-op on the web demo.
 export async function clearLegacyContentStorageIfHost(): Promise<void> {
   if (typeof window === 'undefined') return;
   if (!isTauriEnvironment() && !isNetworkClient()) return;
@@ -45,46 +45,63 @@ export async function clearLegacyContentStorageIfHost(): Promise<void> {
   try {
     if (localStorage.getItem(CLEANUP_MARKER_KEY)) return;
 
-    const hasLegacyLocal = LEGACY_CONTENT_KEYS.some(k => localStorage.getItem(k) !== null);
-
-    // Tauri-only safety check: verify SQLite has data before wiping localStorage.
-    if (isTauriEnvironment() && hasLegacyLocal) {
-      try {
-        const adapter = getStorageAdapter();
-        let sqliteHasData = false;
-        for (const table of SAFETY_PROBE_TABLES) {
-          const rows = await adapter.getAll(table);
-          if (rows && rows.length > 0) {
-            sqliteHasData = true;
-            break;
-          }
+    // Network client: its localStorage content is per-device noise. Purge all.
+    if (isNetworkClient()) {
+      let cleared = 0;
+      for (const key of Object.keys(LEGACY_KEY_TO_TABLE)) {
+        if (localStorage.getItem(key) !== null) {
+          localStorage.removeItem(key);
+          cleared++;
         }
-        if (!sqliteHasData) {
-          console.warn(
-            '[legacyCleanup] SQLite appears empty but localStorage has legacy content. ' +
-            'Refusing to purge — the user may not yet be migrated. Will retry on next launch.'
-          );
-          return;
-        }
-      } catch (probeError) {
-        // If we can't probe SQLite, be conservative and don't purge.
-        console.warn('[legacyCleanup] SQLite probe failed; skipping cleanup:', probeError);
-        return;
       }
+      localStorage.setItem(CLEANUP_MARKER_KEY, new Date().toISOString());
+      if (cleared > 0) {
+        console.log(`[legacyCleanup] Cleared ${cleared} legacy localStorage key(s) on network client.`);
+      }
+      return;
     }
 
+    // Tauri: per-key probe. Only purge a key if its SQLite table has rows.
+    const adapter = getStorageAdapter();
     let cleared = 0;
-    for (const key of LEGACY_CONTENT_KEYS) {
-      if (localStorage.getItem(key) !== null) {
+    let preserved = 0;
+    const tableCache = new Map<string, boolean>();
+
+    for (const [key, table] of Object.entries(LEGACY_KEY_TO_TABLE)) {
+      if (localStorage.getItem(key) === null) continue;
+
+      let tableHasData = tableCache.get(table);
+      if (tableHasData === undefined) {
+        try {
+          const rows = await adapter.getAll(table);
+          tableHasData = Array.isArray(rows) && rows.length > 0;
+        } catch (error) {
+          console.warn(`[legacyCleanup] Probe failed for table "${table}":`, error);
+          tableHasData = false;
+        }
+        tableCache.set(table, tableHasData);
+      }
+
+      if (tableHasData) {
         localStorage.removeItem(key);
         cleared++;
+      } else {
+        preserved++;
       }
     }
 
-    localStorage.setItem(CLEANUP_MARKER_KEY, new Date().toISOString());
+    // Only mark complete if we didn't preserve any keys. If we preserved some,
+    // they represent potentially-unmigrated data — retry on next launch in case
+    // their tables get populated later.
+    if (preserved === 0) {
+      localStorage.setItem(CLEANUP_MARKER_KEY, new Date().toISOString());
+    }
 
-    if (cleared > 0) {
-      console.log(`[legacyCleanup] Cleared ${cleared} legacy localStorage key(s). SQLite is authoritative.`);
+    if (cleared > 0 || preserved > 0) {
+      console.log(
+        `[legacyCleanup] Tauri cleanup: cleared=${cleared}, preserved=${preserved} ` +
+        `(preserved keys have empty SQLite tables and may hold unmigrated data).`
+      );
     }
   } catch (error) {
     // Never block app startup on this.
