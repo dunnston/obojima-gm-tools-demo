@@ -1066,12 +1066,16 @@ function VendingMachineSettings({ settings, onUpdate }: VendingMachineSettingsPr
   const [customPotions, setCustomPotions] = useState<any[]>([]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('modifiedPotions');
-      if (saved) setCustomPotions(JSON.parse(saved));
-    } catch (error) {
-      console.error('Error loading custom potions:', error);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await syncService.syncWithFallback('user-potions', 'modifiedPotions');
+        if (!cancelled && Array.isArray(data)) setCustomPotions(data);
+      } catch (error) {
+        console.error('Error loading custom potions:', error);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const allPotions = [...combatPotions, ...utilityPotions, ...whimsyPotions, ...customPotions];

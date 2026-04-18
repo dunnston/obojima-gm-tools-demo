@@ -16,13 +16,14 @@ import QuestLog from '@/components/QuestLog';
 import Credits from '@/components/Credits';
 import DowntimeTracker from '@/components/DowntimeTracker';
 import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
-import VistaEditor from '@/components/VistaEditor';
 import PlayerQuickView from '@/components/PlayerQuickView';
 import LocalSetupPage from './local-setup/page';
 import { NPCProvider } from '@/contexts/NPCContext';
 import { CalendarConfigProvider, useCalendarConfig } from '@/contexts/CalendarConfigContext';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
+import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
+import { clearLegacyContentStorageIfHost } from '@/lib/storage/legacyCleanup';
 import { ObojimaDate, createObojimaDate, safeObojimaDate, DEFAULT_CALENDAR_CONFIG, CalendarConfig } from '@/data/obojimaCalendar';
 import { isValidCalendarConfig } from '@/data/settings';
 import { isSameObojimaDate } from '@/data/calendarEvents';
@@ -87,6 +88,13 @@ function HomeContent() {
     };
   }, [isHoldingKey]);
 
+  // One-shot: purge legacy content keys from localStorage on Tauri / network client.
+  useEffect(() => {
+    clearLegacyContentStorageIfHost().catch(err => {
+      console.warn('[page] legacy cleanup failed:', err);
+    });
+  }, []);
+
   // Load saved date from settings with sync after component mounts
   useEffect(() => {
     loadCalendarDate();
@@ -136,11 +144,11 @@ function HomeContent() {
         setCurrentObojimaDate(validDate);
         // Mirror to localStorage so the raw stored value stays in sync with
         // what we actually render (important when coercion rewrote it).
-        try { localStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
+        try { webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
         setCalendarSyncStatus('idle');
       } else {
-        // Fall back to localStorage for migration
-        const saved = localStorage.getItem('obojima-current-date');
+        // Fall back to localStorage for migration (web demo only)
+        const saved = webDemoOnlyStorage.getItem('obojima-current-date');
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
@@ -148,7 +156,7 @@ function HomeContent() {
             setCurrentObojimaDate(validDate);
 
             // Persist the coerced value so localStorage reflects what we render.
-            try { localStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
+            try { webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
 
             // Migrate validated date to sync
             await syncService.saveSetting('currentObojimaDate', validDate);
@@ -165,8 +173,8 @@ function HomeContent() {
       console.error('Error loading calendar date:', error);
       setCalendarSyncStatus('error');
 
-      // Fall back to localStorage
-      const saved = localStorage.getItem('obojima-current-date');
+      // Fall back to localStorage (web demo only)
+      const saved = webDemoOnlyStorage.getItem('obojima-current-date');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -206,14 +214,16 @@ function HomeContent() {
     const validDate = safeObojimaDate(newDate, currentObojimaDate, calendarConfig);
     setCurrentObojimaDate(validDate);
 
-    // Persist to localStorage synchronously. This is the reliable fallback.
+    // Persist synchronously BEFORE the sync call so a hanging or silently-
+    // failing sync can't lose the write. webDemoOnlyStorage is a no-op on
+    // Tauri / network client where the SyncService + SQLite are authoritative.
     try {
-      localStorage.setItem('obojima-current-date', JSON.stringify(validDate));
+      webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate));
     } catch (error) {
       console.error('Failed to persist calendar date to localStorage:', error);
     }
 
-    // Best-effort sync. If this fails or hangs, localStorage still has the value.
+    // Best-effort sync. If this fails or hangs, web demo still has the localStorage copy.
     try {
       const result = await syncService.saveSetting('currentObojimaDate', validDate);
       if (!result.success) {
@@ -233,8 +243,9 @@ function HomeContent() {
       if (isSameObojimaDate(prev, coerced)) return prev;
 
       // The date changed — persist the new shape so future loads are consistent.
+      // webDemoOnlyStorage is a no-op on Tauri / network client.
       try {
-        localStorage.setItem('obojima-current-date', JSON.stringify(coerced));
+        webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(coerced));
       } catch {
         /* non-fatal */
       }
@@ -262,8 +273,6 @@ function HomeContent() {
         return <QuestLog />;
       case 'encounters':
         return <EncounterCreator />;
-      case 'vista':
-        return <VistaEditor />;
       case 'vending':
         return <VendingMachine />;
       case 'database':
