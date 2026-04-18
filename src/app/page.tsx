@@ -19,13 +19,20 @@ import EnhancedObojimaCalendar from '@/components/EnhancedObojimaCalendar';
 import PlayerQuickView from '@/components/PlayerQuickView';
 import LocalSetupPage from './local-setup/page';
 import { NPCProvider } from '@/contexts/NPCContext';
+import { CalendarConfigProvider, useCalendarConfig } from '@/contexts/CalendarConfigContext';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { syncService } from '@/services/sync';
 import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import { clearLegacyContentStorageIfHost } from '@/lib/storage/legacyCleanup';
-import { ObojimaDate, createObojimaDate, safeObojimaDate } from '@/data/obojimaCalendar';
+import { ObojimaDate, createObojimaDate, safeObojimaDate, DEFAULT_CALENDAR_CONFIG, CalendarConfig } from '@/data/obojimaCalendar';
+import { isValidCalendarConfig } from '@/data/settings';
+import { isSameObojimaDate } from '@/data/calendarEvents';
 
-export default function Home() {
+// The actual page body. Must live inside CalendarConfigProvider so it can
+// call useCalendarConfig() — which is how we re-coerce the stored date
+// whenever the GM changes the calendar configuration.
+function HomeContent() {
+  const calendarConfig = useCalendarConfig();
   const [currentPage, setCurrentPage] = useState('potions');
 
   /**
@@ -35,8 +42,14 @@ export default function Home() {
    * Fallback behavior: Invalid dates are replaced with a safe default
    * and warnings are logged in development mode.
    */
-  const [currentObojimaDate, setCurrentObojimaDate] = useState<ObojimaDate>(
-    createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+  const [currentObojimaDate, setCurrentObojimaDate] = useState<ObojimaDate>(() =>
+    createObojimaDate(
+      1,
+      calendarConfig.seasons[0]?.id ?? 'Spring',
+      calendarConfig.phases[0]?.id ?? 'New Moon',
+      1,
+      1,
+    )
   );
   const [calendarSyncStatus, setCalendarSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const [showQuickStats, setShowQuickStats] = useState(false);
@@ -95,17 +108,43 @@ export default function Home() {
     return () => clearInterval(syncInterval);
   }, []);
 
+  // Resolve the active calendar config. Prefer sync (authoritative when
+  // available), fall back to localStorage (needed in demo/web-dev mode
+  // where sync.saveSetting is a no-op). Default config only if neither
+  // source has a valid value. Must happen before safeObojimaDate so stored
+  // dates aren't coerced against the wrong config.
+  const resolveConfig = (settingsData: unknown): CalendarConfig => {
+    const fromSync = (settingsData as { calendarConfig?: unknown })?.calendarConfig;
+    if (isValidCalendarConfig(fromSync)) return fromSync;
+    try {
+      const raw = localStorage.getItem('appSettings');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (isValidCalendarConfig(parsed?.calendarConfig)) return parsed.calendarConfig;
+      }
+    } catch {
+      // fall through
+    }
+    return DEFAULT_CALENDAR_CONFIG;
+  };
+
   const loadCalendarDate = async () => {
     setCalendarSyncStatus('syncing');
     try {
       const result = await syncService.getSettings();
+      const activeConfig = resolveConfig(result.data);
+      const defaultDate = createObojimaDate(1, activeConfig.seasons[0]?.id ?? 'Spring', activeConfig.phases[0]?.id ?? 'New Moon', 1, 1);
       if (result.success && result.data && result.data.currentObojimaDate) {
-        // Use type guard to validate server data
+        // Validate against the active config — critical for custom-config users.
         const validDate = safeObojimaDate(
           result.data.currentObojimaDate,
-          createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
+          defaultDate,
+          activeConfig,
         );
         setCurrentObojimaDate(validDate);
+        // Mirror to localStorage so the raw stored value stays in sync with
+        // what we actually render (important when coercion rewrote it).
+        try { webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
         setCalendarSyncStatus('idle');
       } else {
         // Fall back to localStorage for migration (web demo only)
@@ -113,11 +152,11 @@ export default function Home() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            const validDate = safeObojimaDate(
-              parsed,
-              createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
-            );
+            const validDate = safeObojimaDate(parsed, defaultDate, activeConfig);
             setCurrentObojimaDate(validDate);
+
+            // Persist the coerced value so localStorage reflects what we render.
+            try { webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate)); } catch {}
 
             // Migrate validated date to sync
             await syncService.saveSetting('currentObojimaDate', validDate);
@@ -139,10 +178,23 @@ export default function Home() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          const validDate = safeObojimaDate(
-            parsed,
-            createObojimaDate(1, 'Spring', 'New Moon', 1, 1)
-          );
+          // Best-effort: the sync fetch failed, so we don't know the active
+          // config. Read it from localStorage directly to avoid coercing
+          // against the wrong config.
+          let activeConfig: CalendarConfig = DEFAULT_CALENDAR_CONFIG;
+          try {
+            const appSettings = localStorage.getItem('appSettings');
+            if (appSettings) {
+              const parsedSettings = JSON.parse(appSettings);
+              if (isValidCalendarConfig(parsedSettings.calendarConfig)) {
+                activeConfig = parsedSettings.calendarConfig;
+              }
+            }
+          } catch {
+            // Keep default config
+          }
+          const defaultDate = createObojimaDate(1, activeConfig.seasons[0]?.id ?? 'Spring', activeConfig.phases[0]?.id ?? 'New Moon', 1, 1);
+          const validDate = safeObojimaDate(parsed, defaultDate, activeConfig);
           setCurrentObojimaDate(validDate);
         } catch {
           // Keep current default value if localStorage is corrupted
@@ -152,27 +204,58 @@ export default function Home() {
   };
 
   /**
-   * Save Obojima date to settings with sync when it changes
-   * Validates incoming date and ensures type safety
+   * Save Obojima date to settings with sync when it changes.
+   * Persists to localStorage FIRST (synchronous, can't be lost to a hanging
+   * or silently-failing sync), then fires sync as a best-effort update.
    */
-  const handleObojimaDateChange = async (newDate: ObojimaDate, skipEventIds?: string[]) => {
-    // Validate the incoming date using type guard
-    const validDate = safeObojimaDate(newDate, currentObojimaDate);
+  const handleObojimaDateChange = async (newDate: ObojimaDate, _skipEventIds?: string[]) => {
+    // Validate the incoming date against the active config. A valid date
+    // returns unchanged; otherwise coerce to the nearest valid value.
+    const validDate = safeObojimaDate(newDate, currentObojimaDate, calendarConfig);
     setCurrentObojimaDate(validDate);
 
+    // Persist synchronously BEFORE the sync call so a hanging or silently-
+    // failing sync can't lose the write. webDemoOnlyStorage is a no-op on
+    // Tauri / network client where the SyncService + SQLite are authoritative.
+    try {
+      webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate));
+    } catch (error) {
+      console.error('Failed to persist calendar date to localStorage:', error);
+    }
+
+    // Best-effort sync. If this fails or hangs, web demo still has the localStorage copy.
     try {
       const result = await syncService.saveSetting('currentObojimaDate', validDate);
-
       if (!result.success) {
         console.warn('Calendar date saved locally but sync failed');
       }
     } catch (error) {
       console.error('Error syncing calendar date:', error);
     }
-
-    // Backup to localStorage on web demo only (host modes already persisted via syncService)
-    webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(validDate));
   };
+
+  // Re-coerce the stored current date whenever the calendar config changes.
+  // Without this, stored ids from a previous config (e.g. "Spring", "New Moon")
+  // would render as fallback text when the GM switches to a new calendar.
+  useEffect(() => {
+    setCurrentObojimaDate(prev => {
+      const coerced = safeObojimaDate(prev, prev, calendarConfig);
+      if (isSameObojimaDate(prev, coerced)) return prev;
+
+      // The date changed — persist the new shape so future loads are consistent.
+      // webDemoOnlyStorage is a no-op on Tauri / network client.
+      try {
+        webDemoOnlyStorage.setItem('obojima-current-date', JSON.stringify(coerced));
+      } catch {
+        /* non-fatal */
+      }
+      // Fire-and-forget; the UI is already correct via setCurrentObojimaDate.
+      syncService.saveSetting('currentObojimaDate', coerced).catch(err =>
+        console.warn('Failed to sync coerced date after config change:', err),
+      );
+      return coerced;
+    });
+  }, [calendarConfig]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -253,5 +336,14 @@ export default function Home() {
         />
       </div>
     </NPCProvider>
+  );
+}
+
+// Provider wrapper. HomeContent lives inside so it can call useCalendarConfig().
+export default function Home() {
+  return (
+    <CalendarConfigProvider>
+      <HomeContent />
+    </CalendarConfigProvider>
   );
 }

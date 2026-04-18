@@ -1,29 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  CalendarEvent, 
+import {
+  CalendarEvent,
   getEventsForDate,
   isSameObojimaDate,
-  formatEventDate
 } from '@/data/calendarEvents';
-import { 
-  ObojimaDate, 
-  SEASONS,
-  MOON_PHASES,
-  formatObojimaDate,
-  addDaysToObojimaDate,
-  subtractDaysFromObojimaDate
-} from '@/data/obojimaCalendar';
 import {
-  CalendarDaysIcon,
+  ObojimaDate,
+  resolvePhase,
+  resolveSeason,
+  formatObojimaDate,
+} from '@/data/obojimaCalendar';
+import { useCalendarConfigReady } from '@/contexts/CalendarConfigContext';
+import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
   EyeIcon,
   EyeSlashIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 interface CalendarGridViewProps {
@@ -46,107 +43,69 @@ export default function CalendarGridView({
   onToggleDmOnly
 }: CalendarGridViewProps) {
   const { t } = useTranslation();
+  const { config, isLoaded } = useCalendarConfigReady();
   const [viewDate, setViewDate] = useState<ObojimaDate>(currentDate);
 
-  // Generate calendar days for the current season/cycle
-  const generateCalendarDays = () => {
-    const days: Array<{
-      date: ObojimaDate;
-      isCurrentDate: boolean;
-      events: CalendarEvent[];
-    }> = [];
+  // Defer rendering the grid until the active config is known — otherwise
+  // a GM with a custom calendar would see a flash of the default 4×3 grid
+  // before it snaps to their custom layout.
+  if (!isLoaded) {
+    return (
+      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center text-slate-400">
+        Loading calendar…
+      </div>
+    );
+  }
 
-    // Get current phase index and cycle
-    const currentPhaseIndex = MOON_PHASES.findIndex(p => p.name === viewDate.phase);
-    const currentCycle = viewDate.cycle;
-
-    // Generate all days for the current season
-    for (let cycle = 1; cycle <= 3; cycle++) {
-      for (let phaseIndex = 0; phaseIndex < MOON_PHASES.length; phaseIndex++) {
-        const phase = MOON_PHASES[phaseIndex];
-        for (let day = 1; day <= phase.days; day++) {
-          const date: ObojimaDate = {
-            year: viewDate.year,
-            season: viewDate.season,
-            cycle: cycle,
-            phase: phase.name,
-            day: day
-          };
-
-          const dateEvents = getEventsForDate(events, date, showDmOnly);
-          const isCurrentDate = isSameObojimaDate(date, currentDate);
-
-          days.push({
-            date,
-            isCurrentDate,
-            events: dateEvents
-          });
-        }
-      }
-    }
-
-    return days;
-  };
-
-  const calendarDays = generateCalendarDays();
+  // Cycles shown for the viewed season (per-season cycle count).
+  const viewSeason = resolveSeason(viewDate.season, config) ?? config.seasons[0];
+  const cyclesInView = viewSeason?.cycles ?? 1;
 
   const handlePreviousSeason = () => {
-    const seasons = SEASONS.map(s => s.name);
-    const currentSeasonIndex = seasons.indexOf(viewDate.season);
-    
+    const seasonIds = config.seasons.map(s => s.id);
+    const currentSeasonIndex = seasonIds.indexOf(viewDate.season);
+
     if (currentSeasonIndex > 0) {
       setViewDate({
         ...viewDate,
-        season: seasons[currentSeasonIndex - 1] as any
+        season: seasonIds[currentSeasonIndex - 1],
       });
     } else {
-      // Go to previous year
+      // Wrap to last season of previous year.
       setViewDate({
         ...viewDate,
         year: viewDate.year - 1,
-        season: 'Winter'
+        season: seasonIds[seasonIds.length - 1],
       });
     }
   };
 
   const handleNextSeason = () => {
-    const seasons = SEASONS.map(s => s.name);
-    const currentSeasonIndex = seasons.indexOf(viewDate.season);
-    
-    if (currentSeasonIndex < seasons.length - 1) {
+    const seasonIds = config.seasons.map(s => s.id);
+    const currentSeasonIndex = seasonIds.indexOf(viewDate.season);
+
+    if (currentSeasonIndex < seasonIds.length - 1) {
       setViewDate({
         ...viewDate,
-        season: seasons[currentSeasonIndex + 1] as any
+        season: seasonIds[currentSeasonIndex + 1],
       });
     } else {
-      // Go to next year
+      // Wrap to first season of next year.
       setViewDate({
         ...viewDate,
         year: viewDate.year + 1,
-        season: 'Spring'
+        season: seasonIds[0],
       });
     }
   };
 
-  const getMoonPhaseEmoji = (phase: string) => {
-    switch (phase) {
-      case 'New Moon': return '🌑';
-      case 'Waxing Moon': return '🌓';
-      case 'Full Moon': return '🌕';
-      case 'Waning Moon': return '🌗';
-      default: return '🌙';
-    }
-  };
+  const getMoonPhaseEmoji = (phase: string) =>
+    resolvePhase(phase, config)?.emoji ?? '🌙';
 
-  const getSeasonEmoji = (season: string) => {
-    switch (season) {
-      case 'Spring': return '🌸';
-      case 'Summer': return '☀️';
-      case 'Autumn': return '🍂';
-      case 'Winter': return '❄️';
-      default: return '📅';
-    }
-  };
+  const getSeasonEmoji = (season: string) =>
+    resolveSeason(season, config)?.emoji ?? '📅';
+
+  const viewSeasonName = viewSeason?.name ?? viewDate.season;
 
   return (
     <div className="space-y-6">
@@ -162,7 +121,7 @@ export default function CalendarGridView({
           
           <div className="text-center">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              {getSeasonEmoji(viewDate.season)} {viewDate.season} {viewDate.year}
+              {getSeasonEmoji(viewDate.season)} {viewSeasonName} {viewDate.year}
             </h2>
             <p className="text-sm text-slate-400">
               {t('calendar.title')} - {t('calendar.currentDate')}: {formatObojimaDate(currentDate)}
@@ -206,38 +165,46 @@ export default function CalendarGridView({
       {/* Calendar Grid */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
         {/* Cycle Headers */}
-        <div className="grid grid-cols-3 bg-slate-700/50">
-          {[1, 2, 3].map(cycle => (
+        <div
+          className="bg-slate-700/50"
+          style={{ display: 'grid', gridTemplateColumns: `repeat(${cyclesInView}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: cyclesInView }, (_, i) => i + 1).map(cycle => (
             <div key={cycle} className="p-3 text-center border-r border-slate-600 last:border-r-0">
               <h3 className="font-semibold text-white">
-                {t(`sessions.form.${cycle === 1 ? 'firstCycle' : cycle === 2 ? 'secondCycle' : 'thirdCycle'}`)} Cycle
+                {cycleLabel(t, cycle)} Cycle
               </h3>
             </div>
           ))}
         </div>
 
         {/* Moon Phase Rows */}
-        {MOON_PHASES.map((phase, phaseIndex) => (
-          <div key={phase.name} className="border-t border-slate-600">
+        {config.phases.map((phase) => (
+          <div key={phase.id} className="border-t border-slate-600">
             {/* Phase Header */}
             <div className="bg-slate-700/30 p-2 border-b border-slate-600">
               <h4 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                {getMoonPhaseEmoji(phase.name)} {phase.name} ({phase.days} days)
+                {getMoonPhaseEmoji(phase.id)} {phase.name} ({phase.days} days)
               </h4>
             </div>
 
             {/* Days Grid */}
-            <div className="grid grid-cols-3">
-              {[1, 2, 3].map(cycle => (
-                <div key={`${phase.name}-${cycle}`} className="border-r border-slate-600 last:border-r-0">
-                  <div className="grid grid-cols-4 min-h-[120px]">
+            <div
+              style={{ display: 'grid', gridTemplateColumns: `repeat(${cyclesInView}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: cyclesInView }, (_, i) => i + 1).map(cycle => (
+                <div key={`${phase.id}-${cycle}`} className="border-r border-slate-600 last:border-r-0">
+                  <div
+                    className="min-h-[120px]"
+                    style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, phase.days)}, minmax(0, 1fr))` }}
+                  >
                     {Array.from({ length: phase.days }, (_, dayIndex) => {
                       const day = dayIndex + 1;
                       const date: ObojimaDate = {
                         year: viewDate.year,
                         season: viewDate.season,
                         cycle: cycle,
-                        phase: phase.name,
+                        phase: phase.id,
                         day: day
                       };
 
@@ -247,7 +214,7 @@ export default function CalendarGridView({
 
                       return (
                         <div
-                          key={`${cycle}-${phase.name}-${day}`}
+                          key={`${cycle}-${phase.id}-${day}`}
                           onClick={() => onDateSelect(date)}
                           className={`relative p-2 border-r border-b border-slate-600 cursor-pointer hover:bg-slate-700/30 transition-colors min-h-[60px] ${
                             isCurrentDate ? 'bg-blue-500/20 border-blue-400' : ''
@@ -313,6 +280,13 @@ export default function CalendarGridView({
         ))}
       </div>
 
+      {/* Cycle count hint for custom configs */}
+      {cyclesInView !== 3 && (
+        <p className="text-xs text-slate-500">
+          {viewSeasonName} has {cyclesInView} cycle{cyclesInView === 1 ? '' : 's'} in this calendar.
+        </p>
+      )}
+
       {/* Legend */}
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
@@ -330,4 +304,20 @@ export default function CalendarGridView({
       </div>
     </div>
   );
+}
+
+// Localized cycle label. Uses existing firstCycle/secondCycle/thirdCycle
+// translation keys for 1–3, falls back to ordinal for custom configs with
+// more cycles.
+function cycleLabel(t: (key: string) => string, cycle: number): string {
+  if (cycle === 1) return t('sessions.form.firstCycle');
+  if (cycle === 2) return t('sessions.form.secondCycle');
+  if (cycle === 3) return t('sessions.form.thirdCycle');
+  return ordinal(cycle);
+}
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }

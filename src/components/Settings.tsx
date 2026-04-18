@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, Component, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon, WifiIcon, ClipboardIcon, StopIcon, PlayIcon, ComputerDesktopIcon, LockClosedIcon, LockOpenIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { CogIcon, BuildingStorefrontIcon, MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, CloudArrowDownIcon, CloudArrowUpIcon, ArchiveBoxIcon, ArrowDownTrayIcon, CheckCircleIcon, WifiIcon, ClipboardIcon, StopIcon, PlayIcon, ComputerDesktopIcon, LockClosedIcon, LockOpenIcon, QrCodeIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import CalendarSettings from './CalendarSettings';
 import { AppSettings, getSettings, saveSettings, resetSettings, VendingMachineSettings, NetworkSharingSettings as NetworkSharingSettingsType, getSettingsWithSync, saveSettingsWithSync, defaultNetworkSharingSettings } from '@/data/settings';
 import { isTauriEnvironment } from '@/lib/storage';
 import { QRCodeSVG } from 'qrcode.react';
@@ -50,7 +51,7 @@ class UpdatesErrorBoundary extends Component<{ children: ReactNode }, { hasError
 export default function Settings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getSettings());
-  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates' | 'networkSharing'>('vendingMachine');
+  const [activeTab, setActiveTab] = useState<'vendingMachine' | 'backupRestore' | 'updates' | 'networkSharing' | 'calendar'>('vendingMachine');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const userHasEdited = useRef(false);
 
@@ -196,6 +197,17 @@ export default function Settings() {
             <WifiIcon className="h-5 w-5" />
             Network
           </button>
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === 'calendar'
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <CalendarDaysIcon className="h-5 w-5" />
+            Calendar
+          </button>
         </div>
       </div>
 
@@ -217,6 +229,9 @@ export default function Settings() {
         )}
         {activeTab === 'networkSharing' && (
           <NetworkSharingSettings />
+        )}
+        {activeTab === 'calendar' && (
+          <CalendarSettings />
         )}
       </div>
 

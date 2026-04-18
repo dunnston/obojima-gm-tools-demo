@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { GameSession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
-import { formatObojimaDate, ObojimaDate, SEASONS, MOON_PHASES } from '@/data/obojimaCalendar';
+import { formatObojimaDate, ObojimaDate, resolvePhase, resolveSeason } from '@/data/obojimaCalendar';
+import { useCalendarConfig } from '@/contexts/CalendarConfigContext';
 import { XMarkIcon, CalendarIcon, UserGroupIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 interface SessionFormProps {
@@ -15,13 +16,14 @@ interface SessionFormProps {
 }
 
 export default function SessionForm({ session, characters, onSave, onCancel, isEditing = false }: SessionFormProps) {
+  const config = useCalendarConfig();
   const [formData, setFormData] = useState({
     name: session?.name || '',
     realWorldDate: session?.realWorldDate ? session.realWorldDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     gameDate: session?.gameDate || {
       year: 1,
-      season: 'Spring',
-      phase: 'New Moon',
+      season: config.seasons[0]?.id ?? 'Spring',
+      phase: config.phases[0]?.id ?? 'New Moon',
       day: 1,
       cycle: 1
     },
@@ -29,18 +31,32 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
     playerCharacters: session?.playerCharacters || []
   });
 
+  const selectedSeason = resolveSeason(formData.gameDate.season, config);
+  const maxCycles = selectedSeason?.cycles ?? 1;
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleGameDateChange = (field: keyof ObojimaDate, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      gameDate: {
-        ...prev.gameDate,
-        [field]: value
+    setFormData(prev => {
+      const nextDate = { ...prev.gameDate, [field]: value };
+      // Clamp cycle/day to the new season/phase's max so invalid dates can't
+      // be saved via a season/phase swap after setting cycle or day.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
       }
-    }));
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return { ...prev, gameDate: nextDate };
+    });
   };
 
   const handleCharacterToggle = (characterId: string) => {
@@ -153,8 +169,8 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
                         onChange={(e) => handleGameDateChange('season', e.target.value)}
                         className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
                       >
-                        {SEASONS.map((season) => (
-                          <option key={season.name} value={season.name}>
+                        {config.seasons.map((season) => (
+                          <option key={season.id} value={season.id}>
                             {season.name}
                           </option>
                         ))}
@@ -168,8 +184,8 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
                         onChange={(e) => handleGameDateChange('phase', e.target.value)}
                         className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
                       >
-                        {MOON_PHASES.map((phase) => (
-                          <option key={phase.name} value={phase.name}>
+                        {config.phases.map((phase) => (
+                          <option key={phase.id} value={phase.id}>
                             {phase.name}
                           </option>
                         ))}
@@ -183,9 +199,9 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
                         onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
                         className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
                       >
-                        <option value={1}>1st Cycle</option>
-                        <option value={2}>2nd Cycle</option>
-                        <option value={3}>3rd Cycle</option>
+                        {Array.from({ length: maxCycles }, (_, i) => i + 1).map(c => (
+                          <option key={c} value={c}>{ordinalLabel(c)} Cycle</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -195,20 +211,20 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
                     <input
                       type="number"
                       min="1"
-                      max={formData.gameDate.phase === 'New Moon' || formData.gameDate.phase === 'Full Moon' ? 8 : 7}
+                      max={resolvePhase(formData.gameDate.phase, config)?.days ?? 8}
                       value={formData.gameDate.day}
                       onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
                       className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500 rounded text-white text-sm focus:outline-none focus:border-emerald-400"
                     />
                     <p className="text-xs text-slate-400 mt-1">
-                      Max: {formData.gameDate.phase === 'New Moon' || formData.gameDate.phase === 'Full Moon' ? 8 : 7} days
+                      Max: {resolvePhase(formData.gameDate.phase, config)?.days ?? 8} days
                     </p>
                   </div>
 
                   {/* Game Date Preview */}
                   <div className="pt-2 border-t border-slate-600">
                     <p className="text-sm text-emerald-400 font-medium">
-                      Game Date: {formatObojimaDate(formData.gameDate as ObojimaDate)}
+                      Game Date: {formatObojimaDate(formData.gameDate as ObojimaDate, config)}
                     </p>
                   </div>
                 </div>
@@ -278,4 +294,10 @@ export default function SessionForm({ session, characters, onSave, onCancel, isE
       </div>
     </div>
   );
+}
+
+function ordinalLabel(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }

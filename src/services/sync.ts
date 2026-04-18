@@ -269,8 +269,18 @@ class SyncService {
       if (!response.ok) throw new Error('Failed to fetch');
 
       const data = await response.json();
-      const dataKey = Object.keys(data)[0]; // e.g., 'characters', 'sessions', etc.
-      const items = data[dataKey] || [];
+      // API routes vary: some return a wrapped object like { characters: [...] },
+      // others return the array directly (e.g. calendar-events). Handle both.
+      let items: any[];
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (data && typeof data === 'object') {
+        const dataKey = Object.keys(data)[0];
+        const candidate = data[dataKey];
+        items = Array.isArray(candidate) ? candidate : [];
+      } else {
+        items = [];
+      }
 
       this.cache.set(dataType, items);
       return { success: true, data: items };

@@ -81,6 +81,11 @@ export const defaultNetworkSharingSettings: NetworkSharingSettings = {
   pin: '',
 };
 
+import type { CalendarConfig } from './obojimaCalendar';
+import { DEFAULT_CALENDAR_CONFIG, isValidCalendarConfig } from './obojimaCalendar';
+// Re-export so existing imports from '@/data/settings' keep working.
+export { isValidCalendarConfig } from './obojimaCalendar';
+
 export interface AppSettings {
   vendingMachine: VendingMachineSettings;
   networkSharing: NetworkSharingSettings;
@@ -91,6 +96,7 @@ export interface AppSettings {
     day: number;
     cycle: number;
   };
+  calendarConfig?: CalendarConfig;
   // Future settings can be added here
   // ui: UISettings;
   // gameplay: GameplaySettings;
@@ -99,7 +105,9 @@ export interface AppSettings {
 export const defaultAppSettings: AppSettings = {
   vendingMachine: defaultVendingMachineSettings,
   networkSharing: defaultNetworkSharingSettings,
+  calendarConfig: DEFAULT_CALENDAR_CONFIG,
 };
+
 
 // Settings management functions
 function mergeVendingMachine(saved?: Partial<VendingMachineSettings>): VendingMachineSettings {
@@ -118,6 +126,10 @@ function mergeVendingMachine(saved?: Partial<VendingMachineSettings>): VendingMa
   };
 }
 
+function mergeCalendarConfig(saved?: unknown): CalendarConfig {
+  return isValidCalendarConfig(saved) ? saved : DEFAULT_CALENDAR_CONFIG;
+}
+
 export function getSettings(): AppSettings {
   if (typeof window === 'undefined') return defaultAppSettings;
 
@@ -134,6 +146,7 @@ export function getSettings(): AppSettings {
           ...defaultNetworkSharingSettings,
           ...parsed.networkSharing,
         },
+        calendarConfig: mergeCalendarConfig(parsed.calendarConfig),
       };
     }
   } catch (error) {
@@ -180,6 +193,7 @@ export async function getSettingsWithSync(): Promise<AppSettings> {
           ...defaultNetworkSharingSettings,
           ...syncData.networkSharing,
         },
+        calendarConfig: mergeCalendarConfig(syncData.calendarConfig),
       };
     } else {
       // Fall back to localStorage

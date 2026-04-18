@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { GameSession, SessionScene, SessionNPC, SessionMusic, SessionTreasure, SessionSecretClue, createEmptySession } from '@/data/sessions';
 import { PlayerCharacter } from '@/data/characters';
 import { creatures, Encounter } from '@/data/creatures';
-import { ObojimaDate, formatObojimaDate, SEASONS, MOON_PHASES, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
+import { ObojimaDate, formatObojimaDate, resolvePhase, resolveSeason, daysBetweenObojimaDate, obojimaDateToAbsoluteDays } from '@/data/obojimaCalendar';
+import { useCalendarConfig } from '@/contexts/CalendarConfigContext';
 import { syncService } from '@/services/sync';
 import { webDemoOnlyStorage } from '@/lib/storage/webDemoOnlyStorage';
 import {
@@ -44,6 +45,7 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
   const [quests, setQuests] = useState<any[]>([]);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const { t } = useTranslation();
+  const config = useCalendarConfig();
   
   // Validator for session data
   const validateSession = (session: any): GameSession => ({
@@ -125,12 +127,12 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       if (sessionsWithGameDates.length > 0) {
         // Find the latest session date (where the world should be)
         const latestSessionDate = sessionsWithGameDates.reduce((latest, session) => {
-          const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
-          const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+          const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!, config);
+          const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!, config);
           return sessionDays > latestDays ? session : latest;
         }).gameDate;
 
-        const daysDifference = daysBetweenObojimaDate(currentGameDate, latestSessionDate);
+        const daysDifference = daysBetweenObojimaDate(currentGameDate, latestSessionDate, config);
         if (daysDifference !== 0) {
           // Silently align the world date to the latest session date
           if (process.env.NODE_ENV === 'development') {
@@ -207,8 +209,8 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
     
     // Find the earliest session date
     return sessionsWithGameDates.reduce((earliest, session) => {
-      const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
-      const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!);
+      const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!, config);
+      const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!, config);
       return sessionDays < earliestDays ? session : earliest;
     }).gameDate;
   };
@@ -228,24 +230,24 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
       
       // Find the earliest (anchor) date and the latest (current) date
       const anchorDate = sessionsWithGameDates.reduce((earliest, session) => {
-        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
-        const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!);
+        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!, config);
+        const earliestDays = obojimaDateToAbsoluteDays(earliest.gameDate!, config);
         return sessionDays < earliestDays ? session : earliest;
       }).gameDate;
 
       const latestSessionDate = sessionsWithGameDates.reduce((latest, session) => {
-        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
-        const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+        const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!, config);
+        const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!, config);
         return sessionDays > latestDays ? session : latest;
       }).gameDate;
 
       // The world date should be the latest session date, but never before the anchor
       const targetWorldDate = latestSessionDate;
-      const daysDifference = daysBetweenObojimaDate(currentGameDate, targetWorldDate);
+      const daysDifference = daysBetweenObojimaDate(currentGameDate, targetWorldDate, config);
       
       if (daysDifference !== 0) {
         const isFirstSession = sessions.filter(s => s.gameDate).length === 0;
-        const isNewAnchor = daysBetweenObojimaDate(currentGameDate, anchorDate) < 0; // Current date is after new anchor
+        const isNewAnchor = daysBetweenObojimaDate(currentGameDate, anchorDate, config) < 0; // Current date is after new anchor
         
         let message = '';
         if (isFirstSession) {
@@ -347,12 +349,12 @@ export default function SessionPlanner({ onPageChange, currentGameDate, onGameDa
             if (remainingWithDates.length > 0) {
               // Find the latest remaining session date (where world should be)
               const newLatestDate = remainingWithDates.reduce((latest, session) => {
-                const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!);
-                const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!);
+                const sessionDays = obojimaDateToAbsoluteDays(session.gameDate!, config);
+                const latestDays = obojimaDateToAbsoluteDays(latest.gameDate!, config);
                 return sessionDays > latestDays ? session : latest;
               }).gameDate;
               
-              const daysDifference = daysBetweenObojimaDate(currentGameDate, newLatestDate);
+              const daysDifference = daysBetweenObojimaDate(currentGameDate, newLatestDate, config);
               if (daysDifference !== 0) {
                 const message = `After deleting that session, the world date is now ${formatObojimaDate(newLatestDate)} (matching your latest remaining session).\n\nThe world calendar will be adjusted to match.`;
                 if (process.env.NODE_ENV === 'development') {
@@ -634,17 +636,21 @@ function CreateSessionModal({
   const [name, setName] = useState('');
   const [realWorldDate, setRealWorldDate] = useState(new Date().toISOString().split('T')[0]);
   const [useGameDate, setUseGameDate] = useState(false);
+  const config = useCalendarConfig();
   const [gameDate, setGameDate] = useState(
     currentGameDate || {
       year: 1,
-      season: 'Spring',
-      phase: 'New Moon',
+      season: config.seasons[0]?.id ?? 'Spring',
+      phase: config.phases[0]?.id ?? 'New Moon',
       day: 1,
       cycle: 1
     }
   );
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
   const { t } = useTranslation();
+
+  const gameDateSeason = resolveSeason(gameDate.season, config);
+  const gameDateMaxCycles = gameDateSeason?.cycles ?? 1;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -659,10 +665,24 @@ function CreateSessionModal({
   };
 
   const handleGameDateChange = (field: string, value: string | number) => {
-    setGameDate(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setGameDate(prev => {
+      const nextDate = { ...prev, [field]: value };
+      // Clamp cycle/day when the season or phase changes so invalid dates
+      // (e.g. cycle 3 in a 1-cycle season) can't slip through.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
+      }
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return nextDate;
+    });
   };
 
   const toggleCharacter = (characterId: string) => {
@@ -734,8 +754,8 @@ function CreateSessionModal({
                       onChange={(e) => handleGameDateChange('season', e.target.value)}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      {SEASONS.map((season) => (
-                        <option key={season.name} value={season.name}>{season.name}</option>
+                      {config.seasons.map((season) => (
+                        <option key={season.id} value={season.id}>{season.name}</option>
                       ))}
                     </select>
                   </div>
@@ -746,8 +766,8 @@ function CreateSessionModal({
                       onChange={(e) => handleGameDateChange('phase', e.target.value)}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      {MOON_PHASES.map((phase) => (
-                        <option key={phase.name} value={phase.name}>{phase.name}</option>
+                      {config.phases.map((phase) => (
+                        <option key={phase.id} value={phase.id}>{phase.name}</option>
                       ))}
                     </select>
                   </div>
@@ -758,9 +778,9 @@ function CreateSessionModal({
                       onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      <option value={1}>1st</option>
-                      <option value={2}>2nd</option>
-                      <option value={3}>3rd</option>
+                      {Array.from({ length: gameDateMaxCycles }, (_, i) => i + 1).map(c => (
+                        <option key={c} value={c}>{ordinalShort(c)}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -769,7 +789,7 @@ function CreateSessionModal({
                   <input
                     type="number"
                     min="1"
-                    max={gameDate.phase === 'New Moon' || gameDate.phase === 'Full Moon' ? 8 : 7}
+                    max={resolvePhase(gameDate.phase, config)?.days ?? 8}
                     value={gameDate.day}
                     onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
                     className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
@@ -842,6 +862,12 @@ function CreateSessionModal({
   );
 }
 
+function ordinalShort(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 import SessionDetailView from './SessionDetailView';
 
 // Edit Session Modal Component
@@ -861,17 +887,21 @@ function EditSessionModal({
   const [name, setName] = useState(session.name);
   const [realWorldDate, setRealWorldDate] = useState(session.realWorldDate.toISOString().split('T')[0]);
   const [useGameDate, setUseGameDate] = useState(!!session.gameDate);
+  const config = useCalendarConfig();
   const [gameDate, setGameDate] = useState(
     session.gameDate || {
       year: 1,
-      season: 'Spring',
-      phase: 'New Moon',
+      season: config.seasons[0]?.id ?? 'Spring',
+      phase: config.phases[0]?.id ?? 'New Moon',
       day: 1,
       cycle: 1
     }
   );
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>(session.playerCharacters);
   const { t } = useTranslation();
+
+  const gameDateSeason = resolveSeason(gameDate.season, config);
+  const gameDateMaxCycles = gameDateSeason?.cycles ?? 1;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -886,10 +916,24 @@ function EditSessionModal({
   };
 
   const handleGameDateChange = (field: string, value: string | number) => {
-    setGameDate(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setGameDate(prev => {
+      const nextDate = { ...prev, [field]: value };
+      // Clamp cycle/day when the season or phase changes so invalid dates
+      // (e.g. cycle 3 in a 1-cycle season) can't slip through.
+      if (field === 'season') {
+        const newSeason = resolveSeason(String(value), config);
+        if (newSeason && nextDate.cycle > newSeason.cycles) {
+          nextDate.cycle = newSeason.cycles;
+        }
+      }
+      if (field === 'phase') {
+        const newPhase = resolvePhase(String(value), config);
+        if (newPhase && nextDate.day > newPhase.days) {
+          nextDate.day = newPhase.days;
+        }
+      }
+      return nextDate;
+    });
   };
 
   const toggleCharacter = (characterId: string) => {
@@ -961,8 +1005,8 @@ function EditSessionModal({
                       onChange={(e) => handleGameDateChange('season', e.target.value)}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      {SEASONS.map((season) => (
-                        <option key={season.name} value={season.name}>{season.name}</option>
+                      {config.seasons.map((season) => (
+                        <option key={season.id} value={season.id}>{season.name}</option>
                       ))}
                     </select>
                   </div>
@@ -973,8 +1017,8 @@ function EditSessionModal({
                       onChange={(e) => handleGameDateChange('phase', e.target.value)}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      {MOON_PHASES.map((phase) => (
-                        <option key={phase.name} value={phase.name}>{phase.name}</option>
+                      {config.phases.map((phase) => (
+                        <option key={phase.id} value={phase.id}>{phase.name}</option>
                       ))}
                     </select>
                   </div>
@@ -985,9 +1029,9 @@ function EditSessionModal({
                       onChange={(e) => handleGameDateChange('cycle', parseInt(e.target.value))}
                       className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
                     >
-                      <option value={1}>1st</option>
-                      <option value={2}>2nd</option>
-                      <option value={3}>3rd</option>
+                      {Array.from({ length: gameDateMaxCycles }, (_, i) => i + 1).map(c => (
+                        <option key={c} value={c}>{ordinalShort(c)}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -996,7 +1040,7 @@ function EditSessionModal({
                   <input
                     type="number"
                     min="1"
-                    max={gameDate.phase === 'New Moon' || gameDate.phase === 'Full Moon' ? 8 : 7}
+                    max={resolvePhase(gameDate.phase, config)?.days ?? 8}
                     value={gameDate.day}
                     onChange={(e) => handleGameDateChange('day', parseInt(e.target.value) || 1)}
                     className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded text-white text-sm"
